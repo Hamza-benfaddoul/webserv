@@ -61,7 +61,7 @@ void    Server::acceptClientRequest(void)
             {
                 char buffer[255];
                 read(clientFd, buffer, sizeof(buffer));
-                write(clientFd, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 13 \r\n\r\nhello world\n", 100);
+                write(clientFd, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 13 \r\n\r\nhello world\n", 93);
                 write(1, buffer, strlen(buffer));
                 close(clientFd);
                 exit(0);

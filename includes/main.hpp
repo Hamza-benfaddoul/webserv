@@ -19,6 +19,7 @@
 #include <iostream>
 #include <sstream>
 #include <exception>
+#include <cstring>
 
 // c headers
 #include <sys/socket.h>
