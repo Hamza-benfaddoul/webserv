@@ -1,55 +1,78 @@
-#include <sys/socket.h>
-#include <iostream>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   server.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/10/25 10:29:43 by hbenfadd          #+#    #+#             */
+/*   Updated: 2023/10/25 15:28:31by hbenfadd         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "Server.hpp"
+
+Server::Server(unsigned long ip, unsigned short port) :
+    _ip(ip), _port(port) {};
+
+Server::~Server() {
+    close(_socketfd);
+};
 
 
-int main(void)
+void    Server::run(void)
 {
+    initServerSocket();
+    std::cout << "Server is running on port " << _port << std::endl;
+    listenToClient();
+    std::cout << "Server is listening to client" << std::endl;
+    acceptClientRequest();
+    std::cout << "Server accepted client request" << std::endl;
+}   
 
-  char message[255] = "<h1>Hello form server</h1>";
-  
-  while(true)
-  {
+void    Server::initServerSocket()
+{
+    _socketfd = socket( AF_INET, SOCK_STREAM, 0);
+    if (_socketfd < 0)
+        throw std::runtime_error("could not create socket");
+    getIp();
+    
+    // bind the IP and port to the server
+    if (bind(_socketfd, (const struct sockaddr *)&_server_address, (socklen_t)sizeof(_server_address)) < 0)
+        throw std::runtime_error("Could not bind the address");
+};
 
-    while(true)
-    {
-      int socketfd;
-      socketfd = socket( AF_INET, SOCK_STREAM, 0);
-      if (socketfd < 0)
-        std::cout << "could not create socket" << std::endl;
-      std::cout << socketfd << std::endl;
-
-      //  define the server address
-      struct sockaddr_in server_address;
-      server_address.sin_family = AF_INET;
-      server_address.sin_port = htons(8080);
-      server_address.sin_addr.s_addr = INADDR_ANY;
-
-      // bind the IP and port to the server
-      if (bind(socketfd, (const struct sockaddr *)&server_address, (socklen_t)sizeof(server_address)) < 0)
-        std::cout << "Could not bind the address \n";
-
-      // listen at the port
-      listen(socketfd, 5);
-      int client_socket = accept(socketfd,NULL, NULL);
-      if (client_socket < 0)
-        std::cout << "could not create socket for client " << std::endl;
-      if(fork())
-      {
-        // accept the incomming connection from the client
-        // send the massage to the client address``
-        /* if (!send(client_socket, message, strlen(message) , 0))
-      std::cout << "Could not send the message " << std::endl; */
-        write(client_socket, message, sizeof(message));
-      }
-
-    }
-
-   // close(client_socket);
-  }
-  return (0);
+void    Server::listenToClient()
+{
+    // listen at the port
+    if (listen(_socketfd, MAX_CONNECTIONS) < 0)
+        throw std::runtime_error("Could not listen at the port");
 }
+
+void    Server::acceptClientRequest(void)
+{
+    while (true)
+    {
+            int clientFd = accept(_socketfd, NULL, NULL);
+            if (clientFd < 0)
+                throw std::runtime_error("could not create socket for client");
+            std::cout << "request accepted" << std::endl;
+            if(fork())
+            {
+                char buffer[255];
+                read(clientFd, buffer, sizeof(buffer));
+                write(clientFd, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 13 \r\n\r\nhello world\n", 100);
+                write(1, buffer, strlen(buffer));
+                close(clientFd);
+                exit(0);
+            }
+            close(clientFd);
+    }
+}
+
+void    Server::getIp() {
+    memset(&_server_address, 0, sizeof(_server_address));
+    _server_address.sin_family = AF_INET;
+    _server_address.sin_port = htons(_port);
+    _server_address.sin_addr.s_addr = htonl(_ip);
+};
