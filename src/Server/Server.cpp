@@ -12,6 +12,7 @@
 
 #include "Server.hpp"
 
+
 Server::Server(unsigned long ip, unsigned short port) :
     _ip(ip), _port(port) {};
 
@@ -51,22 +52,45 @@ void    Server::listenToClient()
 
 void    Server::acceptClientRequest(void)
 {
+    size_t max_fd = _socketfd;
+    fd_set readfds;
+    FD_ZERO(&readfds);
+    FD_SET(_socketfd, &readfds);
+
+
     while (true)
     {
-            int clientFd = accept(_socketfd, NULL, NULL);
-            if (clientFd < 0)
-                throw std::runtime_error("could not create socket for client");
-            std::cout << "request accepted" << std::endl;
-            if(fork())
+        if(select(max_fd + 1, &readfds, NULL, NULL, NULL) < 0)
+            throw std::runtime_error("could not select");
+        for (int i = 0; i <= max_fd; i++)
+        {
+            if(FD_ISSET(i, &readfds))
             {
-                char buffer[255];
-                read(clientFd, buffer, sizeof(buffer));
-                write(clientFd, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 13 \r\n\r\nhello world\n", 93);
-                write(1, buffer, strlen(buffer));
-                close(clientFd);
-                exit(0);
+                int clientFd;
+                if(i == _socketfd)
+                {
+                    clientFd = accept(_socketfd, NULL, NULL);
+                    if (clientFd < 0)
+                        throw std::runtime_error("could not create socket for client");
+                    FD_SET(clientFd, &readfds);
+                    std::cout << "client " << clientFd << " is running" << std::endl;
+                    _clients.push_back(Client(clientFd, readfds));
+                    _client = new Client(clientFd, readfds);
+                    _client->run();
+                    if (clientFd > max_fd)
+                        max_fd = clientFd;
+                }
+                else
+                {
+
+                    std::cout << "daz " << std::endl;
+                    _client->run();
+                    //Client client(clientFd, readfds);
+                    //std::cout << "client " << i << " is running" << std::endl;
+                    //_clients.at(i).run();
+                }
             }
-            close(clientFd);
+        }
     }
 }
 

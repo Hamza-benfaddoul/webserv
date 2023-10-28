@@ -6,14 +6,14 @@
 /*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/25 09:55:20 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/10/25 14:56:39 by hbenfadd         ###   ########.fr       */
+/*   Updated: 2023/10/28 15:16:35 by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include "../../includes/main.hpp"
-
+#include "../Client/Client.hpp"
 class Server {
 	public:
 		Server(unsigned long ip=INADDR_ANY, unsigned short port=80);
@@ -32,4 +32,7 @@ class Server {
 		int					_socketfd;   
 		struct sockaddr_in	_server_address;
 		struct sockaddr_in	_client_address;
+
+		std::vector<Client>	_clients;
+		Client				*_client;
 };

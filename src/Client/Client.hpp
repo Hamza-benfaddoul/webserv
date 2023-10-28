@@ -1,29 +1,32 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/10/25 11:41:00 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/10/28 14:48:33 by hbenfadd         ###   ########.fr       */
+/*   Created: 2023/10/28 10:59:30 by hbenfadd          #+#    #+#             */
+/*   Updated: 2023/10/28 15:08:29 by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/main.hpp"
-#include "./Server/Server.hpp"
+#pragma once
 
-int main(void)
-{
-    Server S1(INADDR_ANY, 80);
+#include "../../includes/main.hpp"
 
-    try{
-        S1.run();
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-        return (1);
-    }
-    return (0);
-}
+class Client {
+	private:
+		Client();
+		std::string _responseBuffer;
+		size_t		_fd;
+		fd_set		&_readfds;
+
+		void	receiveResponse(void);
+		void	sendResponse(void);
+		void	closeConnection(void);
+
+	public:
+		Client(size_t fd, fd_set &readfds);
+		~Client();
+		void	run(void);
+};
