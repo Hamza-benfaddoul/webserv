@@ -6,7 +6,7 @@
 /*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/25 09:55:20 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/10/29 15:01:46 by hbenfadd         ###   ########.fr       */
+/*   Updated: 2023/10/29 18:26:37 by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 
 #include "../../includes/main.hpp"
 #include "../Client/Client.hpp"
+class Client;
 class Server {
 	public:
 		Server(unsigned long ip=INADDR_ANY, unsigned short port=80);
@@ -29,7 +30,7 @@ class Server {
 
 		unsigned long		_ip;
 		unsigned short		_port;
-		int					_socketfd;   
+		size_t				_socketfd;   
 		struct sockaddr_in	_server_address;
 		struct sockaddr_in	_client_address;
 

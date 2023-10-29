@@ -1,3 +1,10 @@
+server:
+  listen: 8000
+  server_name: [ somename , alias , another.alias]
+  location:
+    - path: "/"
+    - root:	html
+    - index:	[index.html,index.htm]
 
 server:
   listen: 80
@@ -18,10 +25,3 @@ server:
     - fastcgi_param:  SCRIPT_FILENAME  /scripts$fastcgi_script_name
     - include:        fastcgi_params
 
-server:
-  listen: 8000
-  server_name: [ somename , alias , another.alias]
-  location:
-    - path: "/"
-    - root:	html
-    - index:	[index.html,index.htm]

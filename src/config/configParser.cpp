@@ -131,8 +131,8 @@ bool configParser::loadFile()
 			// std::cout << serverBlocks.size() << std::endl;
 			for (std::vector<serverBlock>::iterator it = serverBlocks.begin() + 1; it != serverBlocks.end(); ++it) {
 				it->parseBlock();
-				// std::cout << it->getServerName() << std::endl;
-				// std::cout << it->getPort() << std::endl;
+				std::cout << it->getServerName() << std::endl;
+				std::cout << it->getPort() << std::endl;
 				// std::cout << it->getRoot() << std::endl;
 			}
 		}

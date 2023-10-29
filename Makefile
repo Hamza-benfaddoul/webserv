@@ -6,18 +6,18 @@
 #    By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/24 11:11:39 by rakhsas           #+#    #+#              #
-#    Updated: 2023/10/29 17:43:21 by hbenfadd         ###   ########.fr        #
+#    Updated: 2023/10/29 18:31:38 by hbenfadd         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-NAME	= webserv.exe
+NAME	= webserv
 
 CC		= c++
 CFLAGS	= -Wall -Wextra -Werror -std=c++98 # -fsanitize=address -g3
 
-SRCSCONFIG = configParser.cpp serverBlock.cpp
+SRCSCONFIG = configParser.cpp serverBlock.cpp 
 
-SRCSMULTIPLEX = Server/Server.cpp Client/Client.cpp
+SRCSMULTIPLEX = Server/Server.cpp Client/Client.cpp Server/Cluster.cpp
 
 SRCS = $(addprefix src/, main.cpp) $(addprefix src/config/,$(SRCSCONFIG))  $(addprefix src/,$(SRCSMULTIPLEX))
 

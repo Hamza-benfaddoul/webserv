@@ -1,7 +1,16 @@
 #ifndef SERVERBLOCK_HPP
 #define SERVERBLOCK_HPP
 
-#include "main.hpp"
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include <sstream>
+#include <exception>
+#include <cstring>
+#include <vector>
+#include <map>
+#include <sys/stat.h>
+#include <fstream>
 
 
 class serverBlock

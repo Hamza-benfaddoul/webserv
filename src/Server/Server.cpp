@@ -64,11 +64,11 @@ void    Server::acceptClientRequest(void)
     {
         if(select(max_fd + 1, &readfds, NULL, NULL, NULL) < 0)
             throw std::runtime_error("could not select");
-        for (int i = 0; i <= max_fd; i++)
+        for (size_t i = 0; i <= max_fd; i++)
         {
             if(FD_ISSET(i, &readfds))
             {
-                int clientFd;
+                size_t clientFd;
                 if(i == _socketfd)
                 {
                     clientFd = accept(_socketfd, NULL, NULL);

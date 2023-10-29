@@ -1,5 +1,4 @@
-#ifndef HEADER_HPP
-#define HEADER_HPP
+#pragma once
 
 // #define DEFAULT_PATH "./config/"
 #define DEFAULT_PATH "./config/default.yaml"
@@ -31,4 +30,8 @@
 // config parser
 #include "configParser.hpp"
 
-#endif
+// server
+#include "../src/Server/Server.hpp"
+#include "../src/Server/Cluster.hpp"
+
+
