@@ -18,17 +18,19 @@ Server::Server(unsigned long ip, unsigned short port) :
 
 Server::~Server() {
     close(_socketfd);
+    for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+        delete *it;
 };
 
 
 void    Server::run(void)
 {
     initServerSocket();
-    std::cout << "Server is running on port " << _port << std::endl;
+    // std::cout << "Server is running on port " << _port << std::endl;
     listenToClient();
-    std::cout << "Server is listening to client" << std::endl;
+    // std::cout << "Server is listening to client" << std::endl;
     acceptClientRequest();
-    std::cout << "Server accepted client request" << std::endl;
+    // std::cout << "Server accepted client request" << std::endl;
 }   
 
 void    Server::initServerSocket()
@@ -73,21 +75,13 @@ void    Server::acceptClientRequest(void)
                     if (clientFd < 0)
                         throw std::runtime_error("could not create socket for client");
                     FD_SET(clientFd, &readfds);
-                    std::cout << "client " << clientFd << " is running" << std::endl;
-                    _clients.push_back(Client(clientFd, readfds));
-                    _client = new Client(clientFd, readfds);
-                    _client->run();
+                    _clients.push_back(new Client(clientFd, readfds));
                     if (clientFd > max_fd)
                         max_fd = clientFd;
                 }
-                else
+                else 
                 {
-
-                    std::cout << "daz " << std::endl;
-                    _client->run();
-                    //Client client(clientFd, readfds);
-                    //std::cout << "client " << i << " is running" << std::endl;
-                    //_clients.at(i).run();
+                    _clients.at(i - _socketfd - 1)->run();
                 }
             }
         }

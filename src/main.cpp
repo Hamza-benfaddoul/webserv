@@ -6,7 +6,7 @@
 /*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/25 11:41:00 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/10/28 14:48:33 by hbenfadd         ###   ########.fr       */
+/*   Updated: 2023/10/29 16:08:15 by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 
 int main(void)
 {
-    Server S1(INADDR_ANY, 80);
+    Server S1(INADDR_ANY, 8080);
 
     try{
         S1.run();

@@ -6,7 +6,7 @@
 /*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/25 09:55:20 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/10/28 15:16:35 by hbenfadd         ###   ########.fr       */
+/*   Updated: 2023/10/29 15:01:46 by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,5 @@ class Server {
 		struct sockaddr_in	_server_address;
 		struct sockaddr_in	_client_address;
 
-		std::vector<Client>	_clients;
-		Client				*_client;
+		std::vector<Client*>	_clients;
 };
