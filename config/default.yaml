@@ -1,0 +1,27 @@
+
+server:
+  listen: 80
+  server_name: localhost
+  root: /var/www/html
+  location:
+    - path: "/"
+    - root:   html
+    - autoindex:on 
+    - methods: GET POST
+    - index:  [index.html, index.htm]
+
+  location:
+    - path:               "~ \.php$"
+    - root:  html
+    - fastcgi_pass:   127.0.0.1:9000 #fdkgvldjsld
+    - fastcgi_index:  index.php
+    - fastcgi_param:  SCRIPT_FILENAME  /scripts$fastcgi_script_name
+    - include:        fastcgi_params
+
+server:
+  listen: 8000
+  server_name: [ somename , alias , another.alias]
+  location:
+    - path: "/"
+    - root:	html
+    - index:	[index.html,index.htm]
