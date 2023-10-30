@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
+/*   By: rakhsas <rakhsas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/10/29 16:07:02 by hbenfadd         ###   ########.fr       */
+/*   Updated: 2023/10/30 09:30:43 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ void    Client::receiveResponse(void)
 }
 
 void    Client::sendResponse(void)
-{
+{ 
 	write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 11 \r\n\r\nhello world", 92);
 }
 
