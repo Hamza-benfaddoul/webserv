@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   serverBlock.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rakhsas <rakhsas@student.42.fr>            +#+  +:+       +#+        */
+/*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:15:12 by rakhsas           #+#    #+#             */
-/*   Updated: 2023/10/30 10:06:15 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/10/30 18:31:51 by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,14 +31,13 @@ uint32_t serverBlock::getHost(void) const {
 		res |= atoi(parsed.c_str()) << (count);
 		count -= 8;
 	}
-	std::cout << res << std::endl;
+	// std::cout << res << std::endl;
 	return res;
 }
 int     serverBlock::getPort(void) const { return port; }
 
 void    serverBlock::parseBlock(  )
 {
-	std::cout << "Server Block Attributes:" << std::endl;
 	std::map<std::string, std::string> attributes = getAttributes();
 	for (std::map<std::string, std::string>::iterator attr_it = attributes.begin(); attr_it != attributes.end(); ++attr_it) {
 		if (attr_it->first.compare("server_name") == 0)
@@ -145,7 +144,6 @@ void    serverBlock::parseHost(std::string value)
 		{
 			if (value.at(i) == '.' && value.at(i) == str[y])
 			{
-				std::cout << value.at(i) << std::endl;
 				points++;
 			}
 			if (value.at(i) == str[y])
@@ -156,7 +154,7 @@ void    serverBlock::parseHost(std::string value)
 				continue;
 		}
 	}
-	std::cout << points << std::endl;
+	// std::cout << points << std::endl;
 	if (points > 3)
 		throw std::runtime_error("ERROR: IP address Must Contain only three dots !!!. ");
 	std::string parsed;

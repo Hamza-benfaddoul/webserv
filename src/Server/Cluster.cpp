@@ -39,6 +39,7 @@ void Cluster::run(void)
 {
     for (size_t i = 0; i < servers.size(); i++)
     {
-        servers[i]->run();
+        if (fork())
+            servers[i]->run();
     }
 }
