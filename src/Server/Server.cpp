@@ -36,8 +36,8 @@ void    Server::run(void)
 void    Server::initServerSocket()
 {
     _socketfd = socket( AF_INET, SOCK_STREAM, 0);
-    if (_socketfd < 0)
-        throw std::runtime_error("could not create socket");
+    // if (_socketfd < 0)
+    //     throw std::runtime_error("could not create socket");
     getIp();
     
     // bind the IP and port to the server
@@ -72,8 +72,8 @@ void    Server::acceptClientRequest(void)
                 if(i == _socketfd)
                 {
                     clientFd = accept(_socketfd, NULL, NULL);
-                    if (clientFd < 0)
-                        throw std::runtime_error("could not create socket for client");
+                    // if (clientFd < 0)
+                    //     throw std::runtime_error("could not create socket for client");
                     FD_SET(clientFd, &readfds);
                     _clients.push_back(new Client(clientFd, readfds));
                     if (clientFd > max_fd)

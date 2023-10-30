@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
+/*   By: rakhsas <rakhsas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/25 11:41:00 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/10/29 18:36:47 by hbenfadd         ###   ########.fr       */
+/*   Updated: 2023/10/30 10:02:54 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@ int main(int ac, char **av)
             {
                 configParser webserv(av[1]);
                 
-                Cluster cluster(webserv.getServerBlocks());
+                //   Cluster cluster(webserv.getServerBlocks());
             }
             else
             {
@@ -33,7 +33,7 @@ int main(int ac, char **av)
         }
         catch (const std::exception &e)
         {
-            std::cerr << e.what() << '\n';
+            std::cout << "\e[0;31m" << e.what() << "\033[0m"<< std::endl;
             return (1);
         }
 

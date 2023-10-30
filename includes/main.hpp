@@ -26,7 +26,6 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/select.h>
-
 // config parser
 #include "configParser.hpp"
 

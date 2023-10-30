@@ -1,22 +1,7 @@
 #include "../../includes/configParser.hpp"
-
-
-class ServerConfig {
-public:
-    std::string listen;
-    std::string serverName;
-    std::string root;
-    // Add more members as needed
-	ServerConfig(): listen(NULL), serverName(NULL), root(NULL)  {
-	}
-    // Constructor to initialize members
-    ServerConfig(const std::string& listen, const std::string& serverName, const std::string& root)
-        : listen(listen), serverName(serverName), root(root) {
-        // Initialize other members here
-    }
-};
-
-
+#include <iostream>
+#include <fstream>
+#include <string>
 configParser::configParser()
 {
 	setConfigFilePath(DEFAULT_PATH);
@@ -69,7 +54,7 @@ std::string& trim(std::string& s)
 
 bool configParser::loadFile()
 {
-	std::ifstream file( getConfigFilePath() );
+	std::ifstream file(getConfigFilePath().c_str());
 	if (file.is_open())
 	{
 		if (!regFile(getConfigFilePath()))
