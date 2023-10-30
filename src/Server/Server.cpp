@@ -13,7 +13,7 @@
 #include "Server.hpp"
 
 
-Server::Server(unsigned long ip, unsigned short port) :
+Server::Server(uint32_t ip, unsigned short port) :
     _ip(ip), _port(port) {};
 
 Server::~Server() {
