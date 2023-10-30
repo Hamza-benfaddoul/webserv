@@ -27,13 +27,13 @@ int main(int ac, char **av)
             else
             {
                 configParser webserv;
-                // Cluster cluster(webserv.getServerBlocks());
+                Cluster cluster(webserv.getServerBlocks());
             }
         
         }
         catch (const std::exception &e)
         {
-            std::cerr << e.what() << '\n';
+            std::cout << "\e[0;31m" << e.what() << "\033[0m"<< std::endl;
             return (1);
         }
 

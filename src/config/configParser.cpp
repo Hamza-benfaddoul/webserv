@@ -1,5 +1,7 @@
 #include "../../includes/configParser.hpp"
-
+#include <iostream>
+#include <fstream>
+#include <string>
 configParser::configParser()
 {
 	setConfigFilePath(DEFAULT_PATH);
@@ -52,7 +54,7 @@ std::string& trim(std::string& s)
 
 bool configParser::loadFile()
 {
-	std::ifstream file( getConfigFilePath() );
+	std::ifstream file(getConfigFilePath().c_str());
 	if (file.is_open())
 	{
 		if (!regFile(getConfigFilePath()))

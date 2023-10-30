@@ -38,7 +38,7 @@ class serverBlock
         void    parseServerName( std::string value );
         void    parsePortNumber( std::string value );
         void    parseRoot(std::string value) const;
-        void    parseHost(std::string value) const;
+        void    parseHost(std::string value);
 
         int         getPort(void) const;
         std::string getRoot(void) const;

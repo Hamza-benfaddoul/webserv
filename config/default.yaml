@@ -1,6 +1,6 @@
 server:
-  listen: 8000
-  host: 125.22.1.12
+  listen: 8010
+  host: 127.0.0.1
   server_name: [ somename , alias , another.alias]
   location:
     - path: "/"
