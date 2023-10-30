@@ -20,7 +20,20 @@ void serverBlock::setLocation(std::map<std::string, std::string> vec) { this->lo
 void serverBlock::setAttribute(std::string key, std::string value) { this->attributes[key] = value; }
 std::string serverBlock::getServerName(void) const { return this->serverName; }
 std::string serverBlock::getRoot(void) const { return this->root; }
-std::string serverBlock::getHost(void) const { return host; }
+uint32_t serverBlock::getHost(void) const {
+	uint32_t res = 0;
+	std::string parsed;
+	std::stringstream input_stringstream(host);
+	int count = 24;
+	while (getline(input_stringstream,parsed,'.'))
+	{
+		// 127.0.0.1
+		res |= atoi(parsed.c_str()) << (count);
+		count -= 8;
+	}
+	std::cout << res << std::endl;
+	return res;
+}
 int     serverBlock::getPort(void) const { return port; }
 
 void    serverBlock::parseBlock(  )

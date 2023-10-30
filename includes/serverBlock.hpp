@@ -11,7 +11,7 @@
 #include <map>
 #include <sys/stat.h>
 #include <fstream>
-
+#include "stdint.h"
 
 class serverBlock
 {
@@ -43,7 +43,7 @@ class serverBlock
         int         getPort(void) const;
         std::string getRoot(void) const;
         std::string getServerName(void) const;
-        std::string getHost(void) const;
+        uint32_t getHost(void) const;
 };
 
 #endif
