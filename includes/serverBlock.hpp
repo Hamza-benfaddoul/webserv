@@ -12,14 +12,16 @@
 #include <sys/stat.h>
 #include <fstream>
 #include "stdint.h"
+#include "unistd.h"
 
 class serverBlock
 {
     private:
-        std::string serverName;
+        // std::string serverName;
         std::string host;
         std::string root;
         int         port;
+        bool        autoIndex;
         std::map<std::string, std::string> attributes;
         std::vector<std::map<std::string, std::string> > locations;
     public:
@@ -35,14 +37,16 @@ class serverBlock
         std::map<std::string, std::string> getAttributes() const {
             return attributes;
         }
-        void    parseServerName( std::string value );
+        // void    parseServerName( std::string value );
         void    parsePortNumber( std::string value );
-        void    parseRoot(std::string value) const;
+        void    parseRoot(std::string value) ;
         void    parseHost(std::string value);
+        void    parseAutoIndex(std::string value);
 
-        int         getPort(void) const;
+        int     getPort(void) const;
+        bool    getAutoIndex(void) const;
         std::string getRoot(void) const;
-        std::string getServerName(void) const;
+        // std::string getServerName(void) const;
         uint32_t getHost(void) const;
 };
 

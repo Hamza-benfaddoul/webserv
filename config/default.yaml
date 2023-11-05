@@ -1,6 +1,7 @@
 server:
   listen: 8010
   host: 127.0.0.1
+  autoindex: onds
   server_name: [ somename , alias , another.alias]
   location:
     - path: "/"
@@ -10,7 +11,7 @@ server:
 server:
   listen: 80
   server_name: localhost
-  root: /var/www/html
+  root: www
   location:
     - path: "/"
     - root:   html

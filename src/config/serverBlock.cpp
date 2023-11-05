@@ -18,7 +18,7 @@ serverBlock::serverBlock() {
 }
 void serverBlock::setLocation(std::map<std::string, std::string> vec) { this->locations.push_back(vec); }
 void serverBlock::setAttribute(std::string key, std::string value) { this->attributes[key] = value; }
-std::string serverBlock::getServerName(void) const { return this->serverName; }
+// std::string serverBlock::getServerName(void) const { return this->serverName; }
 std::string serverBlock::getRoot(void) const { return this->root; }
 uint32_t serverBlock::getHost(void) const {
 	uint32_t res = 0;
@@ -31,24 +31,26 @@ uint32_t serverBlock::getHost(void) const {
 		res |= atoi(parsed.c_str()) << (count);
 		count -= 8;
 	}
-	std::cout << res << std::endl;
+	// std::cout << res << std::endl;
 	return res;
 }
 int     serverBlock::getPort(void) const { return port; }
 
 void    serverBlock::parseBlock(  )
 {
-	std::cout << "Server Block Attributes:" << std::endl;
+	// std::cout << "Server Block Attributes:" << std::endl;
 	std::map<std::string, std::string> attributes = getAttributes();
 	for (std::map<std::string, std::string>::iterator attr_it = attributes.begin(); attr_it != attributes.end(); ++attr_it) {
-		if (attr_it->first.compare("server_name") == 0)
-			parseServerName(attr_it->second);
-		else if (attr_it->first.compare("listen") == 0)
+		// if (attr_it->first.compare("server_name") == 0)
+		// 	parseServerName(attr_it->second);
+		if (attr_it->first.compare("listen") == 0)
 			parsePortNumber(attr_it->second);
 		else if (attr_it->first.compare("root") == 0)
 			parseRoot(attr_it->second);
 		else if (attr_it->first.compare("host") == 0)
 			parseHost(attr_it->second);
+		else if (attr_it->first.compare("autoindex") == 0)
+			parseAutoIndex(attr_it->second);
 	}
 	// std::cout << "Server Block Locations:" << std::endl;
 	// std::vector<std::map<std::string, std::string> > locations = getLocations();
@@ -62,7 +64,7 @@ void    serverBlock::parseBlock(  )
 
 }
 
-void serverBlock::parseRoot(std::string value) const {
+void serverBlock::parseRoot(std::string value) {
 	// std::cout << value << std::endl;
 	std::ifstream file;
 	if (value.length() > 0)
@@ -71,10 +73,13 @@ void serverBlock::parseRoot(std::string value) const {
 		file.open( value.c_str() );
 	if (file.is_open())
 	{
-		// if (!regFile(getConfigFilePath()))
-		// 	throw notARegularFile();
-		// else if (getFileSize( getConfigFilePath()) == 0)
-		// 	throw configFileIsEmpty();
+		this->root = value;
+		// close(file);
+	}
+	else
+	{
+		std::string a = "ERROR: root: `" + value + "` Not Found !!!.";
+		throw std::runtime_error(a);
 	}
 }
 
@@ -102,31 +107,31 @@ std::string serverBlock::trim(const std::string& str, std::string sep) {
 	}
 	return "";
 }
-void    serverBlock::parseServerName(std::string value) {
-	if (value.find("[[") != std::string::npos || value.find("]]") != std::string::npos || value.find("][") != std::string::npos || value.find("[]") != std::string::npos)
-		throw std::runtime_error("ERROR: Found an invalid pattern related to []!!!.");
-	if (value.at(0) == '[')
-	{
-		value = trim(value, " []");
-		if (value.find(",,") != std::string::npos)
-			throw std::runtime_error("ERROR: Found an invalid pattern related to ,,!!!.");
-		std::stringstream ss(value);
-		std::string word, word1;
-		while (ss >> word)
-		{
-			if (word == ",")
-				word = word.substr(1);
-			word1.append(trim(word, " ,"));
-			word1.append(" ");
-		}
-		this->serverName = word1;
-	} else {
-		if (containsOnlyAlphabets(value))
-			this->serverName = value;
-		else
-			throw std::runtime_error("ERROR: `server_name` MUST CONTAIN ONLY ALPHABETS!!!.");
-	}
-}
+// void    serverBlock::parseServerName(std::string value) {
+// 	if (value.find("[[") != std::string::npos || value.find("]]") != std::string::npos || value.find("][") != std::string::npos || value.find("[]") != std::string::npos)
+// 		throw std::runtime_error("ERROR: Found an invalid pattern related to []!!!.");
+// 	if (value.at(0) == '[')
+// 	{
+// 		value = trim(value, " []");
+// 		if (value.find(",,") != std::string::npos)
+// 			throw std::runtime_error("ERROR: Found an invalid pattern related to ,,!!!.");
+// 		std::stringstream ss(value);
+// 		std::string word, word1;
+// 		while (ss >> word)
+// 		{
+// 			if (word == ",")
+// 				word = word.substr(1);
+// 			word1.append(trim(word, " ,"));
+// 			word1.append(" ");
+// 		}
+// 		this->serverName = word1;
+// 	} else {
+// 		if (containsOnlyAlphabets(value))
+// 			this->serverName = value;
+// 		else
+// 			throw std::runtime_error("ERROR: `server_name` MUST CONTAIN ONLY ALPHABETS!!!.");
+// 	}
+// }
 void    serverBlock::parsePortNumber(std::string value) {
 	if (containsOnlyDigits(value))
 		this->port = std::atoi(value.c_str());
@@ -145,7 +150,7 @@ void    serverBlock::parseHost(std::string value)
 		{
 			if (value.at(i) == '.' && value.at(i) == str[y])
 			{
-				std::cout << value.at(i) << std::endl;
+				// std::cout << value.at(i) << std::endl;
 				points++;
 			}
 			if (value.at(i) == str[y])
@@ -156,7 +161,7 @@ void    serverBlock::parseHost(std::string value)
 				continue;
 		}
 	}
-	std::cout << points << std::endl;
+	// std::cout << points << std::endl;
 	if (points > 3)
 		throw std::runtime_error("ERROR: IP address Must Contain only three dots !!!. ");
 	std::string parsed;
@@ -174,4 +179,12 @@ void    serverBlock::parseHost(std::string value)
 	if (count < 4)
 		throw std::runtime_error("ERROR: Invalid IP address");
 	host = value;
+}
+void serverBlock::parseAutoIndex(std::string value)
+{
+	std::cout << value.find("on") << std::endl;
+	if (std::string("on").compare(value) != 0)
+		throw std::runtime_error("ERROR: Auto Index EXPECTS just `on` or `off` !!!.");
+	else if ( std::string("off").compare(value) != 0 )
+		throw std::runtime_error("ERROR: Auto Index EXPECTS just `on` or `off` !!!.");
 }
