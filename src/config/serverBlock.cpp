@@ -14,11 +14,12 @@
 #include "cstdlib"
 
 serverBlock::serverBlock() {
-
+	port = -1;
+	autoIndex = 0;
 }
-void serverBlock::setLocation(std::map<std::string, std::string> vec) { this->locations.push_back(vec); }
+// void serverBlock::setLocation(std::map<std::string, std::string> vec) { this->locations.push_back(vec); }
 void serverBlock::setAttribute(std::string key, std::string value) { this->attributes[key] = value; }
-// std::string serverBlock::getServerName(void) const { return this->serverName; }
+void	serverBlock::setLocation( Location loc ) { this->locations.push_back(loc); }
 std::string serverBlock::getRoot(void) const { return this->root; }
 uint32_t serverBlock::getHost(void) const {
 	uint32_t res = 0;
@@ -35,7 +36,7 @@ uint32_t serverBlock::getHost(void) const {
 	return res;
 }
 int     serverBlock::getPort(void) const { return port; }
-
+bool	serverBlock::getAutoIndex( void ) const { return autoIndex; }
 void    serverBlock::parseBlock(  )
 {
 	// std::cout << "Server Block Attributes:" << std::endl;
@@ -52,16 +53,15 @@ void    serverBlock::parseBlock(  )
 		else if (attr_it->first.compare("autoindex") == 0)
 			parseAutoIndex(attr_it->second);
 	}
-	// std::cout << "Server Block Locations:" << std::endl;
-	// std::vector<std::map<std::string, std::string> > locations = getLocations();
-	// for (std::vector<std::map<std::string, std::string> >::iterator loc_it = locations.begin(); loc_it != locations.end(); ++loc_it) {
-	//     std::cout << "Location Attributes:" << std::endl;
-	//     for (std::map<std::string, std::string>::iterator loc_attr_it = loc_it->begin(); loc_attr_it != loc_it->end(); ++loc_attr_it) {
-	//         std::cout << loc_attr_it->first << ": " << loc_attr_it->second << std::endl;
-	//     }
-	// }
+	if (getPort() == -1)
+		port = 0;
+	if (getRoot().length() == 0)
+		root = "www";
+	if (getHost() == 0)
+		host = "127.0.0.1";
+	// Location
 	// std::cout << "END OF SERVER INFOS\n\n\n";
-
+		
 }
 
 void serverBlock::parseRoot(std::string value) {
@@ -107,31 +107,6 @@ std::string serverBlock::trim(const std::string& str, std::string sep) {
 	}
 	return "";
 }
-// void    serverBlock::parseServerName(std::string value) {
-// 	if (value.find("[[") != std::string::npos || value.find("]]") != std::string::npos || value.find("][") != std::string::npos || value.find("[]") != std::string::npos)
-// 		throw std::runtime_error("ERROR: Found an invalid pattern related to []!!!.");
-// 	if (value.at(0) == '[')
-// 	{
-// 		value = trim(value, " []");
-// 		if (value.find(",,") != std::string::npos)
-// 			throw std::runtime_error("ERROR: Found an invalid pattern related to ,,!!!.");
-// 		std::stringstream ss(value);
-// 		std::string word, word1;
-// 		while (ss >> word)
-// 		{
-// 			if (word == ",")
-// 				word = word.substr(1);
-// 			word1.append(trim(word, " ,"));
-// 			word1.append(" ");
-// 		}
-// 		this->serverName = word1;
-// 	} else {
-// 		if (containsOnlyAlphabets(value))
-// 			this->serverName = value;
-// 		else
-// 			throw std::runtime_error("ERROR: `server_name` MUST CONTAIN ONLY ALPHABETS!!!.");
-// 	}
-// }
 void    serverBlock::parsePortNumber(std::string value) {
 	if (containsOnlyDigits(value))
 		this->port = std::atoi(value.c_str());
@@ -139,6 +114,7 @@ void    serverBlock::parsePortNumber(std::string value) {
 		throw std::runtime_error("ERROR: PORT MUST CONTAIN ONLY DIGITS !!!.");
 	if (port <= 0 || port > 65535)
 		throw std::runtime_error("ERROR: PORT MUST BE POSITIF AND < 65535 !!!.");
+	// std::cout << this->port << std::endl;
 }
 void    serverBlock::parseHost(std::string value)
 {
@@ -161,7 +137,6 @@ void    serverBlock::parseHost(std::string value)
 				continue;
 		}
 	}
-	// std::cout << points << std::endl;
 	if (points > 3)
 		throw std::runtime_error("ERROR: IP address Must Contain only three dots !!!. ");
 	std::string parsed;
@@ -182,9 +157,10 @@ void    serverBlock::parseHost(std::string value)
 }
 void serverBlock::parseAutoIndex(std::string value)
 {
-	std::cout << value.find("on") << std::endl;
-	if (std::string("on").compare(value) != 0)
+	// std::cout << value.find("on") << std::endl;
+	if (std::string("on").compare(value) != 0 && std::string("off").compare(value) != 0 )
 		throw std::runtime_error("ERROR: Auto Index EXPECTS just `on` or `off` !!!.");
-	else if ( std::string("off").compare(value) != 0 )
-		throw std::runtime_error("ERROR: Auto Index EXPECTS just `on` or `off` !!!.");
+	else
+		autoIndex = true;
+	// else if ( std::string("off").compare(value) != 0 )
 }

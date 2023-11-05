@@ -13,6 +13,7 @@
 #include <fstream>
 #include "stdint.h"
 #include "unistd.h"
+#include "Location.hpp"
 
 class serverBlock
 {
@@ -23,21 +24,18 @@ class serverBlock
         int         port;
         bool        autoIndex;
         std::map<std::string, std::string> attributes;
-        std::vector<std::map<std::string, std::string> > locations;
+        std::vector<Location> locations;
     public:
-        void        parseBlock( );
         serverBlock();
-        // serverBlock(int, std::string);
-        void    setLocation(std::map<std::string, std::string>) ;
+
+        void    setLocation( Location e ) ;
         void    setAttribute(std::string, std::string) ;
-        std::string trim(const std::string& str, std::string sep);
-        std::vector<std::map<std::string, std::string> > getLocations() const {
+        std::vector<Location> getLocations() const {
             return locations;
         }
-        std::map<std::string, std::string> getAttributes() const {
-            return attributes;
-        }
-        // void    parseServerName( std::string value );
+        std::string trim(const std::string& str, std::string sep);
+
+        void    parseBlock( );
         void    parsePortNumber( std::string value );
         void    parseRoot(std::string value) ;
         void    parseHost(std::string value);
@@ -46,8 +44,11 @@ class serverBlock
         int     getPort(void) const;
         bool    getAutoIndex(void) const;
         std::string getRoot(void) const;
-        // std::string getServerName(void) const;
         uint32_t getHost(void) const;
+
+        std::map<std::string, std::string> getAttributes() const {
+            return attributes;
+        }
 };
 
 #endif
