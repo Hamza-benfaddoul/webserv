@@ -49,22 +49,12 @@ void Cluster::run(void)
 		{
 			servers[i]->initServerSocket();
 			servers[i]->listenToClient();
-			// print message on the console 'server listening on ip:port'
-			std::cout << "server listening on ";
-			std::cout << (servers[i]->getIp()	>> 24)			<< ".";
-			std::cout << ((servers[i]->getIp()	>> 16)	& 255)	<< ".";
-			std::cout << (( servers[i]->getIp() >> 8)	& 255)	<< ".";
-			std::cout << (servers[i]->getIp() 			& 255)	<< ":";
-			std::cout << servers[i]->getPort() 					<< std::endl;
 			// add file discription of the client socket to set_fd 
 			FD_SET(servers[i]->getFd(), &readfds);
 			fd.insert(servers[i]->getFd());
 		}
 	}
 	max_fd = servers[servers.size() - 1]->getFd();
-	std::cout << servers[servers.size() - 1]->getFd() << std::endl;
-	std::cout << servers[servers.size() - 2]->getFd() << std::endl;
-
 	// run the servers
 	{
 
