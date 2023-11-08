@@ -13,6 +13,7 @@
 #pragma once
 
 #include "../../includes/main.hpp"
+#include "Request.hpp"
 
 class Client {
 	private:
@@ -20,6 +21,8 @@ class Client {
 		std::string _responseBuffer;
 		size_t		_fd;
 		fd_set		&_readfds;
+		Request	*request;
+		// Response	*response;
 
 		void	receiveResponse(void);
 		void	sendResponse(void);

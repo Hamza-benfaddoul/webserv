@@ -27,6 +27,9 @@ void	Client::receiveResponse(void)
 		this->_responseBuffer += std::string(buffer, bytesRead);
 		if (std::string(buffer, bytesRead).find("\r\n\r\n") != std::string::npos)
 		{
+			this->request = new Request(_responseBuffer);
+			this->request->parseRequest();
+			this->request->printRequest();
 			sendResponse();
 		}
 		break;
@@ -57,6 +60,7 @@ void Client::run(void)
 
 Client::~Client()
 {
+	delete request;
 	close(_fd);
 	FD_CLR(_fd, &_readfds);
 }
