@@ -3,17 +3,17 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+         #
+#    By: hamza <hamza@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/24 11:11:39 by rakhsas           #+#    #+#              #
-#    Updated: 2023/10/29 18:31:38 by hbenfadd         ###   ########.fr        #
+#    Updated: 2023/11/08 12:07:39 by hamza            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME	= webserv
 
-CC		= c++
-CFLAGS	= -Wall -Wextra -Werror -std=c++98 # -fsanitize=address -g3
+CXX		= c++
+CXXFLAGS	= -Wall -Wextra -Werror -std=c++98 -g # -fsanitize=address -g3
 
 SRCSCONFIG = configParser.cpp serverBlock.cpp 
 
@@ -26,11 +26,8 @@ OBJCS = $(SRCS:.cpp=.o)
 all : $(NAME)
 
 $(NAME) : $(OBJCS)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
-%.o:%.cpp
-	@printf "\033[0;33mGenerating objects... %-33.33s\r" $@
-	@$(CC)  $(CFLAGS) -c $<  -o $@
 
 clean :
 	rm -f $(OBJCS)
