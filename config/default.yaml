@@ -1,26 +1,26 @@
 server:
   listen: 8010
   host: 127.0.0.1
+  autoindex: on
   server_name: [ somename , alias , another.alias]
   location:
     - path: "/"
-    - root:	html
+    - root:	www/
     - index:	[index.html,index.htm]
 
 server:
   listen: 8081
   server_name: localhost
-  root: /var/www/html
+  root: www
   location:
-    - path: "/"
-    - root:   html
-    - autoindex:on 
-    - methods: GET POST
+    - path: "/bootstrap"
+    - root:   www
+    - autoindex: on 
+    - methods: [GET, POST]
     - index:  [index.html, index.htm]
 
   location:
-    - path:               "~ \.php$"
-    - root:  html
+    - path: "~ \.php$"
     - fastcgi_pass:   127.0.0.1:9000 #fdkgvldjsld
     - fastcgi_index:  index.php
     - fastcgi_param:  SCRIPT_FILENAME  /scripts$fastcgi_script_name

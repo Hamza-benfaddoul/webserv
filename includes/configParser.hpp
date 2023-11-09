@@ -20,6 +20,7 @@ class configParser
         std::vector<serverBlock> getServerBlocks( void ) const{
             return serverBlocks;
         }
+        void	parseLocation( std::ifstream& file, serverBlock& currentServer );
         std::string getConfigFilePath( void ) const;
         std::string getWorkingDir( void ) const;
         std::string getLogFile( void ) const;
