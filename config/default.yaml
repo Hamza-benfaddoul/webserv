@@ -16,7 +16,7 @@ server:
     - path: "/bootstrap"
     - root:   www
     - autoindex: on 
-    - methods: GET POST
+    - methods: [GET, POST]
     - index:  [index.html, index.htm]
 
   location:
