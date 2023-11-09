@@ -115,6 +115,9 @@ bool configParser::loadFile()
 				std::cout << "\n";
 				// for (std::vector<Location>::iterator iterator = it->getLocations().begin(); iterator != it->getLocations().end(); ++iterator) {
 				// }
+				// std::cout << it->getServerName() << std::endl;
+				// std::cout << it->getPort() << std::endl;
+				// std::cout << it->getRoot() << std::endl;
 			}
 
 		}

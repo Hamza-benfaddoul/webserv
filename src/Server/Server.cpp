@@ -13,7 +13,7 @@
 #include "Server.hpp"
 
 
-Server::Server(unsigned long ip, unsigned short port) :
+Server::Server(uint32_t ip, unsigned short port) :
     _ip(ip), _port(port) {};
 
 Server::~Server() {
@@ -26,18 +26,18 @@ Server::~Server() {
 void    Server::run(void)
 {
     initServerSocket();
-    // std::cout << "Server is running on port " << _port << std::endl;
+     std::cout << "Server is running on port " << _port << std::endl;
     listenToClient();
-    // std::cout << "Server is listening to client" << std::endl;
+     // std::cout << "Server is listening to client" << std::endl;
     acceptClientRequest();
-    // std::cout << "Server accepted client request" << std::endl;
+     // std::cout << "Server accepted client request" << std::endl;
 }   
 
 void    Server::initServerSocket()
 {
     _socketfd = socket( AF_INET, SOCK_STREAM, 0);
-    // if (_socketfd < 0)
-    //     throw std::runtime_error("could not create socket");
+    if (_socketfd < 0)
+        throw std::runtime_error("could not create socket");
     getIp();
     
     // bind the IP and port to the server
@@ -54,26 +54,25 @@ void    Server::listenToClient()
 
 void    Server::acceptClientRequest(void)
 {
-    size_t max_fd = _socketfd;
-    fd_set readfds;
+    int     max_fd = _socketfd;
+    fd_set  readfds;
+
     FD_ZERO(&readfds);
     FD_SET(_socketfd, &readfds);
-
-
     while (true)
     {
         if(select(max_fd + 1, &readfds, NULL, NULL, NULL) < 0)
             throw std::runtime_error("could not select");
-        for (size_t i = 0; i <= max_fd; i++)
+        for (int i = 0; i <= max_fd; i++)
         {
             if(FD_ISSET(i, &readfds))
             {
-                size_t clientFd;
+                int clientFd;
                 if(i == _socketfd)
                 {
                     clientFd = accept(_socketfd, NULL, NULL);
-                    // if (clientFd < 0)
-                    //     throw std::runtime_error("could not create socket for client");
+                    if (clientFd < 0)
+                        throw std::runtime_error("could not create socket for client");
                     FD_SET(clientFd, &readfds);
                     _clients.push_back(new Client(clientFd, readfds));
                     if (clientFd > max_fd)

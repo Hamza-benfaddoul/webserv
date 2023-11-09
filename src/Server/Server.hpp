@@ -6,7 +6,7 @@
 /*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/25 09:55:20 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/10/29 18:26:37 by hbenfadd         ###   ########.fr       */
+/*   Updated: 2023/10/30 18:26:47 by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 class Client;
 class Server {
 	public:
-		Server(unsigned long ip=INADDR_ANY, unsigned short port=80);
+		Server(uint32_t ip=INADDR_ANY, unsigned short port=80);
 		~Server();
 		void run(void);
 	private:
@@ -28,9 +28,9 @@ class Server {
 		void	acceptClientRequest(void);
 		void	getIp(void);
 
-		unsigned long		_ip;
+		uint32_t			_ip;
 		unsigned short		_port;
-		size_t				_socketfd;   
+		int					_socketfd;   
 		struct sockaddr_in	_server_address;
 		struct sockaddr_in	_client_address;
 

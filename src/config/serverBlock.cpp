@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   serverBlock.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rakhsas <rakhsas@student.42.fr>            +#+  +:+       +#+        */
+/*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:15:12 by rakhsas           #+#    #+#             */
-/*   Updated: 2023/10/30 10:06:15 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/10/30 18:31:51 by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,6 +137,7 @@ void    serverBlock::parseHost(std::string value)
 				continue;
 		}
 	}
+	// std::cout << points << std::endl;
 	if (points > 3)
 		throw std::runtime_error("ERROR: IP address Must Contain only three dots !!!. ");
 	std::string parsed;
