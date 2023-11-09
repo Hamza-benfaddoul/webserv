@@ -14,6 +14,8 @@
     Sec-Fetch-Mode: navigate
     Sec-Fetch-Site: none
     Sec-Fetch-User: ?1
+
+
 */
 
 Request::Request(std::string req) : request(req)
@@ -46,6 +48,7 @@ void    Request::parseRequest()
         {
             std::vector<std::string> mapElements;
             mapElements = ft_split(elements.at(i), ": ");
+            // std::cout << "elements at i: " << elements.at(i) << std::endl;
             this->headers[mapElements.at(0)] = mapElements.at(1);
         }
         else
@@ -61,12 +64,16 @@ void    Request::parseRequest()
 
 void    Request::printRequest() const
 {
-    std::cout << "the method is: " << this->method << std::endl;
-    std::cout << "the path is: " << this->path << std::endl;
-    std::cout << "the headers are: " << std::endl;
+    std::ofstream req("request.txt");
+
+    
+    req << "the method is: " << this->method << std::endl;
+    req << "the path is: " << this->path << std::endl;
+    req << "the headers are: " << std::endl;
     std::map<std::string, std::string>::const_iterator it;
     for (it = this->headers.begin(); it != this->headers.end(); ++it)
     {
-        std::cout << it->first << ": " << it->second << std::endl;
+        req << it->first << ": " << it->second << std::endl;
     }
+    req.close();
 }
