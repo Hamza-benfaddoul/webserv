@@ -27,6 +27,9 @@ void	Client::receiveResponse(void)
 		this->_responseBuffer += std::string(buffer, bytesRead);
 		if (std::string(buffer, bytesRead).find("\r\n\r\n") != std::string::npos)
 		{
+			this->request = new Request(_responseBuffer);
+			this->request->parseRequest();
+			this->request->printRequest();
 			sendResponse();
 		}
 		break;
@@ -36,7 +39,7 @@ void	Client::receiveResponse(void)
 void    Client::sendResponse(void)
 { 
 	static bool a = false;
-	std::cout << _responseBuffer << std::endl;
+	// std::cout << _responseBuffer << std::endl;
 	if (a)
 	{
 		write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 12 \r\n\r\nhello world", 92);
@@ -57,6 +60,7 @@ void Client::run(void)
 
 Client::~Client()
 {
+	delete request;
 	close(_fd);
 	FD_CLR(_fd, &_readfds);
 }

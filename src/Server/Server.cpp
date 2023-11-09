@@ -26,7 +26,7 @@ Server::~Server() {
 void    Server::run(void)
 {
     initServerSocket();
-                            // std::cout << "Server is running on port " << _port << std::endl;
+     std::cout << "Server is running on port " << _port << std::endl;
     listenToClient();
      // std::cout << "Server is listening to client" << std::endl;
     acceptClientRequest();
