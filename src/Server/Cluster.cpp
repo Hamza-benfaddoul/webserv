@@ -59,50 +59,6 @@ void Cluster::run(void)
 		}
 	}
 	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	//max_fd = servers[servers.size() - 1]->getFd();
-	// run the servers
-	/*
-	{
-
-		while (true) {
-			if (select(max_fd + 1, &readfds, NULL, NULL, NULL) < 0)
-			  throw std::runtime_error("could not select");
-			for (int i = 3; i <= max_fd; i++) {
-			  if (FD_ISSET(i, &readfds)) {
-				int clientFd;
-				if (i == 3 || i == 4) {
-				  clientFd = accept(i, NULL, NULL);
-				  if (clientFd < 0)
-					throw std::runtime_error(
-						"could not create socket for client");
-				  FD_SET(clientFd, &readfds);
-				  servers[0]->_clients.push_back(new Client(clientFd, readfds));
-					FD_SET(servers[i - 3]->getFd(), &readfds);
-					fd.insert(servers[i - 3]->getFd());
-					max_fd = clientFd;
-				} else {
-				  servers[0]->_clients.at(0i - _socketfd - 1)->run();
-				}
-			  }
-			}
-		}
-	}
-	*/
 	{
 		struct epoll_event ev, events[MAX_EVENTS];
 		int listen_sock = 3, conn_sock, nfds, epollfd, n;
@@ -176,9 +132,9 @@ void Cluster::run(void)
 					std::cout << events[n].data.fd  << std::endl;
 					std::cout << "n "<< n  << std::endl;
 					servers.at(0)->_clients.at(events[n].data.fd - 6)->run();
-					//epoll_ctl(epollfd, EPOLL_CTL_DEL, events[n].data.fd, &ev);
-					//close(events[n].data.fd);
-					//delete servers.at(0)->_clients.at(events[n].data.fd - 6);
+					epoll_ctl(epollfd, EPOLL_CTL_DEL, events[n].data.fd, &ev);
+					close(events[n].data.fd);
+					delete servers.at(0)->_clients.at(events[n].data.fd - 6);
 				}
 			}
 		}
