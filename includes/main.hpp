@@ -34,4 +34,8 @@
 #include "../src/Server/Server.hpp"
 #include "../src/Server/Cluster.hpp"
 
+// helper function
+
+std::vector<std::string> ft_split(std::string str, std::string needed);
+
 

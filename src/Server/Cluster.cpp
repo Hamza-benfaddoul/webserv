@@ -20,13 +20,13 @@ Cluster::Cluster() {}
 
 Cluster::Cluster( std::vector<serverBlock> serverBlocks)
 {
-	// create a servers
-	for (std::vector<serverBlock>::iterator it = serverBlocks.begin() + 1; it != serverBlocks.end(); ++it)
-	{
-		servers.push_back(new Server(it->getHost(), it->getPort()));
-	}
-	// run all servers
-	run();
+    // create a servers
+    for (std::vector<serverBlock>::iterator it = serverBlocks.begin(); it != serverBlocks.end(); ++it)
+    {
+        servers.push_back(new Server(it->getHost(), it->getPort(), &serverBlocks));
+    }
+    // run all servers
+    run();
 }
 
 Cluster::~Cluster()
@@ -101,7 +101,7 @@ void Cluster::run(void)
 						exit(EXIT_FAILURE);
 					}
 					std::cout << "client socket " << conn_sock << std::endl;
-				  	servers[0]->_clients.push_back(new Client(conn_sock, readfds));
+				  	servers[0]->_clients.push_back(new Client(conn_sock, readfds,NULL));
 					//setnonblocking(conn_sock);
 					ev.events = EPOLLIN | EPOLLET;
 					ev.data.fd = conn_sock;
@@ -119,7 +119,7 @@ void Cluster::run(void)
 					}
 					std::cout << "client socket " << conn_sock << std::endl;
 
-				  	servers[0]->_clients.push_back(new Client(conn_sock, readfds));
+				  	servers[0]->_clients.push_back(new Client(conn_sock, readfds,NULL));
 					//setnonblocking(conn_sock);
 					ev.events = EPOLLIN | EPOLLET;
 					ev.data.fd = conn_sock;

@@ -21,8 +21,7 @@ int main(int ac, char **av)
             if (av[1])
             {
                 configParser webserv(av[1]);
-                
-                //   Cluster cluster(webserv.getServerBlocks());
+                Cluster cluster(webserv.getServerBlocks());
             }
             else
             {
