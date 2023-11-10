@@ -29,7 +29,10 @@ class Client {
 		void	postMethodHandler(void);
 		void	receiveResponse(void);
 		void	sendResponse(void);
+		void	sendResponse1(std::string, int);
 		void	closeConnection(void);
+		std::string readFile( const std::string path );
+
 		
 
 	public:

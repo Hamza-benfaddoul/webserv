@@ -35,13 +35,13 @@ void	Client::receiveResponse(void)
 				getMethodHandler();
 			else if (this->request->getMethod().compare("POST") == 0)
 				postMethodHandler();
-			sendResponse();
+			// sendResponse();
 		}
 		break;
 	}
 }
 
-std::string readFile( const std::string path )
+std::string Client::readFile( const std::string path )
 {
 	std::cout << path << std::endl;
 	std::ifstream file(path.c_str());
@@ -51,17 +51,18 @@ std::string readFile( const std::string path )
 		while (std::getline(file, line)) {
 			content.append(line);
 		}
-		std::cout << strlen(content.c_str()) << std::endl;
+		sendResponse1(content, strlen(content.c_str()));
 	}else
 		throw std::runtime_error("could not open file `" + path + "`");
 	return "";
 }
 
 void	Client::getMethodHandler(void){
+	// std::cout << this->request->getPath() << std::endl;
 	std::string fullPath = (this->request->getPath().compare("/") == 0) ? "www/index.html" : "www" + this->request->getPath();
 	std::cout << fullPath << std::endl;
 
-    // // // Read the content of the file
+    // // // // Read the content of the file
     std::string content = readFile(fullPath);
 
     // if (!content.empty()) {
@@ -77,6 +78,25 @@ void	Client::postMethodHandler(void){
 }
 
 
+void    Client::sendResponse1(std::string content, int len)
+{ 
+	static bool a = false;
+	// std::cout << _responseBuffer << std::endl;
+	if (a)
+	{
+		write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n", 58);
+		write(_fd, "Content-Length: 434 \r\n\r\n", 25);
+		write(_fd, content.c_str(), len);
+		a = false;
+	}
+	else
+	{
+		write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n", 58);
+		write(_fd, "Content-Length: 434 \r\n\r\n", 25);
+		write(_fd, content.c_str(), len);
+		a = true;
+	}
+}
 void    Client::sendResponse(void)
 { 
 	static bool a = false;
