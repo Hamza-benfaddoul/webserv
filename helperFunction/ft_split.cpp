@@ -8,6 +8,11 @@ std::vector<std::string> ft_split(std::string str, std::string needed)
 
     while ((pos = str.find(needed)) != std::string::npos)
     {
+        if (pos == 0)
+        {
+            str = str.substr(needed.length(), str.length());
+            continue;
+        }
         token = str.substr(0, pos);
         res.push_back(token);
         str = str.substr(pos + needed.length(), str.length());
