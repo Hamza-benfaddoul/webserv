@@ -8,6 +8,11 @@ std::vector<std::string> ft_split(std::string str, std::string needed)
 
     while ((pos = str.find(needed)) != std::string::npos)
     {
+        if (pos == 0)
+        {
+            str = str.substr(needed.length(), str.length());
+            continue;
+        }
         token = str.substr(0, pos);
         res.push_back(token);
         str = str.substr(pos + needed.length(), str.length());
@@ -19,7 +24,7 @@ std::vector<std::string> ft_split(std::string str, std::string needed)
 
 int main()
 {
-    std::string strs = "walid\r\nand\r\nmed\r\nare\r\nbrothers";
+    std::string strs = "walid\r\nand\r\n\r\n\r\nmed\r\nare\r\nbrothers";
     std::vector<std::string> res = ft_split(strs, "\r\n");
 
     for (int i = 0; i < (int)res.size(); i++)
