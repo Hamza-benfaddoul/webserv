@@ -13,24 +13,24 @@
 NAME	= webserv
 
 CC		= c++
-CFLAGS	= -Wall -Wextra -Werror -std=c++98 # -fsanitize=address -g3
+CFLAGS	= -Wall -Wextra -Werror -std=c++98 -fsanitize=address -g3
 
-SRCSCONFIG = configParser.cpp serverBlock.cpp 
+SRCSCONFIG = configParser.cpp serverBlock.cpp Location.cpp
 
-SRCSMULTIPLEX = Server/Server.cpp Client/Client.cpp Server/Cluster.cpp
+SRCSMULTIPLEX = Server/Server.cpp Client/Client.cpp Server/Cluster.cpp Client/Request.cpp
 
-SRCS = $(addprefix src/, main.cpp) $(addprefix src/config/,$(SRCSCONFIG))  $(addprefix src/,$(SRCSMULTIPLEX))
+SRCS = $(addprefix src/, main.cpp) $(addprefix src/config/,$(SRCSCONFIG))  $(addprefix src/,$(SRCSMULTIPLEX)) helperFunction/ft_split.cpp
 
 OBJCS = $(SRCS:.cpp=.o)
 
-all : $(NAME)
+all : $(NAME) clean
 
 $(NAME) : $(OBJCS)
 	$(CC) $(CFLAGS) $^ -o $@
 
-%.o:%.cpp
-	@printf "\033[0;33mGenerating objects... %-33.33s\r" $@
-	@$(CC)  $(CFLAGS) -c $<  -o $@
+# %.o:%.cpp
+# 	@printf "\033[0;33mGenerating objects... %-33.33s\r" $@
+# 	@$(CC)  $(CFLAGS) -c $<  -o $@
 
 clean :
 	rm -f $(OBJCS)
@@ -38,7 +38,7 @@ clean :
 fclean : clean
 	rm -f $(NAME)
 
-re :fclean all
+re :fclean all clean
 
 run : re
 	./$(NAME)

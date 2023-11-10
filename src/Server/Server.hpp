@@ -32,7 +32,7 @@ class Server {
 
 		uint32_t			_ip;
 		unsigned short		_port;
-		size_t				_socketfd;   
+		int					_socketfd;   
 		struct sockaddr_in	_server_address;
 		struct sockaddr_in	_client_address;
 		std::vector<serverBlock> *_serverBlock;
