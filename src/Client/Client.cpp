@@ -43,19 +43,25 @@ void	Client::receiveResponse(void)
 
 std::string readFile( const std::string path )
 {
-	std::string content, line;
-	std::ifstream file;
-	// file = ope
-	// if (file.is_ope)
-	// {
-
-	// }
+	std::cout << path << std::endl;
+	std::ifstream file(path.c_str());
+	if (file.is_open())
+	{
+		std::string line,content;
+		while (std::getline(file, line)) {
+			content.append(line);
+		}
+		std::cout << strlen(content.c_str()) << std::endl;
+	}else
+		throw std::runtime_error("could not open file `" + path + "`");
+	return "";
 }
 
 void	Client::getMethodHandler(void){
-	std::string fullPath = (this->request->getPath().compare("/") == 0) ? "/www/index.html" : "/www/" + this->request->getPath();
+	std::string fullPath = (this->request->getPath().compare("/") == 0) ? "www/index.html" : "www" + this->request->getPath();
+	std::cout << fullPath << std::endl;
 
-    // // Read the content of the file
+    // // // Read the content of the file
     std::string content = readFile(fullPath);
 
     // if (!content.empty()) {

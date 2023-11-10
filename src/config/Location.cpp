@@ -6,7 +6,7 @@ Location::Location()
     locationPath = "/";
 }
 
-void    Location::setAttribute( std::string key, std::string value ) { this->locationAttributes[key] = value; }
+void    Location::setAttribute( const std::string &key, const std::string &value ) { this->locationAttributes[key] = value; }
 
 void    Location::parseLocations( void )
 {
@@ -14,15 +14,15 @@ void    Location::parseLocations( void )
     for (std::map<std::string, std::string>::iterator iterator = location.begin(); iterator != location.end(); iterator++)
     {
         // std::cout << "*" << iterator->first<< "*" << std::endl;
-        if (iterator->first.compare("path") == 0)
+        if (iterator->first == "path")
             this->locationPath = iterator->second;
-        else if (iterator->first.compare("root") == 0)
+        else if (iterator->first == "root")
             parseRoot(iterator->second);
-        else if (iterator->first.compare("methods") == 0)
+        else if (iterator->first == "methods")
             parseMethods(iterator->second);
-        else if (iterator->first.compare("autoindex") == 0)
+        else if (iterator->first == "autoindex")
 			parseAutoIndex(iterator->second);
-        else if (iterator->first.compare("index"))
+        else if (iterator->first == "index")
             parseIndex(iterator->second);
 			// parsePortNumber(iterator->second);
     	// std::cout << iterator->first << ": " << iterator->second << std::endl;
@@ -96,7 +96,11 @@ std::string& Location::trim(std::string& s)
     return ltrim(rtrim(s, " []"), " []");
 }
 
-void	Location::exceptionsManager( std::string c )
+void    Location::toString(void) const
+{
+    std::cout << "Location Content \n" << "Root: " << getRoot() << "; AutoIndex: " << getAutoIndex() << "; Methods: " << getMethods() << "\n";
+}
+void Location::exceptionsManager(std::string c)
 {
 	throw std::runtime_error("Error: " + c);
 }

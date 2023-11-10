@@ -1,5 +1,5 @@
 the method is: GET
-the path is: /text
+the path is: /index.html
 the headers are: 
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
 Accept-Encoding: gzip, deflate, br

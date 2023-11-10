@@ -79,4 +79,4 @@ void    Request::printRequest() const
 }
 
 const std::string &Request::getMethod() const { return method; }
-const std::string &Request::getPath() const { return method; }
+const std::string &Request::getPath() const { return path; }
