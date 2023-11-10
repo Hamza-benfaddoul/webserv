@@ -14,21 +14,27 @@
 
 #include "../../includes/main.hpp"
 #include "../Client/Client.hpp"
-#include <vector>
 class Client;
 class serverBlock;
 class Server {
 	public:
 		Server(uint32_t ip=INADDR_ANY, unsigned short port=80, std::vector<serverBlock> *serverBlock=NULL);
 		~Server();
-		void run(void);
+
+		int	getFd() const;
+		int	getIp() const;
+		int	getPort() const;
+
+		void	run(void);
+		void	initServerSocket(void);
+		void	listenToClient(void);
+
+		std::vector<Client*>	_clients;
 	private:
 		Server();
 
-		void	initServerSocket(void);
-		void	listenToClient(void);
 		void	acceptClientRequest(void);
-		void	getIp(void);
+		void	setupIp(void);
 
 		uint32_t			_ip;
 		unsigned short		_port;
@@ -36,6 +42,4 @@ class Server {
 		struct sockaddr_in	_server_address;
 		struct sockaddr_in	_client_address;
 		std::vector<serverBlock> *_serverBlock;
-
-		std::vector<Client*>	_clients;
 };

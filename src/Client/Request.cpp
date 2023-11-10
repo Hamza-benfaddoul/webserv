@@ -66,7 +66,7 @@ void    Request::printRequest() const
 {
     std::ofstream req("request.txt");
 
-    
+    req << this->request << std::endl << std::endl << std::endl;
     req << "the method is: " << this->method << std::endl;
     req << "the path is: " << this->path << std::endl;
     req << "the headers are: " << std::endl;
@@ -75,6 +75,16 @@ void    Request::printRequest() const
     {
         req << it->first << ": " << it->second << std::endl;
     }
+    req << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << std::endl;
+    std::vector<std::string>::const_iterator itv;
+    for (itv = this->body.begin(); itv != this->body.end(); ++itv)
+    {
+        if (*itv == "\r\n")
+            req << "wrong();" << std::endl;
+        else
+            req << *itv << std::endl;
+    }
+    std::cout << "the of the body(): " << this->body.size() << std::endl;
     req.close();
 }
 

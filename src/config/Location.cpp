@@ -31,6 +31,7 @@ void    Location::parseLocations( void )
 
 void Location::parseIndex( const std::string &value)
 {
+    (void)value;
     
 }
 
