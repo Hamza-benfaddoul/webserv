@@ -11,10 +11,11 @@
 /* ************************************************************************** */
 
 #include "Server.hpp"
+#include <vector>
 
 
-Server::Server(uint32_t ip, unsigned short port) :
-    _ip(ip), _port(port) {};
+Server::Server(uint32_t ip, unsigned short port, std::vector<serverBlock> *serverBlock) :
+    _ip(ip), _port(port) ,_serverBlock(serverBlock) {};
 
 Server::~Server() {
     close(_socketfd);
@@ -75,7 +76,7 @@ void    Server::acceptClientRequest(void)
                     // if (clientFd < 0)
                     //     throw std::runtime_error("could not create socket for client");
                     FD_SET(clientFd, &readfds);
-                    _clients.push_back(new Client(clientFd, readfds));
+                    _clients.push_back(new Client(clientFd, readfds, _serverBlock));
                     if (clientFd > max_fd)
                         max_fd = clientFd;
                 }

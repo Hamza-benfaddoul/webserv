@@ -3,16 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:59:30 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/10/28 15:08:29 by hbenfadd         ###   ########.fr       */
+/*   Updated: 2023/11/10 08:39:15 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include "../../includes/main.hpp"
+#include <vector>
 
 class Client {
 	private:
@@ -21,12 +22,15 @@ class Client {
 		size_t		_fd;
 		fd_set		&_readfds;
 
+		std::vector<serverBlock> *_serverBlock;
+
 		void	receiveResponse(void);
 		void	sendResponse(void);
 		void	closeConnection(void);
+		
 
 	public:
-		Client(size_t fd, fd_set &readfds);
+		Client(size_t fd, fd_set &readfds, std::vector<serverBlock> *serverBlock);
 		~Client();
 		void	run(void);
 };
