@@ -132,9 +132,9 @@ void Cluster::run(void)
 					std::cout << events[n].data.fd  << std::endl;
 					std::cout << "n "<< n  << std::endl;
 					servers.at(0)->_clients.at(events[n].data.fd - 6)->run();
-					epoll_ctl(epollfd, EPOLL_CTL_DEL, events[n].data.fd, &ev);
-					close(events[n].data.fd);
-					delete servers.at(0)->_clients.at(events[n].data.fd - 6);
+					//epoll_ctl(epollfd, EPOLL_CTL_DEL, events[n].data.fd, &ev);
+					//close(events[n].data.fd);
+					//delete servers.at(0)->_clients.at(events[n].data.fd - 6);
 				}
 			}
 		}
