@@ -31,11 +31,45 @@ void	Client::receiveResponse(void)
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
 			this->request->printRequest();
+			if (this->request->getMethod().compare("GET") == 0)
+				getMethodHandler();
+			else if (this->request->getMethod().compare("POST") == 0)
+				postMethodHandler();
 			sendResponse();
 		}
 		break;
 	}
 }
+
+std::string readFile( const std::string path )
+{
+	std::string content, line;
+	std::ifstream file;
+	// file = ope
+	// if (file.is_ope)
+	// {
+
+	// }
+}
+
+void	Client::getMethodHandler(void){
+	std::string fullPath = (this->request->getPath().compare("/") == 0) ? "/www/index.html" : "/www/" + this->request->getPath();
+
+    // // Read the content of the file
+    std::string content = readFile(fullPath);
+
+    // if (!content.empty()) {
+    //     // Assuming your server has a function to send the HTTP response
+    //     sendHttpResponse(200, "OK", content, "text/html");
+    // } else {
+    //     // Assuming your server has a function to send an error response
+    //     sendHttpErrorResponse(404, "Not Found");
+    // }
+}
+void	Client::postMethodHandler(void){
+	std::cout << "hey from post\n";
+}
+
 
 void    Client::sendResponse(void)
 { 
