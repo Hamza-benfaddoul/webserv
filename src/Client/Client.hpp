@@ -23,7 +23,8 @@ class Client {
 		fd_set		&_readfds;
 		Request	*request;
 		// Response	*response;
-
+		void	getMethodHandler(void);
+		void	postMethodHandler(void);
 		void	receiveResponse(void);
 		void	sendResponse(void);
 		void	closeConnection(void);
