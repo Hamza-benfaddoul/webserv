@@ -24,9 +24,9 @@ class Client {
 		fd_set		&_readfds;
 		Request	*request;
 		// Response	*response;
-
 		std::vector<serverBlock> *_serverBlock;
-
+		void	getMethodHandler(void);
+		void	postMethodHandler(void);
 		void	receiveResponse(void);
 		void	sendResponse(void);
 		void	closeConnection(void);

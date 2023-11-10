@@ -77,3 +77,6 @@ void    Request::printRequest() const
     }
     req.close();
 }
+
+const std::string &Request::getMethod() const { return method; }
+const std::string &Request::getPath() const { return path; }

@@ -19,7 +19,7 @@ Cluster::Cluster() {}
 Cluster::Cluster( std::vector<serverBlock> serverBlocks)
 {
     // create a servers
-    for (std::vector<serverBlock>::iterator it = serverBlocks.begin() + 1; it != serverBlocks.end(); ++it)
+    for (std::vector<serverBlock>::iterator it = serverBlocks.begin(); it != serverBlocks.end(); ++it)
     {
         servers.push_back(new Server(it->getHost(), it->getPort(), &serverBlocks));
     }

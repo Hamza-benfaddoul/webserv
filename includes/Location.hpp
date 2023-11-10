@@ -25,7 +25,7 @@ private:
 
 public:
 	Location();
-	void			setAttribute( std::string key, std::string value ) ;
+	void			setAttribute( const std::string &key, const std::string &value ) ;
 	std::map<std::string, std::string>	getLocationAttributes() const { return locationAttributes; }
 	void			parseLocations( void );
 	void			parseMethods( const std::string & );
@@ -33,12 +33,16 @@ public:
 	void			parseAutoIndex( const std::string & );
 	void			parseIndex( const std::string & );
 
-
+	void	toString( void ) const;
 
 	void			exceptionsManager( std::string c );
 
 	std::string&	rtrim(std::string& s, const char* t);
 	std::string&	ltrim(std::string& s, const char* t);
 	std::string&	trim(std::string& s);
+	const std::string &getRoot( void ) const { return root; };
+	// const std::string &getIndex( void ) const { return index}
+	const std::string &getMethods( void ) const { return methods; };
+	bool	getAutoIndex( void ) const { return autoIndex; };
 
 };

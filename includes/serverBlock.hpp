@@ -18,7 +18,6 @@
 class serverBlock
 {
     private:
-        // std::string serverName;
         std::string host;
         std::string root;
         int         port;
@@ -49,6 +48,7 @@ class serverBlock
         std::map<std::string, std::string> getAttributes() const {
             return attributes;
         }
+        bool    isEmpty() const;
 };
 
 #endif

@@ -75,8 +75,8 @@ bool configParser::loadFile()
 					continue;
 				}
 				if (line.find("server:") == 0) {
-					serverBlocks.push_back(currentServer);
-					currentServer = serverBlock();
+                       	serverBlocks.push_back(currentServer);
+                        currentServer = serverBlock();
 				} else if (line.find("location:") != std::string::npos)
 					parseLocation(file, serverBlocks.back());
 				else {
@@ -93,10 +93,10 @@ bool configParser::loadFile()
 					}
 				}
 			}
-			serverBlocks.push_back(currentServer);
-			// std::cout << serverBlocks.size() << std::endl;
-			for (std::vector<serverBlock>::iterator it = serverBlocks.begin(); it != serverBlocks.end() - 1; ++it) {
-				it->parseBlock();
+                serverBlocks.push_back(currentServer);
+			serverBlocks.erase(serverBlocks.begin());
+			for (std::vector<serverBlock>::iterator it = serverBlocks.begin(); it != serverBlocks.end(); ++it) {
+					it->parseBlock();
 				std::cout << "Server:\n";
 				// std::cout << it->getLocations().begin()->getLocationAttributes().begin()->first << std::endl;
 				for (size_t i = 0; i != it->getLocations().size(); i++) // LOcations
