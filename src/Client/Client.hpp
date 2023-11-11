@@ -21,7 +21,6 @@ class Client {
 		Client();
 		std::string _responseBuffer;
 		size_t		_fd;
-		fd_set		&_readfds;
 		Request	*request;
 		// Response	*response;
 		std::vector<serverBlock> *_serverBlock;
@@ -33,7 +32,7 @@ class Client {
 		
 
 	public:
-		Client(size_t fd, fd_set &readfds, std::vector<serverBlock> *serverBlock);
+		Client(size_t fd, std::vector<serverBlock> *serverBlock);
 		~Client();
 		void	run(void);
 };
