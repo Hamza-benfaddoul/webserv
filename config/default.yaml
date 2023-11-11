@@ -14,8 +14,8 @@ server:
   location:
     - path: "/"
     - root:   html
-    - autoindex:on 
-    - methods: GET POST
+    - autoindex:  on 
+    - methods: GET POST DELETE
     - index:  [index.html, index.htm]
 
   location:
