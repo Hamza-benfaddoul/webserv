@@ -97,17 +97,17 @@ bool configParser::loadFile()
 			serverBlocks.erase(serverBlocks.begin());
 			for (std::vector<serverBlock>::iterator it = serverBlocks.begin(); it != serverBlocks.end(); ++it) {
 					it->parseBlock();
-				std::cout << "Server:\n";
+				// std::cout << "Server:\n";
 				// std::cout << it->getLocations().begin()->getLocationAttributes().begin()->first << std::endl;
 				for (size_t i = 0; i != it->getLocations().size(); i++) // LOcations
 				{
-					std::cout << "location:\n";
+					// std::cout << "location:\n";
 					Location test = it->getLocations().at(i);
 					test.parseLocations();
 					// std::map<std::string, std::string> op = test.getLocationAttributes();
 					// for (std::map<std::string, std::string>::iterator da = op.begin(); da != op.end(); da++)
 					// {
-						
+
 					// 	// std::cout << da->first << ": " << da->second << std::endl;
 					// }
 					// std::cout << "\n";
@@ -194,7 +194,7 @@ void configParser::parse(void)
 		std::string error = "ERROR: `" + std::string(DEFAULT_PATH) + "` cannot be opened !!!.";
 		throw std::runtime_error(error);
 	}
-	
+
 }
 
 std::string configParser::getConfigFilePath(void) const

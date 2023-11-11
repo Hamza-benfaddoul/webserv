@@ -3,15 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/10 08:44:42 by hamza            ###   ########.fr       */
+/*   Updated: 2023/11/11 18:22:14 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Client.hpp"
+#include <string>
 #include <vector>
+#include <sys/stat.h>
 
 Client::Client(size_t fd, fd_set &readfds, std::vector<serverBlock> *serverBlock) :
 	_fd(fd), _readfds(readfds), _serverBlock(serverBlock) {};
@@ -22,7 +24,7 @@ void	Client::receiveResponse(void)
 	int bytesRead;
 	while ((bytesRead = read(_fd, buffer, 1024)))
 	{
-		std::cout << "bytesRead: " << bytesRead << std::endl;
+		// std::cout << "bytesRead: " << bytesRead << std::endl;
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
 		this->_responseBuffer += std::string(buffer, bytesRead);
@@ -41,27 +43,8 @@ void	Client::receiveResponse(void)
 	}
 }
 
-std::string Client::readFile( const std::string path )
-{
-	std::cout << path << std::endl;
-	std::ifstream file(path.c_str());
-	if (file.is_open())
-	{
-		std::string line,content;
-		while (std::getline(file, line)) {
-			content.append(line);
-		}
-		sendResponse1(content, strlen(content.c_str()), this->request->getMimeType());
-		file.close();
-	}else
-	{
-        sendErrorResponse(404, "Not Found", "<html><body><h1>404 Not Found</h1></body></html>");
-	}
-	return "";
-}
 
-void	Client::sendErrorResponse( int CODE, std::string ERRORTYPE, std::string ERRORMESSAGE)
-{
+void	Client::sendErrorResponse( int CODE, std::string ERRORTYPE, std::string ERRORMESSAGE) {
     std::stringstream response;
     response << "HTTP/1.1 " << CODE << " " << ERRORTYPE << "\r\n";
     response << "Content-Type: text/html; charset=UTF-8\r\n";
@@ -90,36 +73,135 @@ void Client::sendImageResponse(const std::string& contentType, const std::string
     }
 }
 
+void Client::readFile(const std::string path) {
+    std::ifstream file(path.c_str(), std::ios::binary);
+    if (file.is_open()) {
+        // Get file size
+        file.seekg(0, std::ios::end);
+        const size_t fileSize = file.tellg();
+        file.seekg(0, std::ios::beg);
 
-void Client::serveImage(std::string path) {
-    std::ifstream faviconFile(path.c_str(), std::ios::binary);
-    if (faviconFile.is_open()) {
-        std::stringstream content;
-        content << faviconFile.rdbuf();
-        faviconFile.close();
-        // sendImageResponse(request->getMimeType(), content.str());
-		sendResponse1(content.str(), content.str().length(), "image/jpg");
+        // Prepare headers
+        std::stringstream headers;
+        headers << "HTTP/1.1 200 OK\r\n";
+        headers << "Content-Type: " << this->request->getMimeType() << "\r\n";
+        headers << "Content-Length: " << fileSize << "\r\n";
+        headers << "Connection: close\r\n\r\n";
+
+        // Write headers to socket
+        write(_fd, headers.str().c_str(), headers.str().length());
+
+        // Write file content to socket
+        char buffer[1024];
+        while (!file.eof()) {
+            file.read(buffer, sizeof(buffer));
+            int bytesRead = file.gcount();
+            if (bytesRead > 0) {
+                write(_fd, buffer, bytesRead);
+            }
+        }
+
+        file.close();
+        fsync(_fd);
     } else {
+        // Handle file not found
         sendErrorResponse(404, "Not Found", "<html><body><h1>404 Not Found</h1></body></html>");
     }
+}
+
+void Client::serveImage(std::string path) {
+    std::ifstream imageFile(path.c_str(), std::ios::binary);
+    if (imageFile.is_open()) {
+        // Determine the MIME type based on the file extension
+        std::string contentType = getMimeTypeFromExtension(path);
+
+        // Prepare headers
+        std::stringstream headers;
+        headers << "HTTP/1.1 200 OK\r\n";
+        headers << "Content-Type: " << contentType << "\r\n";
+        headers << "Transfer-Encoding: chunked\r\n";
+        headers << "Connection: close\r\n\r\n";
+
+        // Write headers to socket
+        write(_fd, headers.str().c_str(), headers.str().length());
+
+        // Write file content to socket in chunks
+        size_t chunkSize = 1024;
+        char buffer[chunkSize];
+        while (!imageFile.eof()) {
+            imageFile.read(buffer, chunkSize);
+            int bytesRead = imageFile.gcount();
+
+            // Send the current chunk
+            std::stringstream chunkHeader;
+            chunkHeader << std::hex << bytesRead << "\r\n";
+            write(_fd, chunkHeader.str().c_str(), chunkHeader.str().length());
+            write(_fd, buffer, bytesRead);
+            write(_fd, "\r\n", 2);
+        }
+
+        // Signal the end of the chunks
+        write(_fd, "0\r\n\r\n", 5);
+
+        imageFile.close();
+    } else {
+        // Handle file not found
+        sendErrorResponse(404, "Not Found", "<html><body><h1>404 Not Found</h1></body></html>");
+    }
+}
+
+#include <map>
+#include <string>
+
+std::string	Client::getMimeTypeFromExtension(const std::string& path) {
+    std::map<std::string, std::string> extensionToMimeType;
+        extensionToMimeType[".jpg"] = "image/jpeg";
+        extensionToMimeType[".jpeg"] = "image/jpeg";
+        extensionToMimeType[".png"] = "image/png";
+        extensionToMimeType[".gif"] = "image/gif";
+        extensionToMimeType[".bmp"] = "image/bmp";
+        extensionToMimeType[".ico"] = "image/x-icon";
+        extensionToMimeType[".mp4"] = "video/mp4";
+        extensionToMimeType[".ogg"] = "video/ogg";
+        extensionToMimeType[".avi"] = "video/x-msvideo";
+        extensionToMimeType[".mov"] = "video/quicktime";
+        extensionToMimeType[".3gp"] = "video/3gpp";
+        extensionToMimeType[".wmv"] = "video/x-ms-wmv";
+        extensionToMimeType[".ts"] = "video/mp2t";
+    // Find the last dot in the path
+    size_t dotPos = path.find_last_of('.');
+    if (dotPos != std::string::npos) {
+        std::string extension = path.substr(dotPos);
+		if (!extension.empty()) {
+		std::map<std::string, std::string>::iterator it = extensionToMimeType.find(extension);
+		if (it != extensionToMimeType.end()) {
+			return it->second; // Return the corresponding MIME type
+		}
+	}
+    }
+
+    // Default to a generic binary type if the extension is not recognized
+    return "application/octet-stream";
 }
 
 
 void	Client::getMethodHandler(void){
 	std::cout << "path is: " <<  this->request->getPath() << std::endl;
 	std::cout << "mime TYpe is " << this->request->getMimeType() << std::endl;
-
-		std::string fullPath = (this->request->getPath().compare("/") == 0) ? "www/index.html" : "www" + this->request->getPath();
-		std::cout << fullPath << std::endl;
-		if (this->request->getMimeType().find("image") != std::string::npos)
-			serveImage(fullPath);
-		else
-			std::string content = readFile(fullPath);
+	std::string fullPath = (this->request->getPath().compare("/") == 0) ? "www/index.html" : "www" + this->request->getPath();
+	std::cout << fullPath << std::endl;
+	std::cout << getMimeTypeFromExtension(fullPath) << std::endl;
+	if (getMimeTypeFromExtension(fullPath).find("image") != std::string::npos
+		|| getMimeTypeFromExtension(fullPath).find("video") != std::string::npos)
+	{
+		serveImage(fullPath);
+	}
+	else
+		readFile(fullPath);
 }
 void	Client::postMethodHandler(void){
 	std::cout << "hey from post\n";
 }
-#include <string> 
 
 void    Client::sendResponse1(std::string content, int len, std::string ctype)
 {
@@ -141,8 +223,9 @@ void    Client::sendResponse1(std::string content, int len, std::string ctype)
         perror("Error writing connection close header");
     }
 }
+
 void    Client::sendResponse(void)
-{ 
+{
 	// static bool a = false;
 	// // std::cout << _responseBuffer << std::endl;
 	// if (a)
@@ -157,7 +240,7 @@ void    Client::sendResponse(void)
 	// }
 }
 
-void Client::run(void)  
+void Client::run(void)
 {
 	this->receiveResponse();
 	std::cout << "run..." << std::endl;

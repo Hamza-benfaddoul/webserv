@@ -32,7 +32,7 @@ void    Location::parseLocations( void )
 void Location::parseIndex( const std::string &value)
 {
     (void)value;
-    
+
 }
 
 void Location::parseAutoIndex( const std::string &value)
@@ -47,13 +47,13 @@ void Location::parseAutoIndex( const std::string &value)
 
 void    Location::parseRoot( const std::string &root )
 {
-    std::cout << root << std::endl;
+    // std::cout << root << std::endl;
     if (!root.empty())
     {
         struct stat s;
         if( stat( root.c_str(), &s ) != 0 )
             exceptionsManager("cannot access " + root );
-        else if( s.st_mode & S_IFDIR ){}  // S_ISDIR() doesn't exist on my windows 
+        else if( s.st_mode & S_IFDIR ){}  // S_ISDIR() doesn't exist on my windows
             // exceptionsManager(root + " is a directory");
         else
             exceptionsManager(root +  " is not a directory");

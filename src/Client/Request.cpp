@@ -83,7 +83,7 @@ void    Request::printRequest() const
         else
             req << *itv << std::endl;
     }
-    std::cout << "the of the body(): " << this->body.size() << std::endl;
+    // std::cout << "the of the body(): " << this->body.size() << std::endl;
     req.close();
 }
 

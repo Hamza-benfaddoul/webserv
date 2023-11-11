@@ -53,18 +53,18 @@ void Cluster::run(void)
 		{
 			servers[i]->initServerSocket();
 			servers[i]->listenToClient();
-			// add file discription of the client socket to set_fd 
+			// add file discription of the client socket to set_fd
 			FD_SET(servers[i]->getFd(), &readfds);
 			fd.insert(servers[i]->getFd());
 		}
 	}
-	
+
 	{
 		struct epoll_event ev, events[MAX_EVENTS];
 		int listen_sock = 3, conn_sock, nfds, epollfd, n;
 
 		// Code to set up listening socket, 'listen_sock',
-		//(socket(), bind(), listen()) omitted.  
+		//(socket(), bind(), listen()) omitted.
 
 		epollfd = epoll_create(1);
 		if (epollfd == -1) {
@@ -100,7 +100,7 @@ void Cluster::run(void)
 						perror("accept");
 						exit(EXIT_FAILURE);
 					}
-					std::cout << "client socket " << conn_sock << std::endl;
+					// std::cout << "client socket " << conn_sock << std::endl;
 				  	servers[0]->_clients.push_back(new Client(conn_sock, readfds,NULL));
 					//setnonblocking(conn_sock);
 					ev.events = EPOLLIN | EPOLLET;
@@ -117,7 +117,7 @@ void Cluster::run(void)
 						perror("accept");
 						exit(EXIT_FAILURE);
 					}
-					std::cout << "client socket " << conn_sock << std::endl;
+					// std::cout << "client socket " << conn_sock << std::endl;
 
 				  	servers[0]->_clients.push_back(new Client(conn_sock, readfds,NULL));
 					//setnonblocking(conn_sock);
@@ -129,8 +129,8 @@ void Cluster::run(void)
 					}
 				}
 				else {
-					std::cout << events[n].data.fd  << std::endl;
-					std::cout << "n "<< n  << std::endl;
+					// std::cout << events[n].data.fd  << std::endl;
+					// std::cout << "n "<< n  << std::endl;
 					servers.at(0)->_clients.at(events[n].data.fd - 6)->run();
 					// epoll_ctl(epollfd, EPOLL_CTL_DEL, events[n].data.fd, &ev);
 					// close(events[n].data.fd);
