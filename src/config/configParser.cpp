@@ -75,30 +75,11 @@ bool configParser::loadFile()
 					continue;
 				}
 				if (line.find("server:") == 0) {
-					serverBlocks.push_back(currentServer);
-					currentServer = serverBlock();
-				} else if (line.find("  location:") == 0) {
-					std::map<std::string, std::string> locationAttributes;
-					while (std::getline(file, line)) {
-						if (line.empty())
-							break;
-						// size_t commentPos = line.find('#');
-						// if (commentPos != std::string::npos) {
-						// 	line = line.substr(0, commentPos);
-						// }
-						if (line.find("server:") == 0)
-							exceptionsManager("Server Block Must be differenciated with new line!!!.");
-						size_t colonPos = line.find(":");
-						if (colonPos != std::string::npos) {
-							std::string key = line.substr(0, colonPos);
-							std::string value = line.substr(colonPos + 1);
-							key = trim(key);
-							value = trim(value);
-							locationAttributes[key] = value;
-						}
-					}
-					currentServer.setLocation(locationAttributes);
-				} else {
+                       	serverBlocks.push_back(currentServer);
+                        currentServer = serverBlock();
+				} else if (line.find("location:") != std::string::npos)
+					parseLocation(file, serverBlocks.back());
+				else {
 					if (line.find("::") != std::string::npos)
         				throw std::runtime_error("Error: Found an invalid pattern related to ::!!!.");
 					size_t colonPos = line.find(":");
@@ -112,18 +93,70 @@ bool configParser::loadFile()
 					}
 				}
 			}
-			serverBlocks.push_back(currentServer);
-			// std::cout << serverBlocks.size() << std::endl;
-			for (std::vector<serverBlock>::iterator it = serverBlocks.begin() + 1; it != serverBlocks.end(); ++it) {
-				it->parseBlock();
+                serverBlocks.push_back(currentServer);
+			serverBlocks.erase(serverBlocks.begin());
+			for (std::vector<serverBlock>::iterator it = serverBlocks.begin(); it != serverBlocks.end(); ++it) {
+					it->parseBlock();
+				std::cout << "Server:\n";
+				// std::cout << it->getLocations().begin()->getLocationAttributes().begin()->first << std::endl;
+				for (size_t i = 0; i != it->getLocations().size(); i++) // LOcations
+				{
+					std::cout << "location:\n";
+					Location test = it->getLocations().at(i);
+					test.parseLocations();
+					// std::map<std::string, std::string> op = test.getLocationAttributes();
+					// for (std::map<std::string, std::string>::iterator da = op.begin(); da != op.end(); da++)
+					// {
+						
+					// 	// std::cout << da->first << ": " << da->second << std::endl;
+					// }
+					// std::cout << "\n";
+				}
+				std::cout << "\n";
+				// for (std::vector<Location>::iterator iterator = it->getLocations().begin(); iterator != it->getLocations().end(); ++iterator) {
+				// }
 				// std::cout << it->getServerName() << std::endl;
 				// std::cout << it->getPort() << std::endl;
 				// std::cout << it->getRoot() << std::endl;
 			}
+
 		}
 		return true;
 	}
 	return false;
+}
+
+void	configParser::parseLocation( std::ifstream& file, serverBlock& currentServer )
+{
+	Location currentLocation;
+	std::string line;
+
+    while (std::getline(file, line)) {
+        if (line.find("location:") != std::string::npos ) {
+            exceptionsManager("Location Blocks Must be differentiated with a new line!!!.");
+        } else if (line.empty()) {
+            break;
+        } else if (line.find("server:") != std::string::npos ) {
+            exceptionsManager("Server Blocks Must be differentiated with a new line!!!");
+        } else {
+			// std::cout << line << std::endl;
+			if (line.find("    - ") == 0)
+			{
+				size_t colonPos = line.find(":");
+				if (colonPos != std::string::npos) {
+					std::string key = trim(line.substr(6, colonPos-6));
+					std::string value = trim(line.substr(colonPos + 1));
+					checkKeyValue(key, value);
+					currentLocation.setAttribute(key, value);
+				}
+			}
+            else {
+                exceptionsManager("Invalid attribute format inside the location block.!!!");
+            }
+        }
+    }
+
+    currentServer.setLocation(currentLocation);
 }
 
 void	configParser::checkKeyValue(const std::string &key, const std::string &value)
@@ -161,7 +194,6 @@ void configParser::parse(void)
 		std::string error = "ERROR: `" + std::string(DEFAULT_PATH) + "` cannot be opened !!!.";
 		throw std::runtime_error(error);
 	}
-	// return true;
 	
 }
 
@@ -169,60 +201,12 @@ std::string configParser::getConfigFilePath(void) const
 {
 	return this->confFilePath;
 }
-// std::string configParser::getWorkingDir(void) const
-// {
-// 	return this->workingDir;
-// }
-
-// std::string configParser::getLogFile(void) const
-// {
-// 	return this->logFile;
-// }
-
-// int configParser::getMaxConnections(void) const
-// {
-// 	return this->maxConnections;
-// }
-
-// int configParser::getPort(void) const
-// {
-// 	return this->port;
-// }
-
-// bool configParser::getAutoIndex(void) const
-// {
-// 	return this->autoIndex;
-// }
-
-// void configParser::setLogFile(std::string logFilePath)
-// {
-// 	this->logFile = logFilePath;
-// }
 
 void configParser::setConfigFilePath(std::string confFilePath)
 {
 	this->confFilePath = confFilePath;
 }
 
-// void configParser::setWorkingDir(std::string workingDir)
-// {
-// 	this->workingDir = workingDir;
-// }
-
-// void configParser::setMaxConnections(int maxConnections)
-// {
-// 	this->maxConnections = maxConnections;
-// }
-
-// void configParser::setPort(int port)
-// {
-// 	this->port = port;
-// }
-
-// void configParser::setAutoIndex(bool autoIndex)
-// {
-// 	this->autoIndex = autoIndex;
-// }
 const char *configParser::notARegularFile::what() const throw()
 {
     return "ERROR: is Not a Regular File!!!.";
@@ -231,13 +215,10 @@ const char *configParser::configFileIsEmpty::what() const throw()
 {
     return "ERROR: Config File is Empty!!!.";
 }
-// const char *configParser::duplicatedEntry::what() const throw()
-// {
-//     return "ERROR: Duplicated Entry!!!.";
-// }
+
 void	configParser::exceptionsManager( std::string c )
 {
-	throw std::runtime_error(c);
+	throw std::runtime_error("Error: " + c);
 }
 const char *configParser::NotParsedWell::what() const throw()
 {

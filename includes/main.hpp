@@ -18,6 +18,7 @@
 #include <map>
 #include <sys/stat.h>
 #include <fstream>
+#include <set>
 
 // c headers
 #include <sys/socket.h>

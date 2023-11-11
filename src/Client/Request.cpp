@@ -89,3 +89,6 @@ void    Request::printRequest() const
     std::cout << "the of the body(): " << this->body.size() << std::endl;
     req.close();
 }
+
+const std::string &Request::getMethod() const { return method; }
+const std::string &Request::getPath() const { return path; }

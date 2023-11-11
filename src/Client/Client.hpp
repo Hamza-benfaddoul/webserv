@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:59:30 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/10/28 15:08:29 by hbenfadd         ###   ########.fr       */
+/*   Updated: 2023/11/10 08:45:44 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 
 #include "../../includes/main.hpp"
 #include "Request.hpp"
+class serverBlock;
 
 class Client {
 	private:
@@ -23,13 +24,16 @@ class Client {
 		fd_set		&_readfds;
 		Request	*request;
 		// Response	*response;
-
+		std::vector<serverBlock> *_serverBlock;
+		void	getMethodHandler(void);
+		void	postMethodHandler(void);
 		void	receiveResponse(void);
 		void	sendResponse(void);
 		void	closeConnection(void);
+		
 
 	public:
-		Client(size_t fd, fd_set &readfds);
+		Client(size_t fd, fd_set &readfds, std::vector<serverBlock> *serverBlock);
 		~Client();
 		void	run(void);
 };

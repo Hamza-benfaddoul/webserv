@@ -22,6 +22,8 @@ public:
     Request(std::string req);
     void parseRequest();
     void    printRequest() const;
+    const std::string &getMethod() const;
+    const std::string &getPath() const;
     ~Request();
 };
 
