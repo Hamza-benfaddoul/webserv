@@ -65,7 +65,6 @@ void    Request::parseRequest()
 void    Request::printRequest() const
 {
     std::ofstream req("request.txt");
-
     req << this->request << std::endl << std::endl << std::endl;
     req << "the method is: " << this->method << std::endl;
     req << "the path is: " << this->path << std::endl;
@@ -90,3 +89,11 @@ void    Request::printRequest() const
 
 const std::string &Request::getMethod() const { return method; }
 const std::string &Request::getPath() const { return path; }
+const std::string &Request::getMimeType()
+{
+    std::istringstream iss(headers.find("Accept")->second);
+    getline(iss, mimeType, ',');
+    // std::cout << mimeType << std::endl;
+    // std::string(headers.find("Accept")->second, )
+    return mimeType;
+}

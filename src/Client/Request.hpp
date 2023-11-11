@@ -15,6 +15,7 @@ private:
     std::string request;
     std::string method;
     std::string path;
+    std::string mimeType;
     std::map<std::string, std::string> headers;
     std::vector<std::string> body;
 
@@ -24,6 +25,7 @@ public:
     void    printRequest() const;
     const std::string &getMethod() const;
     const std::string &getPath() const;
+    const std::string &getMimeType();
     ~Request();
 };
 

@@ -13,7 +13,7 @@
 NAME	= webserv
 
 CXX		= c++
-CXXFLAGS	= -Wall -Wextra -Werror -std=c++98 -g # -fsanitize=address -g3
+CXXFLAGS	= -Wall -Wextra -Werror -std=c++98 -g -fsanitize=address -g3
 
 SRCSCONFIG = configParser.cpp serverBlock.cpp Location.cpp
 
@@ -23,7 +23,7 @@ SRCS = $(addprefix src/, main.cpp) $(addprefix src/config/,$(SRCSCONFIG))  $(add
 
 OBJCS = $(SRCS:.cpp=.o)
 
-all : $(NAME) clean
+all : $(NAME)
 
 $(NAME) : $(OBJCS)
 	$(CXX) $(CXXFLAGS) $^ -o $@

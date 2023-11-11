@@ -29,8 +29,11 @@ class Client {
 		void	postMethodHandler(void);
 		void	receiveResponse(void);
 		void	sendResponse(void);
-		void	sendResponse1(std::string, int);
+		void	sendErrorResponse( int, std::string, std::string );
+		void    sendResponse1(std::string , int , std::string );
 		void	closeConnection(void);
+		void	serveImage(std::string);
+		void sendImageResponse(const std::string&, const std::string&);
 		std::string readFile( const std::string path );
 
 		

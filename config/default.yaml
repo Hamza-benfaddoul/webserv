@@ -1,5 +1,5 @@
 server:
-  listen: 8010
+  listen: 8012
   host: 127.0.0.1
   autoindex: on
   server_name: [ somename , alias , another.alias]

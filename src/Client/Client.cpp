@@ -51,66 +51,110 @@ std::string Client::readFile( const std::string path )
 		while (std::getline(file, line)) {
 			content.append(line);
 		}
-		sendResponse1(content, strlen(content.c_str()));
+		sendResponse1(content, strlen(content.c_str()), this->request->getMimeType());
+		file.close();
 	}else
-		throw std::runtime_error("could not open file `" + path + "`");
+	{
+        sendErrorResponse(404, "Not Found", "<html><body><h1>404 Not Found</h1></body></html>");
+	}
 	return "";
 }
 
+void	Client::sendErrorResponse( int CODE, std::string ERRORTYPE, std::string ERRORMESSAGE)
+{
+    std::stringstream response;
+    response << "HTTP/1.1 " << CODE << " " << ERRORTYPE << "\r\n";
+    response << "Content-Type: text/html; charset=UTF-8\r\n";
+    response << "Content-Length: " << ERRORMESSAGE.length() << "\r\n";
+    response << "\r\n";
+    response << ERRORMESSAGE;
+
+    write(_fd, response.str().c_str(), response.str().length());
+}
+
+void Client::sendImageResponse(const std::string& contentType, const std::string& imageData) {
+    std::stringstream ss;
+    ss << imageData.size();
+
+    write(_fd, "HTTP/1.1 200 OK\r\n", 17);
+    write(_fd, "Content-Type: ", 14);
+    write(_fd, contentType.c_str(), contentType.length());
+    write(_fd, "\r\nContent-Length: ", 19);
+    write(_fd, ss.str().c_str(), ss.str().length());
+    write(_fd, "\r\n\r\n", 4);
+    write(_fd, imageData.c_str(), imageData.size());
+	fsync(_fd);
+
+    if (write(_fd, "Connection: close\r\n", 19) == -1) {
+        perror("Error writing connection close header");
+    }
+}
+
+
+void Client::serveImage(std::string path) {
+    std::ifstream faviconFile(path.c_str(), std::ios::binary);
+    if (faviconFile.is_open()) {
+        std::stringstream content;
+        content << faviconFile.rdbuf();
+        faviconFile.close();
+        // sendImageResponse(request->getMimeType(), content.str());
+		sendResponse1(content.str(), content.str().length(), "image/jpg");
+    } else {
+        sendErrorResponse(404, "Not Found", "<html><body><h1>404 Not Found</h1></body></html>");
+    }
+}
+
+
 void	Client::getMethodHandler(void){
-	// std::cout << this->request->getPath() << std::endl;
-	std::string fullPath = (this->request->getPath().compare("/") == 0) ? "www/index.html" : "www" + this->request->getPath();
-	std::cout << fullPath << std::endl;
+	std::cout << "path is: " <<  this->request->getPath() << std::endl;
+	std::cout << "mime TYpe is " << this->request->getMimeType() << std::endl;
 
-    // // // // Read the content of the file
-    std::string content = readFile(fullPath);
-
-    // if (!content.empty()) {
-    //     // Assuming your server has a function to send the HTTP response
-    //     sendHttpResponse(200, "OK", content, "text/html");
-    // } else {
-    //     // Assuming your server has a function to send an error response
-    //     sendHttpErrorResponse(404, "Not Found");
-    // }
+		std::string fullPath = (this->request->getPath().compare("/") == 0) ? "www/index.html" : "www" + this->request->getPath();
+		std::cout << fullPath << std::endl;
+		if (this->request->getMimeType().find("image") != std::string::npos)
+			serveImage(fullPath);
+		else
+			std::string content = readFile(fullPath);
 }
 void	Client::postMethodHandler(void){
 	std::cout << "hey from post\n";
 }
+#include <string> 
 
+void    Client::sendResponse1(std::string content, int len, std::string ctype)
+{
+	std::stringstream ss;
+    ss << len;
 
-void    Client::sendResponse1(std::string content, int len)
-{ 
-	static bool a = false;
-	// std::cout << _responseBuffer << std::endl;
-	if (a)
-	{
-		write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n", 58);
-		write(_fd, "Content-Length: 434 \r\n\r\n", 25);
-		write(_fd, content.c_str(), len);
-		a = false;
-	}
-	else
-	{
-		write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n", 58);
-		write(_fd, "Content-Length: 434 \r\n\r\n", 25);
-		write(_fd, content.c_str(), len);
-		a = true;
-	}
+    std::string response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: " + ctype + "; charset=UTF-8\r\n"
+        "Content-Length: " + ss.str() + "\r\n"
+        "Connection: close\r\n\r\n";
+
+    write(_fd, response.c_str(), response.length());
+    write(_fd, content.c_str(), len);
+
+    fsync(_fd);
+
+    if (write(_fd, "Connection: close\r\n", 19) == -1) {
+        perror("Error writing connection close header");
+    }
 }
 void    Client::sendResponse(void)
 { 
-	static bool a = false;
-	// std::cout << _responseBuffer << std::endl;
-	if (a)
-	{
-		write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 12 \r\n\r\nhello world", 92);
-		a = false;
-	}
-	else
-	{
-		write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 12 \r\n\r\nhello hamza", 92);
-		a = true;
-	}
+	// static bool a = false;
+	// // std::cout << _responseBuffer << std::endl;
+	// if (a)
+	// {
+	// 	write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 12 \r\n\r\nhello world", 92);
+	// 	a = false;
+	// }
+	// else
+	// {
+	// 	write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 12 \r\n\r\nhello hamza", 92);
+	// 	a = true;
+	// }
 }
 
 void Client::run(void)  
