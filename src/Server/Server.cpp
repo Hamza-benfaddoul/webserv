@@ -43,7 +43,7 @@ void    Server::initServerSocket()
 	
 	// bind the IP and port to the server
 	if (bind(_socketfd, (const struct sockaddr *)&_server_address, (socklen_t)sizeof(_server_address)) < 0)
-		throw std::runtime_error("Could not bind the address");
+		throw std::runtime_error("Could not bind the address" + _port);
 };
 
 void    Server::listenToClient()
@@ -82,7 +82,7 @@ void    Server::acceptClientRequest(void)
                     if (clientFd < 0)
                         throw std::runtime_error("could not create socket for client");
                     FD_SET(clientFd, &readfds);
-                    _clients.push_back(new Client(clientFd, readfds, _serverBlock));
+                    _clients.push_back(new Client(clientFd, _serverBlock));
                     if (clientFd > max_fd)
                         max_fd = clientFd;
                 }
