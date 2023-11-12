@@ -93,10 +93,10 @@ void    Client::sendResponse(void)
 	}
 }
 
-void Client::run(void)  
+bool Client::run(void)  
 {
 	this->receiveResponse();
-	std::cout << "run..." << std::endl;
+	return (true);
 }
 
 Client::~Client()

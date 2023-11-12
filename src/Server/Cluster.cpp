@@ -11,10 +11,6 @@
 /* ************************************************************************** */
 
 #include "../../includes/main.hpp"
-#include <arpa/inet.h>
-#include <stdexcept>
-#include <unistd.h>
-#include <vector>
 
 
 Cluster::Cluster() {}
@@ -38,12 +34,11 @@ Cluster::~Cluster()
 	}
 }
 
-#include <sys/epoll.h>
-#include <cstdlib>
-#define MAX_EVENTS  10
+#define MAX_EVENTS  100
 
 void Cluster::run(void)
 {
+	servers[0]->_clients.resize(MAX_EVENTS);
 	struct epoll_event	ev, events[MAX_EVENTS];
 	int					conn_sock, nfds, epollfd, n;
 
@@ -74,8 +69,8 @@ void Cluster::run(void)
 				if (conn_sock == -1) {
 					throw std::runtime_error("could not accept client");
 				}
-
-				servers[0]->_clients.push_back(new Client(conn_sock,NULL));
+				std::cout << " conn_sock " << conn_sock << std::endl;
+				servers[0]->_clients.at(conn_sock) = new Client(conn_sock,NULL);
 				ev.events = EPOLLIN | EPOLLET;
 				ev.data.fd = conn_sock;
 				if (epoll_ctl(epollfd, EPOLL_CTL_ADD, conn_sock, &ev) == -1) {
@@ -83,10 +78,13 @@ void Cluster::run(void)
 				}
 			}
 			else {
-				servers.at(0)->_clients.at(events[n].data.fd - 6)->run();
-				//epoll_ctl(epollfd, EPOLL_CTL_DEL, events[n].data.fd, &ev);
-				//close(events[n].data.fd);
-				//delete servers.at(0)->_clients.at(events[n].data.fd - 6);
+				std::cout << "run = " << events[n].data.fd<< std::endl;
+				if (servers.at(0)->_clients.at(events[n].data.fd)->run()) // return true when client close the connection
+				{
+					epoll_ctl(epollfd, EPOLL_CTL_DEL, events[n].data.fd, &ev);
+					close(events[n].data.fd);
+					delete servers.at(0)->_clients.at(events[n].data.fd);
+				}
 			}
 		}
 	}

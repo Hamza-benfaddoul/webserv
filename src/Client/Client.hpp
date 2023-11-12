@@ -34,5 +34,6 @@ class Client {
 	public:
 		Client(size_t fd, std::vector<serverBlock> *serverBlock);
 		~Client();
-		void	run(void);
+
+		bool	run(void);
 };
