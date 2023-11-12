@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:59:30 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/10 08:45:44 by hamza            ###   ########.fr       */
+/*   Updated: 2023/11/11 17:37:23 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,12 +24,19 @@ class Client {
 		Request	*request;
 		// Response	*response;
 		serverBlock *_serverBlock;
-		void	getMethodHandler(void);
-		void	postMethodHandler(void);
-		void	receiveResponse(void);
+		bool	getMethodHandler(void);
+		bool	postMethodHandler(void);
+		bool	receiveResponse(void);
 		void	sendResponse(void);
+		void	sendErrorResponse( int, std::string, std::string );
+		void	sendResponse1(std::string , int , std::string );
 		void	closeConnection(void);
-		
+		void	serveImage(std::string);
+		void	sendImageResponse(const std::string&, const std::string&);
+		void	readFile( const std::string path );
+
+		std::string	getMimeTypeFromExtension(const std::string& path);
+
 
 	public:
 		Client(size_t fd, serverBlock *serverBlock);

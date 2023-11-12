@@ -45,7 +45,7 @@ void    Server::initServerSocket()
 	
 	// bind the IP and port to the server
 	if (bind(_socketfd, (const struct sockaddr *)&_server_address, (socklen_t)sizeof(_server_address)) < 0)
-		throw std::runtime_error("Could not bind the address");
+		throw std::runtime_error("Could not bind the address" + _port);
 };
 
 void    Server::listenToClient()

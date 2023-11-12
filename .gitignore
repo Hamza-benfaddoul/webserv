@@ -1,3 +1,4 @@
+./www/*
 *.DS_Store
 *.vscode
 webserv
@@ -33,4 +34,6 @@ webserv
 *.exe
 *.out
 *.app
-request.txt
+*.txt
+*.html
+*.mp4
