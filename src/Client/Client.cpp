@@ -13,7 +13,7 @@
 #include "Client.hpp"
 #include <vector>
 
-Client::Client(size_t fd, std::vector<serverBlock> *serverBlock) :
+Client::Client(size_t fd, serverBlock *serverBlock) :
 	_fd(fd), _serverBlock(serverBlock) {};
 
 void	Client::receiveResponse(void)
