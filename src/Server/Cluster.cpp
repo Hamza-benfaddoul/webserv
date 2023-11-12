@@ -69,8 +69,8 @@ void Cluster::run(void)
 				if (conn_sock == -1) {
 					throw std::runtime_error("could not accept client");
 				}
-				std::cout << " conn_sock " << conn_sock << std::endl;
-				std::cout << servers[0]->_serverBlock->getLocations().size() << "\n";
+				// std::cout << " conn_sock " << conn_sock << std::endl;
+				// std::cout << servers[0]->_serverBlock->getLocations().size() << "\n";
 				servers[0]->_clients.at(conn_sock) = new Client(conn_sock,servers[0]->_serverBlock);
 				ev.events = EPOLLIN | EPOLLET;
 				ev.data.fd = conn_sock;

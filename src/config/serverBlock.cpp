@@ -3,17 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   serverBlock.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
+/*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:15:12 by rakhsas           #+#    #+#             */
-/*   Updated: 2023/10/30 18:31:51 by hbenfadd         ###   ########.fr       */
+/*   Updated: 2023/11/12 22:25:40 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../includes/serverBlock.hpp"
 #include "cstdlib"
 
-serverBlock::serverBlock() {
+serverBlock::serverBlock(): locations() {
 	port = -1;
 	autoIndex = 0;
 }
@@ -63,7 +63,7 @@ void    serverBlock::parseBlock(  )
 		host = "127.0.0.1";
 	// Location
 	// std::cout << "END OF SERVER INFOS\n\n\n";
-		
+
 }
 
 void serverBlock::parseRoot(std::string value) {

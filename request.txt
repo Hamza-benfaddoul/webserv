@@ -1,34 +1,32 @@
-GET /favicon.ico HTTP/1.1
-Host: localhost:8012
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/119.0
-Accept: image/avif,image/webp,*/*
+GET / HTTP/1.1
+Host: localhost:8081
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
 Accept-Language: en-US,en;q=0.5
 Accept-Encoding: gzip, deflate, br
 Connection: keep-alive
-Referer: http://localhost:8012/
-Sec-Fetch-Dest: image
-Sec-Fetch-Mode: no-cors
-Sec-Fetch-Site: same-origin
-Pragma: no-cache
-Cache-Control: no-cache
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
 
 
 
 
 the method is: GET
-the path is: /favicon.ico
+the path is: /
 the headers are: 
-Accept: image/avif,image/webp,*/*
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
 Accept-Encoding: gzip, deflate, br
 Accept-Language: en-US,en;q=0.5
-Cache-Control: no-cache
 Connection: keep-alive
-Host: localhost:8012
-Pragma: no-cache
-Referer: http://localhost:8012/
-Sec-Fetch-Dest: image
-Sec-Fetch-Mode: no-cors
-Sec-Fetch-Site: same-origin
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/119.0
+Host: localhost:8081
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 

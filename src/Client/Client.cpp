@@ -6,7 +6,7 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/11 18:22:14 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/12 22:59:34 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,28 +40,6 @@ bool	Client::receiveResponse(void)
 			// sendResponse();
 		}
 		break;
-	}
-	return false;
-}
-
-bool Client::checkIfDirectoryIsLocation( std::string path )
-{
-	struct stat s;
-	if( stat(path.c_str(),&s) == 0 )
-	{
-		if( s.st_mode & S_IFDIR )
-		{
-			std::vector<Location>::iterator it_begin = this->_serverBlock->getLocations().begin();
-			std::vector<Location>::iterator it_end = this->_serverBlock->getLocations().end();
-			std::cout << "Locations Size\t" << _serverBlock->getLocations().size() << "\n";
-			while (it_begin != it_end)
-			{
-				std::cout << "Location Path:\t" << it_begin->getLocationPath() << std::endl;
-				if (it_begin->getLocationPath() == path)
-					return true;
-				it_begin++;
-			}
-		}
 	}
 	return false;
 }
@@ -144,9 +122,6 @@ void Client::serveImage(std::string path) {
 		headers << "Content-Disposition: inline\r\n";  // Add this line
 		headers << "Connection: close\r\n";
 		headers << "\r\n";  // Add an extra newline to indicate the end of headers
-		std::cout << "-------- Response Header -------->" << std::endl;
-		std::cout << headers.str() << std::endl;
-		std::cout << "-------- Response Header -------->" << std::endl;
 
 		// Write headers to socket
 		write(_fd, headers.str().c_str(), headers.str().length());
@@ -206,6 +181,25 @@ std::string	Client::getMimeTypeFromExtension(const std::string& path) {
 	return "application/octet-stream";
 }
 
+bool Client::checkIfDirectoryIsLocation( std::string path )
+{
+	struct stat st;
+
+	if (stat(path.c_str(), &st) != 0)
+		return false;
+    if (S_ISDIR(st.st_mode)) {
+		std::cout << "Location Size\t" << _serverBlock->getLocations().size() << "\n";
+		for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) // LOcations
+		{
+			std::cout << this->_serverBlock->getLocations().at(i).getLocationPath() << std::endl;
+			std::cout << path << std::endl;
+			if (this->_serverBlock->getLocations().at(i).getLocationPath() == path)
+				return true;
+		}
+	}
+	return false;
+}
+
 bool Client::getMethodHandler(void) {
 	std::string requestedPath = this->request->getPath();
 
@@ -221,9 +215,9 @@ bool Client::getMethodHandler(void) {
     } else {
         directory = requestedPath.substr(1); // If no additional directory, use the whole path
     }
-	std::cout << "directory :" << this->_serverBlock->getRoot() << "/" << directory << std::endl;
+	// std::cout << "directory :" << this->_serverBlock->getRoot() << "/" << directory << std::endl;
 	bool isLocationBlock = checkIfDirectoryIsLocation(this->_serverBlock->getRoot() + "/" + directory);
-	std::cout << isLocationBlock << std::endl;
+	std::cout << isLocationBlock << "\n";
 	return true;
     // if (this->_serverBlock)
     //     std::cout << "Root is\t" << this->_serverBlock->getRoot() << std::endl;
@@ -272,7 +266,7 @@ void    Client::sendResponse1(std::string content, int len, std::string ctype)
 	}
 }
 
-bool Client::run(void)  
+bool Client::run(void)
 {
 	return this->receiveResponse();
 }
