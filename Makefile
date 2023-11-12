@@ -23,7 +23,7 @@ SRCS = $(addprefix src/, main.cpp) $(addprefix src/config/,$(SRCSCONFIG))  $(add
 
 OBJCS = $(SRCS:.cpp=.o)
 
-all : $(NAME) clean
+all : $(NAME)
 
 $(NAME) : $(OBJCS)
 	$(CXX) $(CXXFLAGS) $^ -o $@

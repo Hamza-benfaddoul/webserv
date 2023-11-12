@@ -13,8 +13,8 @@
 #include "Client.hpp"
 #include <vector>
 
-Client::Client(size_t fd, fd_set &readfds, std::vector<serverBlock> *serverBlock) :
-	_fd(fd), _readfds(readfds), _serverBlock(serverBlock) {};
+Client::Client(size_t fd, std::vector<serverBlock> *serverBlock) :
+	_fd(fd), _serverBlock(serverBlock) {};
 
 void	Client::receiveResponse(void)
 {
@@ -93,15 +93,14 @@ void    Client::sendResponse(void)
 	}
 }
 
-void Client::run(void)  
+bool Client::run(void)  
 {
 	this->receiveResponse();
-	std::cout << "run..." << std::endl;
+	return (true);
 }
 
 Client::~Client()
 {
 	delete request;
 	close(_fd);
-	FD_CLR(_fd, &_readfds);
 }

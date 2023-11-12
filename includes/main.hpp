@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <fstream>
 #include <set>
+#include <cstdlib>
 
 // c headers
 #include <sys/socket.h>
@@ -27,6 +28,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/select.h>
+#include <sys/epoll.h>
 // config parser
 #include "configParser.hpp"
 
