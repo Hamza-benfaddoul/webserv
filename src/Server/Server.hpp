@@ -6,7 +6,7 @@
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/25 09:55:20 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/08 12:05:53 by hamza            ###   ########.fr       */
+/*   Updated: 2023/11/12 22:29:00 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,11 +14,11 @@
 
 #include "../../includes/main.hpp"
 #include "../Client/Client.hpp"
-#include <netinet/in.h>
 class Client;
+class serverBlock;
 class Server {
 	public:
-		Server(uint32_t ip=INADDR_ANY, unsigned short port=80);
+		Server(uint32_t ip=INADDR_ANY, unsigned short port=80, serverBlock *serverBlock=NULL);
 		~Server();
 
 		int	getFd() const;
@@ -30,6 +30,7 @@ class Server {
 		void	listenToClient(void);
 
 		std::vector<Client*>	_clients;
+		serverBlock				*_serverBlock;
 	private:
 		Server();
 

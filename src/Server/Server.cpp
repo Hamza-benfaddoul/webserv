@@ -11,10 +11,13 @@
 /* ************************************************************************** */
 
 #include "Server.hpp"
+#include <vector>
 
 
-Server::Server(uint32_t ip, unsigned short port) :
-	_ip(ip), _port(port) {};
+Server::Server(uint32_t ip, unsigned short port, serverBlock *serverBlock) :
+    _ip(ip), _port(port) {
+		_serverBlock = serverBlock;
+	};
 
 Server::~Server() {
 	close(_socketfd);
@@ -42,7 +45,7 @@ void    Server::initServerSocket()
 	
 	// bind the IP and port to the server
 	if (bind(_socketfd, (const struct sockaddr *)&_server_address, (socklen_t)sizeof(_server_address)) < 0)
-		throw std::runtime_error("Could not bind the address");
+		throw std::runtime_error("Could not bind the address" + _port);
 };
 
 void    Server::listenToClient()
@@ -64,34 +67,34 @@ void    Server::acceptClientRequest(void)
 	int     max_fd = _socketfd;
 	fd_set  readfds;
 
-	FD_ZERO(&readfds);
-	FD_SET(_socketfd, &readfds);
-	while (true)
-	{
-		if(select(max_fd + 1, &readfds, NULL, NULL, NULL) < 0)
-			throw std::runtime_error("could not select");
-		for (int i = 0; i <= max_fd; i++)
-		{
-			if(FD_ISSET(i, &readfds))
-			{
-				int clientFd;
-				if(i == _socketfd)
-				{
-					clientFd = accept(_socketfd, NULL, NULL);
-					if (clientFd < 0)
-						throw std::runtime_error("could not create socket for client");
-					FD_SET(clientFd, &readfds);
-					_clients.push_back(new Client(clientFd, readfds));
-					if (clientFd > max_fd)
-						max_fd = clientFd;
-				}
-				else 
-				{
-					_clients.at(i - _socketfd - 1)->run();
-				}
-			}
-		}
-	}
+    FD_ZERO(&readfds);
+    FD_SET(_socketfd, &readfds);
+    while (true)
+    {
+        if(select(max_fd + 1, &readfds, NULL, NULL, NULL) < 0)
+            throw std::runtime_error("could not select");
+        for (int i = 0; i <= max_fd; i++)
+        {
+            if(FD_ISSET(i, &readfds))
+            {
+                int clientFd;
+                if(i == _socketfd)
+                {
+                    clientFd = accept(_socketfd, NULL, NULL);
+                    if (clientFd < 0)
+                        throw std::runtime_error("could not create socket for client");
+                    FD_SET(clientFd, &readfds);
+                    _clients.push_back(new Client(clientFd, _serverBlock));
+                    if (clientFd > max_fd)
+                        max_fd = clientFd;
+                }
+                else 
+                {
+                    _clients.at(i - _socketfd - 1)->run();
+                }
+            }
+        }
+    }
 }
 int	Server::getFd() const { return (_socketfd);}
 int Server::getIp() const { return (_ip); };
