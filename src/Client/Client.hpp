@@ -21,13 +21,12 @@ class Client {
 		Client();
 		std::string _responseBuffer;
 		size_t		_fd;
-		fd_set		&_readfds;
 		Request	*request;
 		// Response	*response;
 		std::vector<serverBlock> *_serverBlock;
-		void	getMethodHandler(void);
-		void	postMethodHandler(void);
-		void	receiveResponse(void);
+		bool	getMethodHandler(void);
+		bool	postMethodHandler(void);
+		bool	receiveResponse(void);
 		void	sendResponse(void);
 		void	sendErrorResponse( int, std::string, std::string );
 		void	sendResponse1(std::string , int , std::string );
@@ -40,7 +39,8 @@ class Client {
 
 
 	public:
-		Client(size_t fd, fd_set &readfds, std::vector<serverBlock> *serverBlock);
+		Client(size_t fd, std::vector<serverBlock> *serverBlock);
 		~Client();
-		void	run(void);
+
+		bool	run(void);
 };

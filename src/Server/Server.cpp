@@ -82,7 +82,7 @@ void    Server::acceptClientRequest(void)
                     if (clientFd < 0)
                         throw std::runtime_error("could not create socket for client");
                     FD_SET(clientFd, &readfds);
-                    _clients.push_back(new Client(clientFd, readfds, _serverBlock));
+                    _clients.push_back(new Client(clientFd, _serverBlock));
                     if (clientFd > max_fd)
                         max_fd = clientFd;
                 }

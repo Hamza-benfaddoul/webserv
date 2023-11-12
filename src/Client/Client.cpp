@@ -15,10 +15,10 @@
 #include <vector>
 #include <sys/stat.h>
 
-Client::Client(size_t fd, fd_set &readfds, std::vector<serverBlock> *serverBlock) :
-	_fd(fd), _readfds(readfds), _serverBlock(serverBlock) {};
+Client::Client(size_t fd, std::vector<serverBlock> *serverBlock) :
+	_fd(fd), _serverBlock(serverBlock) {};
 
-void	Client::receiveResponse(void)
+bool	Client::receiveResponse(void)
 {
 	char buffer[1024] = {0};
 	int bytesRead;
@@ -34,13 +34,14 @@ void	Client::receiveResponse(void)
 			this->request->parseRequest();
 			this->request->printRequest();
 			if (this->request->getMethod().compare("GET") == 0)
-				getMethodHandler();
+				return getMethodHandler();
 			else if (this->request->getMethod().compare("POST") == 0)
-				postMethodHandler();
+				return postMethodHandler();
 			// sendResponse();
 		}
 		break;
 	}
+	return false;
 }
 
 
@@ -185,7 +186,7 @@ std::string	Client::getMimeTypeFromExtension(const std::string& path) {
 }
 
 
-void	Client::getMethodHandler(void){
+bool	Client::getMethodHandler(void){
 	if (this->_serverBlock)
 		std::cout << this->_serverBlock->size() << std::endl;
 	else
@@ -202,9 +203,11 @@ void	Client::getMethodHandler(void){
 	}
 	else
 		readFile(fullPath);
+	return true;
 }
-void	Client::postMethodHandler(void){
+bool	Client::postMethodHandler(void){
 	std::cout << "hey from post\n";
+	return  true;
 }
 
 void    Client::sendResponse1(std::string content, int len, std::string ctype)
@@ -228,31 +231,13 @@ void    Client::sendResponse1(std::string content, int len, std::string ctype)
 	}
 }
 
-void    Client::sendResponse(void)
+bool Client::run(void)  
 {
-	// static bool a = false;
-	// // std::cout << _responseBuffer << std::endl;
-	// if (a)
-	// {
-	// 	write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 12 \r\n\r\nhello world", 92);
-	// 	a = false;
-	// }
-	// else
-	// {
-	// 	write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 12 \r\n\r\nhello hamza", 92);
-	// 	a = true;
-	// }
-}
-
-void Client::run(void)
-{
-	this->receiveResponse();
-	std::cout << "run..." << std::endl;
+	return this->receiveResponse();
 }
 
 Client::~Client()
 {
 	delete request;
 	close(_fd);
-	FD_CLR(_fd, &_readfds);
 }
