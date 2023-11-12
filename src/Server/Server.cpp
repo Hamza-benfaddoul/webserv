@@ -21,19 +21,13 @@ Server::Server(uint32_t ip, unsigned short port, serverBlock *serverBlock) :
 
 Server::~Server() {
 	close(_socketfd);
-	for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it)
-		delete *it;
 };
 
 
 void    Server::run(void)
 {
 	initServerSocket();
-	// std::cout << "Server is running on port " << _port << std::endl;
 	listenToClient();
-	// std::cout << "Server is listening to client" << std::endl;
-	acceptClientRequest();
-	// std::cout << "Server accepted client request" << std::endl;
 }   
 
 void    Server::initServerSocket()
@@ -41,8 +35,8 @@ void    Server::initServerSocket()
 	_socketfd = socket( AF_INET, SOCK_STREAM, 0);
 	if (_socketfd < 0)
 		throw std::runtime_error("could not create socket");
-	setupIp();
-	
+	this->setupIp();
+
 	// bind the IP and port to the server
 	if (bind(_socketfd, (const struct sockaddr *)&_server_address, (socklen_t)sizeof(_server_address)) < 0)
 		throw std::runtime_error("Could not bind the address" + _port);
@@ -62,40 +56,6 @@ void    Server::listenToClient()
 	std::cout <<  getPort() 				<< std::endl;
 }
 
-void    Server::acceptClientRequest(void)
-{
-	int     max_fd = _socketfd;
-	fd_set  readfds;
-
-    FD_ZERO(&readfds);
-    FD_SET(_socketfd, &readfds);
-    while (true)
-    {
-        if(select(max_fd + 1, &readfds, NULL, NULL, NULL) < 0)
-            throw std::runtime_error("could not select");
-        for (int i = 0; i <= max_fd; i++)
-        {
-            if(FD_ISSET(i, &readfds))
-            {
-                int clientFd;
-                if(i == _socketfd)
-                {
-                    clientFd = accept(_socketfd, NULL, NULL);
-                    if (clientFd < 0)
-                        throw std::runtime_error("could not create socket for client");
-                    FD_SET(clientFd, &readfds);
-                    _clients.push_back(new Client(clientFd, _serverBlock));
-                    if (clientFd > max_fd)
-                        max_fd = clientFd;
-                }
-                else 
-                {
-                    _clients.at(i - _socketfd - 1)->run();
-                }
-            }
-        }
-    }
-}
 int	Server::getFd() const { return (_socketfd);}
 int Server::getIp() const { return (_ip); };
 int Server::getPort() const { return (_port); };
