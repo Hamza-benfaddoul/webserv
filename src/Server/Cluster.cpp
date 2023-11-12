@@ -20,7 +20,7 @@ Cluster::Cluster( std::vector<serverBlock> serverBlocks)
 	// create a servers
 	for (std::vector<serverBlock>::iterator it = serverBlocks.begin(); it != serverBlocks.end(); ++it)
 	{
-		servers.push_back(new Server(it->getHost(), it->getPort(), &serverBlocks));
+		servers.push_back(new Server(it->getHost(), it->getPort(), &(*it)));
 	}
 	// run all servers
 	run();
@@ -69,8 +69,9 @@ void Cluster::run(void)
 				if (conn_sock == -1) {
 					throw std::runtime_error("could not accept client");
 				}
-				std::cout << "client fd " << conn_sock << std::endl;
-				servers[0]->_clients.at(conn_sock) = new Client(conn_sock,NULL);
+				std::cout << " conn_sock " << conn_sock << std::endl;
+				std::cout << servers[0]->_serverBlock->getLocations().size() << "\n";
+				servers[0]->_clients.at(conn_sock) = new Client(conn_sock,servers[0]->_serverBlock);
 				ev.events = EPOLLIN | EPOLLET;
 				ev.data.fd = conn_sock;
 				if (epoll_ctl(epollfd, EPOLL_CTL_ADD, conn_sock, &ev) == -1) {

@@ -15,7 +15,7 @@
 #include <vector>
 #include <sys/stat.h>
 
-Client::Client(size_t fd, std::vector<serverBlock> *serverBlock) :
+Client::Client(size_t fd, serverBlock *serverBlock) :
 	_fd(fd), _serverBlock(serverBlock) {};
 
 bool	Client::receiveResponse(void)
@@ -44,6 +44,27 @@ bool	Client::receiveResponse(void)
 	return false;
 }
 
+bool Client::checkIfDirectoryIsLocation( std::string path )
+{
+	struct stat s;
+	if( stat(path.c_str(),&s) == 0 )
+	{
+		if( s.st_mode & S_IFDIR )
+		{
+			std::vector<Location>::iterator it_begin = this->_serverBlock->getLocations().begin();
+			std::vector<Location>::iterator it_end = this->_serverBlock->getLocations().end();
+			std::cout << "Locations Size\t" << _serverBlock->getLocations().size() << "\n";
+			while (it_begin != it_end)
+			{
+				std::cout << "Location Path:\t" << it_begin->getLocationPath() << std::endl;
+				if (it_begin->getLocationPath() == path)
+					return true;
+				it_begin++;
+			}
+		}
+	}
+	return false;
+}
 
 void	Client::sendErrorResponse( int CODE, std::string ERRORTYPE, std::string ERRORMESSAGE) {
 	std::stringstream response;
@@ -185,26 +206,46 @@ std::string	Client::getMimeTypeFromExtension(const std::string& path) {
 	return "application/octet-stream";
 }
 
+bool Client::getMethodHandler(void) {
+	std::string requestedPath = this->request->getPath();
 
-bool	Client::getMethodHandler(void){
-	if (this->_serverBlock)
-		std::cout << this->_serverBlock->size() << std::endl;
-	else
-		std::cout << "_serverBlock is NULL\n";
-	std::cout << "path is: " <<  this->request->getPath() << std::endl;
-	std::cout << "mime TYpe is " << this->request->getMimeType() << std::endl;
-	std::string fullPath = (this->request->getPath().compare("/") == 0) ? "www/index.html" : "www" + this->request->getPath();
-	std::cout << fullPath << std::endl;
-	std::cout << getMimeTypeFromExtension(fullPath) << std::endl;
-	if (getMimeTypeFromExtension(fullPath).find("image") != std::string::npos
-		|| getMimeTypeFromExtension(fullPath).find("video") != std::string::npos)
-	{
-		serveImage(fullPath);
-	}
-	else
-		readFile(fullPath);
+    // Check if the requested path is the root specified in the server block
+    // if (requestedPath == this->_serverBlock->getRoot()) {
+	// 	handleRequestFromRoot();
+	// }
+	// Check if the requested path has a directory after the hostname
+    size_t directoryEndPos = requestedPath.find("/", 1); // Start searching after the first '/'
+    std::string directory;
+    if (directoryEndPos != std::string::npos) {
+        directory = requestedPath.substr(1, directoryEndPos - 1);
+    } else {
+        directory = requestedPath.substr(1); // If no additional directory, use the whole path
+    }
+	std::cout << "directory :" << this->_serverBlock->getRoot() << "/" << directory << std::endl;
+	bool isLocationBlock = checkIfDirectoryIsLocation(this->_serverBlock->getRoot() + "/" + directory);
+	std::cout << isLocationBlock << std::endl;
 	return true;
+    // if (this->_serverBlock)
+    //     std::cout << "Root is\t" << this->_serverBlock->getRoot() << std::endl;
+    // std::cout << "path is: " << this->request->getPath() << std::endl;
+    // std::cout << "mime Type is " << this->request->getMimeType() << std::endl;
+
+    // std::string fullPath = _serverBlock->getRoot() + this->request->getPath();
+    // std::cout << fullPath << std::endl;
+
+    // std::cout << getMimeTypeFromExtension(fullPath) << std::endl;
+
+    // if (getMimeTypeFromExtension(fullPath).find("image") != std::string::npos ||
+    //     getMimeTypeFromExtension(fullPath).find("video") != std::string::npos) {
+    //     serveImage(fullPath);
+    // } else {
+    //     readFile(fullPath);
+    // }
+
+    // return true;
 }
+
+
 bool	Client::postMethodHandler(void){
 	std::cout << "hey from post\n";
 	return  true;

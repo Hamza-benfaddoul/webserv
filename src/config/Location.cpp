@@ -6,16 +6,25 @@ Location::Location()
     locationPath = "/";
 }
 
-void    Location::setAttribute( const std::string &key, const std::string &value ) { this->locationAttributes[key] = value; }
+
+void    Location::setAttribute( const std::string &key, const std::string &value ) 
+{
+    //  this->locationAttributes[key] = value;
+     this->locationAttributes.insert(std::pair<std::string, std::string>(key, value));
+    }
 
 void    Location::parseLocations( void )
 {
     std::map<std::string, std::string> location = getLocationAttributes();
     for (std::map<std::string, std::string>::iterator iterator = location.begin(); iterator != location.end(); iterator++)
     {
-        // std::cout << "*" << iterator->first<< "*" << std::endl;
+        std::cout << "*" << iterator->first<< "*" << std::endl;
         if (iterator->first == "path")
+        {
+            std::cout << "Location Path in COnf file\t"<< iterator->second << "\n";
             this->locationPath = iterator->second;
+            std::cout << "I am here\n";
+        }
         else if (iterator->first == "root")
             parseRoot(iterator->second);
         else if (iterator->first == "methods")

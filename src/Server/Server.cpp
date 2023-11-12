@@ -14,8 +14,10 @@
 #include <vector>
 
 
-Server::Server(uint32_t ip, unsigned short port, std::vector<serverBlock> *serverBlock) :
-    _ip(ip), _port(port) ,_serverBlock(serverBlock) {};
+Server::Server(uint32_t ip, unsigned short port, serverBlock *serverBlock) :
+    _ip(ip), _port(port) {
+		_serverBlock = serverBlock;
+	};
 
 Server::~Server() {
 	close(_socketfd);

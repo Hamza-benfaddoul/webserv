@@ -27,13 +27,12 @@ class serverBlock
     public:
         serverBlock();
 
-        void    setLocation( Location e ) ;
+        void    setLocation( const Location &e ) ;
         void    setAttribute(std::string, std::string) ;
         std::vector<Location> getLocations() const {
             return locations;
         }
         std::string trim(const std::string& str, std::string sep);
-
         void    parseBlock( );
         void    parsePortNumber( std::string value );
         void    parseRoot(std::string value) ;

@@ -18,7 +18,7 @@ class Client;
 class serverBlock;
 class Server {
 	public:
-		Server(uint32_t ip=INADDR_ANY, unsigned short port=80, std::vector<serverBlock> *serverBlock=NULL);
+		Server(uint32_t ip=INADDR_ANY, unsigned short port=80, serverBlock *serverBlock=NULL);
 		~Server();
 
 		int	getFd() const;
@@ -30,6 +30,7 @@ class Server {
 		void	listenToClient(void);
 
 		std::vector<Client*>	_clients;
+		serverBlock				*_serverBlock;
 	private:
 		Server();
 
@@ -41,5 +42,4 @@ class Server {
 		int					_socketfd;   
 		struct sockaddr_in	_server_address;
 		struct sockaddr_in	_client_address;
-		std::vector<serverBlock> *_serverBlock;
 };

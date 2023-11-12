@@ -23,10 +23,13 @@ class Client {
 		size_t		_fd;
 		Request	*request;
 		// Response	*response;
-		std::vector<serverBlock> *_serverBlock;
+		serverBlock *_serverBlock;
+
 		bool	getMethodHandler(void);
 		bool	postMethodHandler(void);
 		bool	receiveResponse(void);
+		bool	checkIfDirectoryIsLocation( std::string );
+
 		void	sendResponse(void);
 		void	sendErrorResponse( int, std::string, std::string );
 		void	sendResponse1(std::string , int , std::string );
@@ -34,12 +37,12 @@ class Client {
 		void	serveImage(std::string);
 		void	sendImageResponse(const std::string&, const std::string&);
 		void	readFile( const std::string path );
-
+		
 		std::string	getMimeTypeFromExtension(const std::string& path);
 
 
 	public:
-		Client(size_t fd, std::vector<serverBlock> *serverBlock);
+		Client(size_t fd, serverBlock *serverBlock);
 		~Client();
 
 		bool	run(void);

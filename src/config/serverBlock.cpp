@@ -19,7 +19,9 @@ serverBlock::serverBlock() {
 }
 // void serverBlock::setLocation(std::map<std::string, std::string> vec) { this->locations.push_back(vec); }
 void serverBlock::setAttribute(std::string key, std::string value) { this->attributes[key] = value; }
-void	serverBlock::setLocation( Location loc ) { this->locations.push_back(loc); }
+void	serverBlock::setLocation( const Location &loc ) {
+	this->locations.push_back(loc);
+}
 std::string serverBlock::getRoot(void) const { return this->root; }
 uint32_t serverBlock::getHost(void) const {
 	uint32_t res = 0;

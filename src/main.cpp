@@ -26,7 +26,7 @@ int main(int ac, char **av)
             else
             {
                 configParser webserv;
-                Cluster cluster(webserv.getServerBlocks());
+                // Cluster cluster(webserv.getServerBlocks());
             }
         
         }

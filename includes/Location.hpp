@@ -42,7 +42,8 @@ public:
 	std::string&	trim(std::string& s);
 	const std::string &getRoot( void ) const { return root; };
 	// const std::string &getIndex( void ) const { return index}
-	const std::string &getMethods( void ) const { return methods; };
-	bool	getAutoIndex( void ) const { return autoIndex; };
+	const std::string	&getMethods( void ) const { return methods; };
+	bool				getAutoIndex( void ) const { return autoIndex; };
+	const	std::string			&getLocationPath( void ) const { return locationPath; }
 
 };
