@@ -23,7 +23,7 @@ class Client {
 		size_t		_fd;
 		Request	*request;
 		// Response	*response;
-		std::vector<serverBlock> *_serverBlock;
+		serverBlock *_serverBlock;
 		bool	getMethodHandler(void);
 		bool	postMethodHandler(void);
 		bool	receiveResponse(void);
@@ -39,7 +39,7 @@ class Client {
 
 
 	public:
-		Client(size_t fd, std::vector<serverBlock> *serverBlock);
+		Client(size_t fd, serverBlock *serverBlock);
 		~Client();
 
 		bool	run(void);

@@ -15,7 +15,7 @@
 #include <vector>
 #include <sys/stat.h>
 
-Client::Client(size_t fd, std::vector<serverBlock> *serverBlock) :
+Client::Client(size_t fd, serverBlock *serverBlock) :
 	_fd(fd), _serverBlock(serverBlock) {};
 
 bool	Client::receiveResponse(void)
@@ -188,7 +188,7 @@ std::string	Client::getMimeTypeFromExtension(const std::string& path) {
 
 bool	Client::getMethodHandler(void){
 	if (this->_serverBlock)
-		std::cout << this->_serverBlock->size() << std::endl;
+		std::cout << "daz mn hna" /*this->_serverBlock->size()*/ << std::endl;
 	else
 		std::cout << "_serverBlock is NULL\n";
 	std::cout << "path is: " <<  this->request->getPath() << std::endl;
