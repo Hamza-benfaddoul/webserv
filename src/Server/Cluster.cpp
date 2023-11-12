@@ -69,7 +69,7 @@ void Cluster::run(void)
 				if (conn_sock == -1) {
 					throw std::runtime_error("could not accept client");
 				}
-				std::cout << " conn_sock " << conn_sock << std::endl;
+				std::cout << "client fd " << conn_sock << std::endl;
 				servers[0]->_clients.at(conn_sock) = new Client(conn_sock,NULL);
 				ev.events = EPOLLIN | EPOLLET;
 				ev.data.fd = conn_sock;
@@ -78,7 +78,6 @@ void Cluster::run(void)
 				}
 			}
 			else {
-				std::cout << "run = " << events[n].data.fd<< std::endl;
 				if (servers.at(0)->_clients.at(events[n].data.fd)->run()) // return true when client close the connection
 				{
 					epoll_ctl(epollfd, EPOLL_CTL_DEL, events[n].data.fd, &ev);
