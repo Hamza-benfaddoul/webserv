@@ -13,6 +13,11 @@ void    Location::setAttribute( const std::string &key, const std::string &value
      this->locationAttributes.insert(std::pair<std::string, std::string>(key, value));
     }
 
+std::string Location::getKeyFromAttributes(std::string key)
+{
+    return locationAttributes.find(key)->second;
+}
+
 void    Location::parseLocations( void )
 {
     std::map<std::string, std::string> location = getLocationAttributes();

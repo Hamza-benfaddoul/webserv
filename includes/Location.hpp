@@ -32,7 +32,7 @@ public:
 	void			parseRoot( const std::string & );
 	void			parseAutoIndex( const std::string & );
 	void			parseIndex( const std::string & );
-
+	std::string		getKeyFromAttributes( std::string );
 	void	toString( void ) const;
 
 	void			exceptionsManager( std::string c );

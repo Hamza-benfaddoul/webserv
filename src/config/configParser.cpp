@@ -102,13 +102,13 @@ bool configParser::loadFile()
 				// std::cout << "servers:\t" << serverBlocks.size() << std::endl;
 			for (std::vector<serverBlock>::iterator it = serverBlocks.begin(); it != serverBlocks.end(); ++it) {
 					it->parseBlock();
-				std::cout << "Locations Size:\t" << it->getLocations().size() << std::endl;
-				for (size_t i = 0; i != it->getLocations().size(); i++) // LOcations
-				{
-					Location test = it->getLocations().at(i);
-					test.parseLocations();
-				}
-				std::cout << "\n";
+				// std::cout << "Locations Size:\t" << it->getLocations().size() << std::endl;
+				// for (size_t i = 0; i != it->getLocations().size(); i++) // LOcations
+				// {
+				// 	Location test = it->getLocations().at(i);
+				// 	test.parseLocations();
+				// }
+				// std::cout << "\n";
 			}
 
 		}

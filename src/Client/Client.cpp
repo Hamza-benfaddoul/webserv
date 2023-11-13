@@ -6,7 +6,7 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/12 22:59:34 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/13 14:32:37 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -187,13 +187,17 @@ bool Client::checkIfDirectoryIsLocation( std::string path )
 
 	if (stat(path.c_str(), &st) != 0)
 		return false;
-    if (S_ISDIR(st.st_mode)) {
-		std::cout << "Location Size\t" << _serverBlock->getLocations().size() << "\n";
+	if (S_ISDIR(st.st_mode)) {
 		for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) // LOcations
 		{
-			std::cout << this->_serverBlock->getLocations().at(i).getLocationPath() << std::endl;
-			std::cout << path << std::endl;
-			if (this->_serverBlock->getLocations().at(i).getLocationPath() == path)
+			std::string locationPath, initialPath;
+			initialPath = _serverBlock->getLocations().at(i).getKeyFromAttributes("path");
+			initialPath = trim(initialPath, "\"");
+			if (this->_serverBlock->getLocations().at(i).getKeyFromAttributes("root").length() > 0)
+				locationPath = this->_serverBlock->getLocations().at(i).getKeyFromAttributes("root") + initialPath;
+			else
+				locationPath = this->_serverBlock->getRoot() + initialPath;
+			if (locationPath == path)
 				return true;
 		}
 	}
@@ -218,6 +222,8 @@ bool Client::getMethodHandler(void) {
 	// std::cout << "directory :" << this->_serverBlock->getRoot() << "/" << directory << std::endl;
 	bool isLocationBlock = checkIfDirectoryIsLocation(this->_serverBlock->getRoot() + "/" + directory);
 	std::cout << isLocationBlock << "\n";
+	// if (isLocationBlock)
+	// {}
 	return true;
     // if (this->_serverBlock)
     //     std::cout << "Root is\t" << this->_serverBlock->getRoot() << std::endl;
