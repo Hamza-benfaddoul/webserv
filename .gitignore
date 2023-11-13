@@ -1,3 +1,6 @@
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
 ./www/*
 *.DS_Store
 *.vscode
@@ -36,4 +39,8 @@ webserv
 *.app
 *.txt
 *.html
+<<<<<<< HEAD
 *.mp4
+=======
+*.mp4
+>>>>>>> 9bba34e78c4e21ccfb5221aad186458eafdb277b

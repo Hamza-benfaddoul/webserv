@@ -194,7 +194,6 @@ void configParser::parse(void)
 		std::string error = "ERROR: `" + std::string(DEFAULT_PATH) + "` cannot be opened !!!.";
 		throw std::runtime_error(error);
 	}
-
 }
 
 std::string configParser::getConfigFilePath(void) const

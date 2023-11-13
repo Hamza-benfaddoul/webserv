@@ -6,7 +6,7 @@
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/25 09:55:20 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/10 08:34:25 by hamza            ###   ########.fr       */
+/*   Updated: 2023/11/13 12:49:56 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,16 +26,13 @@ class Server {
 		int	getPort() const;
 
 		void	run(void);
-		void	initServerSocket(void);
-		void	listenToClient(void);
-
-		std::vector<Client*>	_clients;
 		serverBlock				*_serverBlock;
 	private:
 		Server();
 
-		void	acceptClientRequest(void);
 		void	setupIp(void);
+		void	initServerSocket(void);
+		void	listenToClient(void);
 
 		uint32_t			_ip;
 		unsigned short		_port;
