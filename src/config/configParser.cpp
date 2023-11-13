@@ -119,6 +119,7 @@ bool configParser::loadFile()
 				// std::cout << it->getPort() << std::endl;
 				// std::cout << it->getRoot() << std::endl;
 			}
+
 		}
 		return true;
 	}

@@ -6,7 +6,7 @@
 #    By: hamza <hamza@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/24 11:11:39 by rakhsas           #+#    #+#              #
-#    Updated: 2023/11/12 22:30:11 by hamza            ###   ########.fr        #
+#    Updated: 2023/11/13 12:50:23 by hamza            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -28,6 +28,9 @@ all : $(NAME)
 $(NAME) : $(OBJCS)
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
+# %.o:%.cpp
+# 	@printf "\033[0;33mGenerating objects... %-33.33s\r" $@
+# 	@$(CC)  $(CFLAGS) -c $<  -o $@
 
 clean :
 	rm -f $(OBJCS)
@@ -35,7 +38,7 @@ clean :
 fclean : clean
 	rm -f $(NAME)
 
-re :fclean all
+re :fclean all clean
 
 run : re
 	./$(NAME)
