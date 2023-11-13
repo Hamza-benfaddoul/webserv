@@ -6,7 +6,7 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:59:30 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/11 17:37:23 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/13 16:23:14 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 
 #include "../../includes/main.hpp"
 #include "Request.hpp"
+#define ERROR403 "www/error/403.html"
+#define ERROR404 "www/error/404.html"
 class serverBlock;
 
 class Client {
@@ -37,7 +39,9 @@ class Client {
 		void	serveImage(std::string);
 		void	sendImageResponse(const std::string&, const std::string&);
 		void	readFile( const std::string path );
-		
+		void	handleRequestFromRoot();
+		void	handleRequestFromLocation( std::string );
+
 		std::string	getMimeTypeFromExtension(const std::string& path);
 
 

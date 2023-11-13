@@ -6,7 +6,7 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/13 14:32:37 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/13 18:00:21 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,13 +44,26 @@ bool	Client::receiveResponse(void)
 	return false;
 }
 
-void	Client::sendErrorResponse( int CODE, std::string ERRORTYPE, std::string ERRORMESSAGE) {
+void	Client::sendErrorResponse( int CODE, std::string ERRORTYPE, std::string errorTypeFilePath) {
+	std::ifstream file(errorTypeFilePath.c_str());
+	std::string content;
+	if (file.is_open())
+	{
+		{
+			std::string line;
+			while (getline(file, line))
+			{
+				content += line;
+			}
+		}
+	}
+	file.close();
 	std::stringstream response;
 	response << "HTTP/1.1 " << CODE << " " << ERRORTYPE << "\r\n";
 	response << "Content-Type: text/html; charset=UTF-8\r\n";
-	response << "Content-Length: " << ERRORMESSAGE.length() << "\r\n";
+	response << "Content-Length: " << content.length() << "\r\n";
 	response << "\r\n";
-	response << ERRORMESSAGE;
+	response << content;
 
 	write(_fd, response.str().c_str(), response.str().length());
 }
@@ -145,7 +158,7 @@ void Client::serveImage(std::string path) {
 		imageFile.close();
 	} else {
 		// Handle file not found
-		sendErrorResponse(404, "Not Found", "<html><body><h1>404 Not Found</h1></body></html>");
+		sendErrorResponse(404, "Not Found", ERROR404);
 	}
 }
 
@@ -204,46 +217,81 @@ bool Client::checkIfDirectoryIsLocation( std::string path )
 	return false;
 }
 
+void	Client::handleRequestFromRoot()
+{
+	std::cout << "ana f root\n";
+	std::string fullPath = this->_serverBlock->getRoot() + this->request->getPath();
+	struct stat st;
+
+	stat(fullPath.c_str(), &st);
+	if (access(fullPath.c_str(), R_OK))
+		sendErrorResponse(404, "Not Found", ERROR404);
+	if (S_ISREG(st.st_mode)) {
+		if (getMimeTypeFromExtension(fullPath).find("image") != std::string::npos ||
+			getMimeTypeFromExtension(fullPath).find("video") != std::string::npos) {
+			serveImage(fullPath);
+		} else {
+			readFile(fullPath);
+		}
+	}
+}
+
+void	Client::handleRequestFromLocation( std::string dir )
+{
+	std::string path;
+	std::cout << "ana f location handler\n";
+	for (size_t i = 0; i < this->_serverBlock->getLocations().size(); i++)
+	{
+		path = this->_serverBlock->getLocations().at(i).getKeyFromAttributes("path");
+		if (path == dir)
+		{
+
+		}
+	}
+}
+
 bool Client::getMethodHandler(void) {
 	std::string requestedPath = this->request->getPath();
 
-    // Check if the requested path is the root specified in the server block
-    // if (requestedPath == this->_serverBlock->getRoot()) {
-	// 	handleRequestFromRoot();
-	// }
-	// Check if the requested path has a directory after the hostname
-    size_t directoryEndPos = requestedPath.find("/", 1); // Start searching after the first '/'
-    std::string directory;
-    if (directoryEndPos != std::string::npos) {
-        directory = requestedPath.substr(1, directoryEndPos - 1);
-    } else {
-        directory = requestedPath.substr(1); // If no additional directory, use the whole path
-    }
-	// std::cout << "directory :" << this->_serverBlock->getRoot() << "/" << directory << std::endl;
-	bool isLocationBlock = checkIfDirectoryIsLocation(this->_serverBlock->getRoot() + "/" + directory);
-	std::cout << isLocationBlock << "\n";
-	// if (isLocationBlock)
-	// {}
+	try {
+		// Check if the requested path has a directory after the hostname
+		if (requestedPath == "/") {
+			handleRequestFromRoot();
+		} else {
+			// Extract directory and handle request from location
+			size_t directoryEndPos = requestedPath.find("/", 1);
+			std::string directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(1, directoryEndPos - 1) : requestedPath.substr(1);
+			if (directory.empty()) {
+				directory = "/";
+			}
+			handleRequestFromLocation(directory);
+		}
+	} catch ( const std::exception &e )
+	{
+		sendErrorResponse(403, "Forbidden", ERROR403);
+	}
 	return true;
-    // if (this->_serverBlock)
-    //     std::cout << "Root is\t" << this->_serverBlock->getRoot() << std::endl;
-    // std::cout << "path is: " << this->request->getPath() << std::endl;
-    // std::cout << "mime Type is " << this->request->getMimeType() << std::endl;
-
-    // std::string fullPath = _serverBlock->getRoot() + this->request->getPath();
-    // std::cout << fullPath << std::endl;
-
-    // std::cout << getMimeTypeFromExtension(fullPath) << std::endl;
-
-    // if (getMimeTypeFromExtension(fullPath).find("image") != std::string::npos ||
-    //     getMimeTypeFromExtension(fullPath).find("video") != std::string::npos) {
-    //     serveImage(fullPath);
-    // } else {
-    //     readFile(fullPath);
-    // }
-
-    // return true;
 }
+
+// return true;
+// if (this->_serverBlock)
+//     std::cout << "Root is\t" << this->_serverBlock->getRoot() << std::endl;
+// std::cout << "path is: " << this->request->getPath() << std::endl;
+// std::cout << "mime Type is " << this->request->getMimeType() << std::endl;
+
+// std::string fullPath = _serverBlock->getRoot() + this->request->getPath();
+// std::cout << fullPath << std::endl;
+
+// std::cout << getMimeTypeFromExtension(fullPath) << std::endl;
+
+// if (getMimeTypeFromExtension(fullPath).find("image") != std::string::npos ||
+//     getMimeTypeFromExtension(fullPath).find("video") != std::string::npos) {
+//     serveImage(fullPath);
+// } else {
+//     readFile(fullPath);
+// }
+
+// return true;
 
 
 bool	Client::postMethodHandler(void){
