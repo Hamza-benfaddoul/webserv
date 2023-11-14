@@ -14,6 +14,8 @@
 
 #include "../../includes/main.hpp"
 #include "Request.hpp"
+#include "Upload.hpp"
+
 class serverBlock;
 
 class Client {
@@ -22,6 +24,7 @@ class Client {
 		std::string _responseBuffer;
 		size_t		_fd;
 		Request	*request;
+		Upload	*upload;
 		// Response	*response;
 		std::vector<serverBlock> *_serverBlock;
 		bool	getMethodHandler(void);
@@ -34,6 +37,8 @@ class Client {
 		void	serveImage(std::string);
 		void	sendImageResponse(const std::string&, const std::string&);
 		void	readFile( const std::string path );
+		void	readChunkedBody();
+		void	readBody();
 
 		std::string	getMimeTypeFromExtension(const std::string& path);
 

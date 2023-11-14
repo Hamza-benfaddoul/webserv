@@ -16,7 +16,11 @@
 #include <sys/stat.h>
 
 Client::Client(size_t fd, std::vector<serverBlock> *serverBlock) :
-	_fd(fd), _serverBlock(serverBlock) {};
+	_fd(fd), _serverBlock(serverBlock)
+{
+	this->request = NULL;
+	this->upload = NULL;
+}
 
 bool	Client::receiveResponse(void)
 {
@@ -109,6 +113,7 @@ void Client::readFile(const std::string path) {
 		sendErrorResponse(404, "Not Found", "<html><body><h1>404 Not Found</h1></body></html>");
 	}
 }
+
 
 void Client::serveImage(std::string path) {
 	std::ifstream imageFile(path.c_str(), std::ios::binary);
@@ -205,10 +210,7 @@ bool	Client::getMethodHandler(void){
 		readFile(fullPath);
 	return true;
 }
-bool	Client::postMethodHandler(void){
-	std::cout << "hey from post\n";
-	return  true;
-}
+
 
 void    Client::sendResponse1(std::string content, int len, std::string ctype)
 {
@@ -231,6 +233,29 @@ void    Client::sendResponse1(std::string content, int len, std::string ctype)
 	}
 }
 
+// ======================= POST method ==========================================
+
+// if (str.find("multipl-part: xxxxx boundry") == std::string::npos)
+	// >> no upload file exit();
+
+// void Client::readChunkedBody()
+// {
+
+// }
+
+// void Client::readBody()
+// {
+// 	std::vector<std::string> body = this->request->getBody();
+
+// }
+
+bool	Client::postMethodHandler(void){
+	this->upload = new Upload(this->request);
+	std::cout << "the start method is called success" << std::endl;
+	this->upload->start();
+	return  true;
+}
+
 bool Client::run(void)  
 {
 	return this->receiveResponse();
@@ -238,6 +263,9 @@ bool Client::run(void)
 
 Client::~Client()
 {
-	delete request;
+	if (upload)
+		delete upload;
+	if (request)
+		delete request;
 	close(_fd);
 }

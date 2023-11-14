@@ -18,6 +18,7 @@ private:
     std::string mimeType;
     std::map<std::string, std::string> headers;
     std::vector<std::string> body;
+    std::string bodyString;
 
 public:
     Request(std::string req);
@@ -26,6 +27,9 @@ public:
     const std::string &getMethod() const;
     const std::string &getPath() const;
     const std::string &getMimeType();
+    const std::map<std::string, std::string > &getHeaders() const;
+    const std::vector<std::string> & getBody() const;
+    const std::string& getBodyString() const;
     ~Request();
 };
 

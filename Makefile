@@ -13,11 +13,11 @@
 NAME	= webserv
 
 CXX		= c++
-CXXFLAGS	= -Wall -Wextra -Werror -std=c++98 -g -fsanitize=address -g3
+CXXFLAGS	= -Wall -Wextra -Werror -std=c++98 -fsanitize=address -g3
 
 SRCSCONFIG = configParser.cpp serverBlock.cpp Location.cpp
 
-SRCSMULTIPLEX = Server/Server.cpp Client/Client.cpp Server/Cluster.cpp Client/Request.cpp
+SRCSMULTIPLEX = Server/Server.cpp Client/Client.cpp Server/Cluster.cpp Client/Request.cpp Client/Upload.cpp
 
 SRCS = $(addprefix src/, main.cpp) $(addprefix src/config/,$(SRCSCONFIG))  $(addprefix src/,$(SRCSMULTIPLEX)) helperFunction/ft_split.cpp
 
