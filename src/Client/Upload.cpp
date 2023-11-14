@@ -13,7 +13,7 @@ void Upload::start()
 {
     std::map <std::string, std::string> headers = this->request->getHeaders();
 	std::map<std::string , std::string>::const_iterator it = headers.find("Transfer-Encoding");
-	const char* filename = "bodyContent";
+	const char* filename = "www/bodyFiles/bodyContent";
 	this->bodyContent.open(filename, std::ios::in | std::ios::app);
 	if (!this->bodyContent.is_open())
 	{
@@ -32,10 +32,13 @@ void Upload::start()
 	// 		std::cout << "wait what the script not found but realy ......................" << std::endl;
 	// }
 	bodyContent.close();
+	unlink("www/bodyFiles/bodyContent");
 }
 
 void Upload::readChunkedBody()
 {
+	std::vector<std::string> body = this->request->getBody();
+	
 }
 
 void Upload::readBody()
@@ -50,9 +53,7 @@ void Upload::readBody()
 	else
 	{
 		std::string cloneBody = this->request->getBodyString();
-		//const char *body = this->request->getBodyString().c_str();
 		int	iter = content_length / 1024;
-		//static int	writer = 0;
 		for (int i = 0; i < iter; i++)
 		{
 			if (cloneBody.length() > 1024 * 2)
