@@ -17,20 +17,26 @@ Cluster::Cluster() {}
 
 Cluster::Cluster( std::vector<serverBlock> serverBlocks)
 {
-	// create a servers
+	// create a _servers
 	for (std::vector<serverBlock>::iterator it = serverBlocks.begin(); it != serverBlocks.end(); ++it)
 	{
-		servers.push_back(new Server(it->getHost(), it->getPort(), &serverBlocks));
+		_servers.push_back(new Server(it->getHost(), it->getPort(), &(*it)));
 	}
-	// run all servers
-	run();
+	// run all _servers
+	this->run();
 }
 
 Cluster::~Cluster()
 {
-	for (size_t i = 0; i < servers.size(); i++)
+	std::cout << "Cluster distructor" << std::endl;
+	for (size_t i = 0; i < _servers.size(); i++)
 	{
-		delete servers[i];
+		delete _servers.at(i);
+	}
+	for (size_t i = 0; i < _clients.size(); i++)
+	{
+		if (_clients.at(i) != NULL)
+			delete _clients.at(i);
 	}
 }
 
@@ -38,21 +44,20 @@ Cluster::~Cluster()
 
 void Cluster::run(void)
 {
-	servers[0]->_clients.resize(MAX_EVENTS);
+	_clients.resize(MAX_EVENTS);
 	struct epoll_event	ev, events[MAX_EVENTS];
-	int					conn_sock, nfds, epollfd, n;
+	int					client_fd, nfds, epollfd, n;
 
 	epollfd = epoll_create(1);
 	if (epollfd == -1) {
 		throw std::runtime_error("epoll_create");
 	}
 
-	for (size_t i = 0; i < servers.size(); i++) {
-		servers[i]->initServerSocket();
-		servers[i]->listenToClient();
+	for (size_t i = 0; i < _servers.size(); i++) {
+		_servers[i]->run();
 		ev.events = EPOLLIN;
-		ev.data.fd = servers[i]->getFd();
-		if (epoll_ctl(epollfd, EPOLL_CTL_ADD, servers[i]->getFd(), &ev) == -1) {
+		ev.data.fd = _servers[i]->getFd();
+		if (epoll_ctl(epollfd, EPOLL_CTL_ADD, _servers[i]->getFd(), &ev) == -1) {
 			throw std::runtime_error("epoll_ctl");
 		}
 	}
@@ -64,25 +69,26 @@ void Cluster::run(void)
 		}
 
 		for (n = 0; n < nfds; ++n) {
-			if (events[n].data.fd <= servers.at(servers.size()- 1)->getFd()) {
-				conn_sock = accept(events[n].data.fd,NULL, NULL);
-				if (conn_sock == -1) {
+			if (events[n].data.fd <= _servers.at(_servers.size()- 1)->getFd()) {
+				client_fd = accept(events[n].data.fd,NULL, NULL);
+				if (client_fd == -1) {
 					throw std::runtime_error("could not accept client");
 				}
-				std::cout << "client fd " << conn_sock << std::endl;
-				servers[0]->_clients.at(conn_sock) = new Client(conn_sock,NULL);
+				// std::cout << " server index " << events[n].data.fd - _servers[0]->getFd() << std::endl;
+				_clients.at(client_fd) = new Client(client_fd,_servers[events[n].data.fd - _servers[0]->getFd()]->_serverBlock);
 				ev.events = EPOLLIN | EPOLLET;
-				ev.data.fd = conn_sock;
-				if (epoll_ctl(epollfd, EPOLL_CTL_ADD, conn_sock, &ev) == -1) {
+				ev.data.fd = client_fd;
+				if (epoll_ctl(epollfd, EPOLL_CTL_ADD, client_fd, &ev) == -1) {
 					throw std::runtime_error("epoll_ctl");
 				}
 			}
 			else {
-				if (servers.at(0)->_clients.at(events[n].data.fd)->run()) // return true when client close the connection
+				if (_clients.at(events[n].data.fd)->run()) // return true when client close the connection
 				{
 					epoll_ctl(epollfd, EPOLL_CTL_DEL, events[n].data.fd, &ev);
 					close(events[n].data.fd);
-					delete servers.at(0)->_clients.at(events[n].data.fd);
+					delete _clients.at(events[n].data.fd);
+					_clients.at(events[n].data.fd) = NULL;
 				}
 			}
 		}

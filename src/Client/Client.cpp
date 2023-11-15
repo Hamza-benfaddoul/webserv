@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/11 18:22:14 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/13 12:53:16 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -194,7 +194,7 @@ std::string	Client::getMimeTypeFromExtension(const std::string& path) {
 
 bool	Client::getMethodHandler(void){
 	if (this->_serverBlock)
-		std::cout << this->_serverBlock->size() << std::endl;
+		std::cout << "daz mn hna" /*this->_serverBlock->size()*/ << std::endl;
 	else
 		std::cout << "_serverBlock is NULL\n";
 	std::cout << "path is: " <<  this->request->getPath() << std::endl;

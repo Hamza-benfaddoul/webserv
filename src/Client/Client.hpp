@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:59:30 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/11 17:37:23 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/13 12:50:27 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ class Client {
 		Request	*request;
 		Upload	*upload;
 		// Response	*response;
-		std::vector<serverBlock> *_serverBlock;
+		serverBlock *_serverBlock;
 		bool	getMethodHandler(void);
 		bool	postMethodHandler(void);
 		bool	receiveResponse(void);
@@ -44,7 +44,7 @@ class Client {
 
 
 	public:
-		Client(size_t fd, std::vector<serverBlock> *serverBlock);
+		Client(size_t fd, serverBlock *serverBlock);
 		~Client();
 
 		bool	run(void);
