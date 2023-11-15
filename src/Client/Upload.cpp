@@ -32,13 +32,45 @@ void Upload::start()
 	// 		std::cout << "wait what the script not found but realy ......................" << std::endl;
 	// }
 	bodyContent.close();
-	unlink("www/bodyFiles/bodyContent");
+	// unlink("www/bodyFiles/bodyContent");
 }
 
 void Upload::readChunkedBody()
 {
 	std::vector<std::string> body = this->request->getBody();
-	
+	std::string	mergedBody;
+	int	bodyLength;
+
+	for (int i = 1; i < (int)body.size(); i++)
+	{
+		if (i != (int)body.size() - 1 && i % 2 != 0)
+			mergedBody += body.at(i);
+	}
+	bodyLength = mergedBody.length();
+	if (bodyLength < 1024 * 2)
+	{
+		bodyContent << mergedBody;
+	}
+	else
+	{
+		int	iter = bodyLength / 1024;
+		std::cout << "the iter is : " << iter << std::endl;
+		for (int i = 0; i < iter; i++)
+		{
+			if (mergedBody.length() > 1024 * 2)
+			{
+				std::string toWrite = mergedBody.substr(0, 1024);
+				bodyContent << toWrite;
+				mergedBody = mergedBody.substr(1024);
+			}
+			else
+			{
+				bodyContent << mergedBody;
+				break;
+			}
+		}
+		bodyContent << std::endl;
+	}
 }
 
 void Upload::readBody()

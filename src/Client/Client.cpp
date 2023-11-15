@@ -34,6 +34,7 @@ bool	Client::receiveResponse(void)
 		this->_responseBuffer += std::string(buffer, bytesRead);
 		if (std::string(buffer, bytesRead).find("\r\n\r\n") != std::string::npos)
 		{
+			std::cout << "request: " << _responseBuffer << std::endl;
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
 			this->request->printRequest();
@@ -234,20 +235,6 @@ void    Client::sendResponse1(std::string content, int len, std::string ctype)
 }
 
 // ======================= POST method ==========================================
-
-// if (str.find("multipl-part: xxxxx boundry") == std::string::npos)
-	// >> no upload file exit();
-
-// void Client::readChunkedBody()
-// {
-
-// }
-
-// void Client::readBody()
-// {
-// 	std::vector<std::string> body = this->request->getBody();
-
-// }
 
 bool	Client::postMethodHandler(void){
 	this->upload = new Upload(this->request);
