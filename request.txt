@@ -1,29 +1,53 @@
 POST / HTTP/1.1
+Content-Type: text/html
 User-Agent: PostmanRuntime/7.34.0
 Accept: */*
-Postman-Token: a61b17bc-19df-421c-aa1f-67927c93cdf5
+Postman-Token: f003ea7a-dcde-4452-914d-d840af9a98fa
 Host: localhost:8081
 Accept-Encoding: gzip, deflate, br
 Connection: keep-alive
-Content-Type: application/x-www-form-urlencoded
-Content-Length: 65
+Content-Length: 16337
 
-name=walid&lastname=oumechtak&age=22&email=woumechtak%40gmail.com
+<!DOCTYPE html>
+<html lang="fr-FR" class="no-js">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<link rel="profile" href="https://gmpg.org/xfn/11">
+	
+	<title>Mes réservations &#8211; Sport</title>
+<meta name='robots' content='max-image-preview:large' />
+<script id="cookieyes" type="text/javascript" src="https://cdn-cookieyes.com/client_data/d81ddcb7b8274f906e2e8a04/script.js"></script><link rel='dns-prefetch' href='//maps.googleapis.com' />
+<link rel='dns-prefetch' href='//fonts.googleapis.com' />
+<link rel="alternate" type="application/rss+xml" title="Sport &raquo; Flux" href="https://sport.um6p.ma/?feed=rss2" />
+<link rel="alternate" type="application/rss+xml" title="Sport &raquo; Flux des commentaires" href="https://sport
 
 
-the method is: 
+the method is: POST
 the path is: /
 the headers are: 
 Accept: */*
 Accept-Encoding: gzip, deflate, br
 Connection: keep-alive
-Content-Length: 65
-Content-Type: application/x-www-form-urlencoded
+Content-Length: 16337
+Content-Type: text/html
 Host: localhost:8081
-Postman-Token: a61b17bc-19df-421c-aa1f-67927c93cdf5
+Postman-Token: f003ea7a-dcde-4452-914d-d840af9a98fa
 User-Agent: PostmanRuntime/7.34.0
 
 
 -------------------------------------------------------
 
-->name=walid&lastname=oumechtak&age=22&email=woumechtak%40gmail.com<-
+<!DOCTYPE html>
+<html lang="fr-FR" class="no-js">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<link rel="profile" href="https://gmpg.org/xfn/11">
+	
+	<title>Mes réservations &#8211; Sport</title>
+<meta name='robots' content='max-image-preview:large' />
+<script id="cookieyes" type="text/javascript" src="https://cdn-cookieyes.com/client_data/d81ddcb7b8274f906e2e8a04/script.js"></script><link rel='dns-prefetch' href='//maps.googleapis.com' />
+<link rel='dns-prefetch' href='//fonts.googleapis.com' />
+<link rel="alternate" type="application/rss+xml" title="Sport &raquo; Flux" href="https://sport.um6p.ma/?feed=rss2" />
+<link rel="alternate" type="application/rss+xml" title="Sport &raquo; Flux des commentaires" href="https://sport

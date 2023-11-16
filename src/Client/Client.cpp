@@ -21,17 +21,14 @@ Client::Client(size_t fd, serverBlock *serverBlock) :
 {
 	this->request = NULL;
 	this->upload = NULL;
-	this->totalRead = 0;
+	errorCheck = false;
+	fileCreated = false;
+	canIRead = true;
+	totalBytesRead = 0;
 }
 
 bool	Client::receiveResponse(void)
 {
-	//int bytesRead;
-	//int	contentLength;
-	this->totalRead = 0;
-
-	//this->totalRead += bytesRead;
-
 	if (_readHeader)
 	{
 		char	buffer[1024] = {0};
@@ -42,12 +39,11 @@ bool	Client::receiveResponse(void)
 		this->_responseBuffer += std::string(buffer, bytesRead);
 		if (std::string(buffer, bytesRead).find("\r\n\r\n") != std::string::npos)
 		{
-			std::cout << "request: " << _responseBuffer << std::endl;
+			// std::cout << "request: " << _responseBuffer << std::endl;
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
 			this->request->printRequest();
 			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
-			//contentLength = strtod((Oheaders["Content-Length"]).c_str(), NULL);
 			_readHeader = false;
 		}
 	}
@@ -371,7 +367,7 @@ int	Client::is_request_well_formed()
 		return (-1);
 	}
 	// transfer encoding is equal to chunked
-	if (ourHeaders["Transfer-Encoding"] != "chunked")
+	if (ourHeaders.find("Transfer-Encoding") != ourHeaders.end() && ourHeaders["Transfer-Encoding"] != "chunked")
 	{
 		sendErrorResponse(501, "Not Implemented", "<html><body><h1>501 Not Implemented</h1></body></html>");
 		return (-1);
@@ -391,17 +387,39 @@ int	Client::is_request_well_formed()
 }
 
 // true -> close, flase continue;
-
 bool	Client::postMethodHandler(void)
 {
+	std::map<std::string, std::string> Headers = this->request->getHeaders();
+	char	buffer[1024] = {0};
+	int		bytesRead;
+	std::string body;
 
-	if (is_request_well_formed() == -1)
+	if (this->errorCheck == false && is_request_well_formed() == -1)
+	{
+		std::cout << "the request is bad .......... i think" << std::endl;
+		this->errorCheck = true;
 		return true;
-	// read until body is complte:
-	
-	this->upload = new Upload(this->request, this->cpt);
-	std::cout << "the start method is called success" << std::endl;
-	this->upload->start();
+	}
+	if (fileCreated == false)
+	{
+		this->upload = new Upload(this->request, this->cpt);
+		this->upload->createFile();
+		body = ltrim(this->request->getBodyString(), "\r\n");
+		fileCreated = true;
+	}
+	// read until body is complte (chunk by chunk)
+	if (canIRead == true)
+		bytesRead = read(_fd, buffer, 1024);
+	if (Headers.find("Transfer-Encoding") != Headers.end() && Headers["Transfer-Encoding"] == "chunked")
+	{
+		return false;
+	}
+	else
+	{
+		this->totalBytesRead += bytesRead;
+		return false;
+	}
+	//this->upload->start();
 	this->cpt++;
 	return  true;
 }

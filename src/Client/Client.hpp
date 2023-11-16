@@ -28,35 +28,36 @@ class serverBlock;
 class Client {
 	private:
 		Client();
-		std::string _responseBuffer;
-		size_t		_fd;
-		Request	*request;
-		Upload	*upload;
-		// Response	*response;
-		static int cpt;
-		long	readd;
-		int totalRead;
-		bool		_readHeader;
-		serverBlock	*_serverBlock;
-		bool	getMethodHandler(void);
-		bool	postMethodHandler(void);
-		bool	receiveResponse(void);
-		bool	checkIfDirectoryIsLocation( std::string );
+		std::string 	_responseBuffer;
+		size_t			_fd;
+		Request			*request;
+		Upload			*upload;
+		static int 		cpt;
+		long			readd;
+		bool			_readHeader;
+		serverBlock		*_serverBlock;
+		bool			errorCheck;
+		bool			fileCreated;
+		bool			canIRead;
+		int				totalBytesRead;
 
-		void	sendResponse(void);
-		void	sendErrorResponse( int, std::string, std::string );
-		void	sendResponse1(std::string , int , std::string );
-		void	closeConnection(void);
-		void	serveImage(std::string);
-		void	sendImageResponse(const std::string&, const std::string&);
-		void	readFile( const std::string path );
-		void	readChunkedBody();
-		void	readBody();
-		int		is_request_well_formed();
-		void	handleRequestFromRoot();
-		void	handleRequestFromLocation( std::string );
-
-		std::string	getMimeTypeFromExtension(const std::string& path);
+		bool			getMethodHandler(void);
+		bool			postMethodHandler(void);
+		bool			receiveResponse(void);
+		bool			checkIfDirectoryIsLocation( std::string );
+		void			sendResponse(void);
+		void			sendErrorResponse( int, std::string, std::string );
+		void			sendResponse1(std::string , int , std::string );
+		void			closeConnection(void);
+		void			serveImage(std::string);
+		void			sendImageResponse(const std::string&, const std::string&);
+		void			readFile( const std::string path );
+		void			readChunkedBody();
+		void			readBody();
+		int				is_request_well_formed();
+		void			handleRequestFromRoot();
+		void			handleRequestFromLocation( std::string );
+		std::string		getMimeTypeFromExtension(const std::string& path);
 
 
 	public:

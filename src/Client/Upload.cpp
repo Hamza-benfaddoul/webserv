@@ -8,12 +8,11 @@ Upload::Upload(Request *req, int in_cpt) : request(req), cpt(in_cpt)
 Upload::~Upload()
 {
 	// unlink(this->filename.c_str());
+	std::remove(this->filename.c_str());
 }
 
-void Upload::start()
+void	Upload::createFile()
 {
-    std::map <std::string, std::string> headers = this->request->getHeaders();
-	std::map<std::string , std::string>::const_iterator it = headers.find("Transfer-Encoding");
 	std::stringstream ss;
 	ss << this->cpt;
 	std::string cptAsString = ss.str();
@@ -21,9 +20,16 @@ void Upload::start()
 	this->bodyContent.open(filename.c_str(), std::ios::in | std::ios::out | std::ios::trunc);
 	if (!this->bodyContent.is_open())
 	{
-		std::cout << "the file was not created successfuly" << std::endl;
+		std::cout << "<< !!!! >> the file was not created successfuly" << std::endl;
 		return;
 	}
+}
+
+void Upload::start()
+{
+    std::map <std::string, std::string> headers = this->request->getHeaders();
+	std::map<std::string , std::string>::const_iterator it = headers.find("Transfer-Encoding");
+	
 	if (it != headers.end())
 		readChunkedBody();
 	else
@@ -110,5 +116,16 @@ void Upload::readBody()
 		}
 		bodyContent << std::endl;
 	}
+
+}
+
+
+void	Upload::chunked()
+{
+
+}
+
+void	Upload::binary()
+{
 
 }

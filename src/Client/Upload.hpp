@@ -18,6 +18,9 @@ public:
     void    start();
     void    readChunkedBody();
     void    readBody();
+    void    createFile();
+    void    chunked();
+    void    binary();
 };
 
 
