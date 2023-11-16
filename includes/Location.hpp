@@ -32,7 +32,7 @@ public:
 	void			parseRoot( const std::string & );
 	void			parseAutoIndex( const std::string & );
 	void			parseIndex( const std::string & );
-
+	std::string		getKeyFromAttributes( std::string );
 	void	toString( void ) const;
 
 	void			exceptionsManager( std::string c );
@@ -42,7 +42,8 @@ public:
 	std::string&	trim(std::string& s);
 	const std::string &getRoot( void ) const { return root; };
 	// const std::string &getIndex( void ) const { return index}
-	const std::string &getMethods( void ) const { return methods; };
-	bool	getAutoIndex( void ) const { return autoIndex; };
+	const std::string	&getMethods( void ) const { return methods; };
+	bool				getAutoIndex( void ) const { return autoIndex; };
+	const	std::string			&getLocationPath( void ) const { return locationPath; }
 
 };

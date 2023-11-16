@@ -1,21 +1,11 @@
 server:
-  listen: 8012
-  host: 127.0.0.1
-  autoindex: on
-  server_name: [ somename , alias , another.alias]
-  location:
-    - path: "/"
-    - root:	www/
-    - index:	[index.html,index.htm]
-
-server:
   listen: 8081
   server_name: localhost
   root: www
   location:
     - path: "/bootstrap"
     - root:   www
-    - autoindex: on 
+    - autoindex: on
     - methods: [GET, POST]
     - index:  [index.html, index.htm]
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/13 12:53:16 by hamza            ###   ########.fr       */
+/*   Updated: 2023/11/15 13:50:27 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,9 @@ bool	Client::receiveResponse(void)
 			this->request->parseRequest();
 			this->request->printRequest();
 			if (this->request->getMethod().compare("GET") == 0)
+			{
 				return getMethodHandler();
+			}
 			else if (this->request->getMethod().compare("POST") == 0)
 				return postMethodHandler();
 			// sendResponse();
@@ -50,14 +52,26 @@ bool	Client::receiveResponse(void)
 	return false;
 }
 
-
-void	Client::sendErrorResponse( int CODE, std::string ERRORTYPE, std::string ERRORMESSAGE) {
+void	Client::sendErrorResponse( int CODE, std::string ERRORTYPE, std::string errorTypeFilePath) {
+	std::ifstream file(errorTypeFilePath.c_str());
+	std::string content;
+	if (file.is_open())
+	{
+		{
+			std::string line;
+			while (getline(file, line))
+			{
+				content += line;
+			}
+		}
+	}
+	file.close();
 	std::stringstream response;
 	response << "HTTP/1.1 " << CODE << " " << ERRORTYPE << "\r\n";
 	response << "Content-Type: text/html; charset=UTF-8\r\n";
-	response << "Content-Length: " << ERRORMESSAGE.length() << "\r\n";
+	response << "Content-Length: " << content.length() << "\r\n";
 	response << "\r\n";
-	response << ERRORMESSAGE;
+	response << content;
 
 	write(_fd, response.str().c_str(), response.str().length());
 }
@@ -130,9 +144,6 @@ void Client::serveImage(std::string path) {
 		headers << "Content-Disposition: inline\r\n";  // Add this line
 		headers << "Connection: close\r\n";
 		headers << "\r\n";  // Add an extra newline to indicate the end of headers
-		std::cout << "-------- Response Header -------->" << std::endl;
-		std::cout << headers.str() << std::endl;
-		std::cout << "-------- Response Header -------->" << std::endl;
 
 		// Write headers to socket
 		write(_fd, headers.str().c_str(), headers.str().length());
@@ -156,7 +167,7 @@ void Client::serveImage(std::string path) {
 		imageFile.close();
 	} else {
 		// Handle file not found
-		sendErrorResponse(404, "Not Found", "<html><body><h1>404 Not Found</h1></body></html>");
+		sendErrorResponse(404, "Not Found", ERROR404);
 	}
 }
 
@@ -184,6 +195,7 @@ std::string	Client::getMimeTypeFromExtension(const std::string& path) {
 		std::string extension = path.substr(dotPos);
 		if (!extension.empty()) {
 		std::map<std::string, std::string>::iterator it = extensionToMimeType.find(extension);
+		std::cout << "video extension: " << extension << "\n";
 		if (it != extensionToMimeType.end()) {
 			return it->second; // Return the corresponding MIME type
 		}
@@ -192,24 +204,112 @@ std::string	Client::getMimeTypeFromExtension(const std::string& path) {
 	return "application/octet-stream";
 }
 
+bool Client::checkIfDirectoryIsLocation( std::string path )
+{
+	struct stat st;
 
-bool	Client::getMethodHandler(void){
-	if (this->_serverBlock)
-		std::cout << "daz mn hna" /*this->_serverBlock->size()*/ << std::endl;
-	else
-		std::cout << "_serverBlock is NULL\n";
-	std::cout << "path is: " <<  this->request->getPath() << std::endl;
-	std::cout << "mime TYpe is " << this->request->getMimeType() << std::endl;
-	std::string fullPath = (this->request->getPath().compare("/") == 0) ? "www/index.html" : "www" + this->request->getPath();
-	std::cout << fullPath << std::endl;
-	std::cout << getMimeTypeFromExtension(fullPath) << std::endl;
-	if (getMimeTypeFromExtension(fullPath).find("image") != std::string::npos
-		|| getMimeTypeFromExtension(fullPath).find("video") != std::string::npos)
-	{
-		serveImage(fullPath);
+			// std::cout << "location PATH: "<< locationPath << "\n";
+			std::cout << "PATH: "<< path << "\n";
+	if (stat(path.c_str(), &st) != 0)
+		return false;
+	if (S_ISDIR(st.st_mode)) {
+		for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) // LOcations
+		{
+			std::string locationPath, initialPath;
+			initialPath = _serverBlock->getLocations().at(i).getKeyFromAttributes("path");
+			initialPath = advanced_trim(initialPath, "\"");
+			if (this->_serverBlock->getLocations().at(i).getKeyFromAttributes("root").length() > 0)
+				locationPath = this->_serverBlock->getLocations().at(i).getKeyFromAttributes("root") + initialPath;
+			else
+				locationPath = this->_serverBlock->getRoot() + initialPath;
+			if (locationPath == path)
+				return true;
+		}
 	}
-	else
-		readFile(fullPath);
+	return false;
+}
+
+void	Client::handleRequestFromRoot()
+{
+	std::cout << "ana f root\n";
+	std::string fullPath = this->_serverBlock->getRoot() + this->request->getPath();
+	struct stat st;
+
+	stat(fullPath.c_str(), &st);
+	if (access(fullPath.c_str(), R_OK))
+		sendErrorResponse(404, "Not Found", ERROR404);
+	if (S_ISREG(st.st_mode)) {
+		if (getMimeTypeFromExtension(fullPath).find("image") != std::string::npos ||
+			getMimeTypeFromExtension(fullPath).find("video") != std::string::npos) {
+			serveImage(fullPath);
+		} else {
+			readFile(fullPath);
+		}
+	}
+}
+
+void	handleFolderRequest( std::string fullPath)
+{
+	std::cout << fullPath << "\n";
+}
+
+void Client::handleRequestFromLocation(std::string dir) {
+	std::string path;
+
+	dir = "/" + dir;
+	for (size_t i = 0; i < this->_serverBlock->getLocations().size(); i++) {
+		path = this->_serverBlock->getLocations().at(i).getLocationPath();
+			// std::cout << "Dir: " << dir << std::endl;
+			// std::cout << "Patho:\t" << path << "\n";
+		// path = trim(path, "\"");
+		// Check if the requested path matches the configured location
+		if ( dir == path || (dir.size() > path.size() && dir.compare(0, path.size(), path) == 0 && dir[path.size()] == '/')) {
+			// Check if the request path refers to a specific file or a folder
+			std::string fullPath = this->_serverBlock->getRoot() + this->request->getPath();
+			std::cout << fullPath << "\n";
+			bool isFile = regFile(fullPath);
+			if (isFile) {
+				if (getMimeTypeFromExtension(fullPath).find("image") != std::string::npos ||
+					getMimeTypeFromExtension(fullPath).find("video") != std::string::npos) {
+					serveImage(fullPath);
+				} else {
+					readFile(fullPath);
+				}
+			} else {
+				// Handle request for a folder (apply index logic, etc.)
+				handleFolderRequest(fullPath);
+			}
+
+			// Break the loop since you found a matching location
+			break;
+		}
+	}
+}
+
+
+bool Client::getMethodHandler(void) {
+	std::string requestedPath = this->request->getPath();
+	// std::cout << "the requestedPath:\t" << this->request->getPath() << "\n";
+	try {
+		// Check if the requested path has a directory after the hostname
+		if (requestedPath == "/") {
+			handleRequestFromRoot();
+		} else {
+			// Extract directory and handle request from location
+			size_t directoryEndPos = requestedPath.find("/", 1);
+			std::string directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(1, directoryEndPos - 1) : requestedPath.substr(1);
+			// if (directory.empty()) {
+			// 	directory = "/";
+			// }
+			if (checkIfDirectoryIsLocation(this->_serverBlock->getRoot() + "/" + directory))
+				handleRequestFromLocation(directory);
+			else
+				sendErrorResponse(404, "NOT FOUND", ERROR404);
+		}
+	} catch ( const std::exception &e )
+	{
+		sendErrorResponse(403, "Forbidden", ERROR403);
+	}
 	return true;
 }
 
@@ -243,9 +343,9 @@ int	Client::is_request_well_formed()
 	std::string charNotAllowed = "!#$%&'()*+,/:;=?@[]";
 	int	badChar = 0;
 
-	for (int i = 0; i < charNotAllowed.length(); i++)
+	for (int i = 0; i < (int)charNotAllowed.length(); i++)
 	{
-		for (int j = 0; j < path.length(); j++)
+		for (int j = 0; j < (int)path.length(); j++)
 		{
 			if (path[j] == charNotAllowed[i])
 			{
@@ -281,6 +381,7 @@ int	Client::is_request_well_formed()
 	{
 		// ...
 	}
+	return (true);
 }
 
 bool	Client::postMethodHandler(void){

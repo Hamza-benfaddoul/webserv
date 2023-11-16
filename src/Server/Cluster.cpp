@@ -28,7 +28,6 @@ Cluster::Cluster( std::vector<serverBlock> serverBlocks)
 
 Cluster::~Cluster()
 {
-	std::cout << "Cluster distructor" << std::endl;
 	for (size_t i = 0; i < _servers.size(); i++)
 	{
 		delete _servers.at(i);

@@ -1,12 +1,22 @@
 #include "../../includes/Location.hpp"
-
+#include "../../includes/main.hpp"
 Location::Location()
 {
     root = "www";
     locationPath = "/";
 }
 
-void    Location::setAttribute( const std::string &key, const std::string &value ) { this->locationAttributes[key] = value; }
+
+void    Location::setAttribute( const std::string &key, const std::string &value )
+{
+    //  this->locationAttributes[key] = value;
+     this->locationAttributes.insert(std::pair<std::string, std::string>(key, value));
+    }
+
+std::string Location::getKeyFromAttributes(std::string key)
+{
+    return locationAttributes.find(key)->second;
+}
 
 void    Location::parseLocations( void )
 {
@@ -15,7 +25,10 @@ void    Location::parseLocations( void )
     {
         // std::cout << "*" << iterator->first<< "*" << std::endl;
         if (iterator->first == "path")
-            this->locationPath = iterator->second;
+        {
+            // std::cout << "Location Path in COnf file\t"<< iterator->second << "\n";
+            this->locationPath = advanced_trim(iterator->second, "\"");
+        }
         else if (iterator->first == "root")
             parseRoot(iterator->second);
         else if (iterator->first == "methods")

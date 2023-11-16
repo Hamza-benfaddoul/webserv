@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 ./www/*
 *.DS_Store
 *.vscode
@@ -40,6 +37,6 @@ webserv
 *.txt
 *.html
 *.mp4
-
-TODO
 request.txt
+www/index.html
+*.mp4
