@@ -1,32 +1,29 @@
-GET / HTTP/1.1
+POST / HTTP/1.1
+User-Agent: PostmanRuntime/7.34.0
+Accept: */*
+Postman-Token: 3c9669e7-f743-4703-bb49-950bda215cfa
 Host: localhost:8081
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0
-Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
-Accept-Language: en-US,en;q=0.5
 Accept-Encoding: gzip, deflate, br
 Connection: keep-alive
-Upgrade-Insecure-Requests: 1
-Sec-Fetch-Dest: document
-Sec-Fetch-Mode: navigate
-Sec-Fetch-Site: none
-Sec-Fetch-User: ?1
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 65
+
+name=walid&lastname=oumechtak&age=22&email=woumechtak%40gmail.com
 
 
-
-
-the method is: GET
+the method is: 
 the path is: /
 the headers are: 
-Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
+Accept: */*
 Accept-Encoding: gzip, deflate, br
-Accept-Language: en-US,en;q=0.5
 Connection: keep-alive
+Content-Length: 65
+Content-Type: application/x-www-form-urlencoded
 Host: localhost:8081
-Sec-Fetch-Dest: document
-Sec-Fetch-Mode: navigate
-Sec-Fetch-Site: none
-Sec-Fetch-User: ?1
-Upgrade-Insecure-Requests: 1
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0
-$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+Postman-Token: 3c9669e7-f743-4703-bb49-950bda215cfa
+User-Agent: PostmanRuntime/7.34.0
 
+
+-------------------------------------------------------
+
+->name=walid&lastname=oumechtak&age=22&email=woumechtak%40gmail.com<-

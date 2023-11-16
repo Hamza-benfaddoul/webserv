@@ -21,14 +21,18 @@ Client::Client(size_t fd, serverBlock *serverBlock) :
 {
 	this->request = NULL;
 	this->upload = NULL;
+	this->totalRead = 0;
 }
 
 bool	Client::receiveResponse(void)
 {
-	char buffer[1024] = {0};
+	char buffer[2048] = {0};
 	int bytesRead;
+	int	contentLength;
+	this->totalRead = 0;
 	while ((bytesRead = read(_fd, buffer, 1024)))
 	{
+		this->totalRead += bytesRead;
 		// std::cout << "bytesRead: " << bytesRead << std::endl;
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
@@ -39,13 +43,16 @@ bool	Client::receiveResponse(void)
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
 			this->request->printRequest();
+			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
+			contentLength = strtod((Oheaders["Content-Length"]).c_str(), NULL);
 			if (this->request->getMethod().compare("GET") == 0)
 			{
 				return getMethodHandler();
 			}
-			else if (this->request->getMethod().compare("POST") == 0)
+			else if (totalRead >= contentLength && this->request->getMethod().compare("POST") == 0)
+			{
 				return postMethodHandler();
-			// sendResponse();
+			}
 		}
 		break;
 	}
@@ -340,22 +347,19 @@ void    Client::sendResponse1(std::string content, int len, std::string ctype)
 int	Client::is_request_well_formed()
 {
 	std::string path = this->request->getPath();
-	std::string charNotAllowed = "!#$%&'()*+,/:;=?@[]";
+	std::string charAllowed = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&'()*+,/:;=?@[]";
 	int	badChar = 0;
 
-	for (int i = 0; i < (int)charNotAllowed.length(); i++)
+	for (int i = 0; i < (int)path.length(); i++)
 	{
-		for (int j = 0; j < (int)path.length(); j++)
+		size_t pos = charAllowed.find(path[i]);
+		if (pos == std::string::npos)
 		{
-			if (path[j] == charNotAllowed[i])
-			{
-				badChar = 1;
-				break;
-			}
-		}
-		if (badChar == 1)
+			badChar = 1;
 			break;
+		}
 	}
+
 	std::map<std::string, std::string> ourHeaders = this->request->getHeaders();
 	std::map<std::string, std::string>::iterator it = ourHeaders.find("Transfer-Encoding");
 	// bad request
@@ -384,7 +388,9 @@ int	Client::is_request_well_formed()
 	return (true);
 }
 
-bool	Client::postMethodHandler(void){
+bool	Client::postMethodHandler(void)
+{
+
 	if (is_request_well_formed() == -1)
 		return false;
 	this->upload = new Upload(this->request, this->cpt);

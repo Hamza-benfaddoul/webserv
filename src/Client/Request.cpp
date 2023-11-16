@@ -62,10 +62,7 @@ void    Request::parseRequest()
         {
             std::vector<std::string> mapElements;
             mapElements = ft_split(elements.at(i), ": ");
-            // std::cout << "elements at i: " << elements.at(i) << std::endl;
             this->headers[mapElements.at(0)] = mapElements.at(1);
-            // if (mapElements.at(0) == "accept")
-            //     this->headers[mapElements.at(0)] = "text/html";
         }
         else
             break;

@@ -15,8 +15,14 @@
 #include "../../includes/main.hpp"
 #include "Request.hpp"
 #include "Upload.hpp"
+
+// those are not exist :   414 - 413 - 301 - 201 - 405
+
 #define ERROR403 "www/error/403.html"
 #define ERROR404 "www/error/404.html"
+#define ERROR400 "www/error/400.html"
+#define ERROR501 "www/error/501.html"
+
 class serverBlock;
 
 class Client {
@@ -30,6 +36,8 @@ class Client {
 		serverBlock *_serverBlock;
 		static int cpt;
 		long	readd;
+		int totalRead;
+		
 
 		bool	getMethodHandler(void);
 		bool	postMethodHandler(void);
