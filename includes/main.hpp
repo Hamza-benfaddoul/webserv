@@ -38,6 +38,8 @@
 
 // helper function
 
-std::vector<std::string> ft_split(std::string str, std::string needed);
-
-
+std::vector<std::string>	ft_split(std::string str, std::string needed);
+std::string&				rtrim(std::string& s, std::string t);
+std::string&				ltrim(std::string& s, std::string t);
+std::string&                advanced_trim(std::string& s, std::string trimSep);
+bool                        regFile(std::string path);

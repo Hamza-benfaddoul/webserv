@@ -14,6 +14,15 @@
 
 #include "../../includes/main.hpp"
 #include "Request.hpp"
+#include "Upload.hpp"
+
+// those are not exist :   414 - 413 - 301 - 201 - 405
+
+#define ERROR403 "www/error/403.html"
+#define ERROR404 "www/error/404.html"
+#define ERROR400 "www/error/400.html"
+#define ERROR501 "www/error/501.html"
+
 class serverBlock;
 
 class Client {
@@ -21,13 +30,19 @@ class Client {
 		Client();
 		std::string _responseBuffer;
 		size_t		_fd;
+		Request	*request;
+		Upload	*upload;
+		// Response	*response;
+		static int cpt;
+		long	readd;
+		int totalRead;
 		bool		_readHeader;
-
-		Request		*request;
 		serverBlock	*_serverBlock;
 		bool	getMethodHandler(void);
 		bool	postMethodHandler(void);
 		bool	receiveResponse(void);
+		bool	checkIfDirectoryIsLocation( std::string );
+
 		void	sendResponse(void);
 		void	sendErrorResponse( int, std::string, std::string );
 		void	sendResponse1(std::string , int , std::string );
@@ -35,6 +50,11 @@ class Client {
 		void	serveImage(std::string);
 		void	sendImageResponse(const std::string&, const std::string&);
 		void	readFile( const std::string path );
+		void	readChunkedBody();
+		void	readBody();
+		int		is_request_well_formed();
+		void	handleRequestFromRoot();
+		void	handleRequestFromLocation( std::string );
 
 		std::string	getMimeTypeFromExtension(const std::string& path);
 

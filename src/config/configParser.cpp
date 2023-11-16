@@ -17,15 +17,6 @@ configParser::~configParser()
 {
 }
 
-bool	regFile(std::string path)
-{
-	struct stat st;
-
-	if (stat(path.c_str(), &st) != 0)
-		return false;
-	return S_ISREG(st.st_mode);
-}
-
 long	getFileSize( std::string path ) {
 	struct stat st;
 	int rc = stat(path.c_str(), &st);
@@ -63,9 +54,10 @@ bool configParser::loadFile()
 			throw configFileIsEmpty();
 		else {
 			std::string line;
-			// std::vector<std::map<std::string, std::string> > att;
 			serverBlock currentServer;
-			// std::vector<std::map<std::string, std::string> > locations;
+			getline(file, line);
+			if  (line != "server:")
+				throw std::runtime_error("conf file must begin with `server:`");
 			while (std::getline(file, line)) {
 				size_t commentPos = line.find('#');
 				if (commentPos != std::string::npos) {
@@ -75,13 +67,13 @@ bool configParser::loadFile()
 					continue;
 				}
 				if (line.find("server:") == 0) {
-                       	serverBlocks.push_back(currentServer);
-                        currentServer = serverBlock();
-				} else if (line.find("location:") != std::string::npos)
-					parseLocation(file, serverBlocks.back());
+					serverBlocks.push_back(currentServer);
+					currentServer = serverBlock();
+				} else if (line.find("  location:") != std::string::npos)
+					parseLocation(file, currentServer);
 				else {
 					if (line.find("::") != std::string::npos)
-        				throw std::runtime_error("Error: Found an invalid pattern related to ::!!!.");
+						throw std::runtime_error("Error: Found an invalid pattern related to ::!!!.");
 					size_t colonPos = line.find(":");
 					if (colonPos != std::string::npos) {
 						std::string key = line.substr(0, colonPos);
@@ -93,31 +85,13 @@ bool configParser::loadFile()
 					}
 				}
 			}
-                serverBlocks.push_back(currentServer);
-			serverBlocks.erase(serverBlocks.begin());
+			serverBlocks.push_back(currentServer);
 			for (std::vector<serverBlock>::iterator it = serverBlocks.begin(); it != serverBlocks.end(); ++it) {
 					it->parseBlock();
-				// std::cout << "Server:\n";
-				// std::cout << it->getLocations().begin()->getLocationAttributes().begin()->first << std::endl;
 				for (size_t i = 0; i != it->getLocations().size(); i++) // LOcations
 				{
-					// std::cout << "location:\n";
-					Location test = it->getLocations().at(i);
-					test.parseLocations();
-					// std::map<std::string, std::string> op = test.getLocationAttributes();
-					// for (std::map<std::string, std::string>::iterator da = op.begin(); da != op.end(); da++)
-					// {
-
-					// 	// std::cout << da->first << ": " << da->second << std::endl;
-					// }
-					// std::cout << "\n";
+					it->locations.at(i).parseLocations();
 				}
-				std::cout << "\n";
-				// for (std::vector<Location>::iterator iterator = it->getLocations().begin(); iterator != it->getLocations().end(); ++iterator) {
-				// }
-				// std::cout << it->getServerName() << std::endl;
-				// std::cout << it->getPort() << std::endl;
-				// std::cout << it->getRoot() << std::endl;
 			}
 
 		}
@@ -126,9 +100,9 @@ bool configParser::loadFile()
 	return false;
 }
 
-void	configParser::parseLocation( std::ifstream& file, serverBlock& currentServer )
+void	configParser::parseLocation( std::ifstream& file, serverBlock &currentServer )
 {
-	Location currentLocation;
+	Location	currentLocation;
 	std::string line;
 
     while (std::getline(file, line)) {
@@ -148,6 +122,7 @@ void	configParser::parseLocation( std::ifstream& file, serverBlock& currentServe
 					std::string value = trim(line.substr(colonPos + 1));
 					checkKeyValue(key, value);
 					currentLocation.setAttribute(key, value);
+					// std::cout << currentLocation.getLocationAttributes().find(key)->second << std::endl;
 				}
 			}
             else {
@@ -155,7 +130,6 @@ void	configParser::parseLocation( std::ifstream& file, serverBlock& currentServe
             }
         }
     }
-
     currentServer.setLocation(currentLocation);
 }
 

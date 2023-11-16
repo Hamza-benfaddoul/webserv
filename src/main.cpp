@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/25 11:41:00 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/12 22:29:05 by hamza            ###   ########.fr       */
+/*   Updated: 2023/11/13 22:37:30 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ int main(int ac, char **av)
                 configParser webserv;
                 Cluster cluster(webserv.getServerBlocks());
             }
-        
+
         }
         catch (const std::exception &e)
         {

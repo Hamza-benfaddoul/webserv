@@ -15,11 +15,23 @@
 #include <vector>
 #include <sys/stat.h>
 
+int Client::cpt = 0;
 Client::Client(size_t fd, serverBlock *serverBlock) :
-	_fd(fd), _readHeader(true), _serverBlock(serverBlock) {};
+	_fd(fd),_readHeader(true), _serverBlock(serverBlock)
+{
+	this->request = NULL;
+	this->upload = NULL;
+	this->totalRead = 0;
+}
 
 bool	Client::receiveResponse(void)
 {
+	//int bytesRead;
+	//int	contentLength;
+	this->totalRead = 0;
+
+	//this->totalRead += bytesRead;
+
 	if (_readHeader)
 	{
 		char	buffer[1024] = {0};
@@ -30,9 +42,12 @@ bool	Client::receiveResponse(void)
 		this->_responseBuffer += std::string(buffer, bytesRead);
 		if (std::string(buffer, bytesRead).find("\r\n\r\n") != std::string::npos)
 		{
+			std::cout << "request: " << _responseBuffer << std::endl;
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
 			this->request->printRequest();
+			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
+			//contentLength = strtod((Oheaders["Content-Length"]).c_str(), NULL);
 			_readHeader = false;
 		}
 	}
@@ -46,14 +61,26 @@ bool	Client::receiveResponse(void)
 	return false;
 }
 
-
-void	Client::sendErrorResponse( int CODE, std::string ERRORTYPE, std::string ERRORMESSAGE) {
+void	Client::sendErrorResponse( int CODE, std::string ERRORTYPE, std::string errorTypeFilePath) {
+	std::ifstream file(errorTypeFilePath.c_str());
+	std::string content;
+	if (file.is_open())
+	{
+		{
+			std::string line;
+			while (getline(file, line))
+			{
+				content += line;
+			}
+		}
+	}
+	file.close();
 	std::stringstream response;
 	response << "HTTP/1.1 " << CODE << " " << ERRORTYPE << "\r\n";
 	response << "Content-Type: text/html; charset=UTF-8\r\n";
-	response << "Content-Length: " << ERRORMESSAGE.length() << "\r\n";
+	response << "Content-Length: " << content.length() << "\r\n";
 	response << "\r\n";
-	response << ERRORMESSAGE;
+	response << content;
 
 	write(_fd, response.str().c_str(), response.str().length());
 }
@@ -112,6 +139,7 @@ void Client::readFile(const std::string path) {
 	}
 }
 
+
 void Client::serveImage(std::string path) {
 	std::ifstream imageFile(path.c_str(), std::ios::binary);
 	if (imageFile.is_open()) {
@@ -125,9 +153,6 @@ void Client::serveImage(std::string path) {
 		headers << "Content-Disposition: inline\r\n";  // Add this line
 		headers << "Connection: close\r\n";
 		headers << "\r\n";  // Add an extra newline to indicate the end of headers
-		std::cout << "-------- Response Header -------->" << std::endl;
-		std::cout << headers.str() << std::endl;
-		std::cout << "-------- Response Header -------->" << std::endl;
 
 		// Write headers to socket
 		write(_fd, headers.str().c_str(), headers.str().length());
@@ -151,7 +176,7 @@ void Client::serveImage(std::string path) {
 		imageFile.close();
 	} else {
 		// Handle file not found
-		sendErrorResponse(404, "Not Found", "<html><body><h1>404 Not Found</h1></body></html>");
+		sendErrorResponse(404, "Not Found", ERROR404);
 	}
 }
 
@@ -179,6 +204,7 @@ std::string	Client::getMimeTypeFromExtension(const std::string& path) {
 		std::string extension = path.substr(dotPos);
 		if (!extension.empty()) {
 		std::map<std::string, std::string>::iterator it = extensionToMimeType.find(extension);
+		std::cout << "video extension: " << extension << "\n";
 		if (it != extensionToMimeType.end()) {
 			return it->second; // Return the corresponding MIME type
 		}
@@ -187,30 +213,115 @@ std::string	Client::getMimeTypeFromExtension(const std::string& path) {
 	return "application/octet-stream";
 }
 
+bool Client::checkIfDirectoryIsLocation( std::string path )
+{
+	struct stat st;
 
-bool	Client::getMethodHandler(void){
-	if (this->_serverBlock)
-		std::cout << "daz mn hna" /*this->_serverBlock->size()*/ << std::endl;
-	else
-		std::cout << "_serverBlock is NULL\n";
-	std::cout << "path is: " <<  this->request->getPath() << std::endl;
-	std::cout << "mime TYpe is " << this->request->getMimeType() << std::endl;
-	std::string fullPath = (this->request->getPath().compare("/") == 0) ? "www/index.html" : "www" + this->request->getPath();
-	std::cout << fullPath << std::endl;
-	std::cout << getMimeTypeFromExtension(fullPath) << std::endl;
-	if (getMimeTypeFromExtension(fullPath).find("image") != std::string::npos
-		|| getMimeTypeFromExtension(fullPath).find("video") != std::string::npos)
-	{
-		serveImage(fullPath);
+			// std::cout << "location PATH: "<< locationPath << "\n";
+			std::cout << "PATH: "<< path << "\n";
+	if (stat(path.c_str(), &st) != 0)
+		return false;
+	if (S_ISDIR(st.st_mode)) {
+		for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) // LOcations
+		{
+			std::string locationPath, initialPath;
+			initialPath = _serverBlock->getLocations().at(i).getKeyFromAttributes("path");
+			initialPath = advanced_trim(initialPath, "\"");
+			if (this->_serverBlock->getLocations().at(i).getKeyFromAttributes("root").length() > 0)
+				locationPath = this->_serverBlock->getLocations().at(i).getKeyFromAttributes("root") + initialPath;
+			else
+				locationPath = this->_serverBlock->getRoot() + initialPath;
+			if (locationPath == path)
+				return true;
+		}
 	}
-	else
-		readFile(fullPath);
+	return false;
+}
+
+void	Client::handleRequestFromRoot()
+{
+	std::cout << "ana f root\n";
+	std::string fullPath = this->_serverBlock->getRoot() + this->request->getPath();
+	struct stat st;
+
+	stat(fullPath.c_str(), &st);
+	if (access(fullPath.c_str(), R_OK))
+		sendErrorResponse(404, "Not Found", ERROR404);
+	if (S_ISREG(st.st_mode)) {
+		if (getMimeTypeFromExtension(fullPath).find("image") != std::string::npos ||
+			getMimeTypeFromExtension(fullPath).find("video") != std::string::npos) {
+			serveImage(fullPath);
+		} else {
+			readFile(fullPath);
+		}
+	}
+}
+
+void	handleFolderRequest( std::string fullPath)
+{
+	std::cout << fullPath << "\n";
+}
+
+void Client::handleRequestFromLocation(std::string dir) {
+	std::string path;
+
+	dir = "/" + dir;
+	for (size_t i = 0; i < this->_serverBlock->getLocations().size(); i++) {
+		path = this->_serverBlock->getLocations().at(i).getLocationPath();
+			// std::cout << "Dir: " << dir << std::endl;
+			// std::cout << "Patho:\t" << path << "\n";
+		// path = trim(path, "\"");
+		// Check if the requested path matches the configured location
+		if ( dir == path || (dir.size() > path.size() && dir.compare(0, path.size(), path) == 0 && dir[path.size()] == '/')) {
+			// Check if the request path refers to a specific file or a folder
+			std::string fullPath = this->_serverBlock->getRoot() + this->request->getPath();
+			std::cout << fullPath << "\n";
+			bool isFile = regFile(fullPath);
+			if (isFile) {
+				if (getMimeTypeFromExtension(fullPath).find("image") != std::string::npos ||
+					getMimeTypeFromExtension(fullPath).find("video") != std::string::npos) {
+					serveImage(fullPath);
+				} else {
+					readFile(fullPath);
+				}
+			} else {
+				// Handle request for a folder (apply index logic, etc.)
+				handleFolderRequest(fullPath);
+			}
+
+			// Break the loop since you found a matching location
+			break;
+		}
+	}
+}
+
+
+bool Client::getMethodHandler(void) {
+	std::string requestedPath = this->request->getPath();
+	// std::cout << "the requestedPath:\t" << this->request->getPath() << "\n";
+	try {
+		// Check if the requested path has a directory after the hostname
+		if (requestedPath == "/") {
+			handleRequestFromRoot();
+		} else {
+			// Extract directory and handle request from location
+			size_t directoryEndPos = requestedPath.find("/", 1);
+			std::string directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(1, directoryEndPos - 1) : requestedPath.substr(1);
+			// if (directory.empty()) {
+			// 	directory = "/";
+			// }
+			if (checkIfDirectoryIsLocation(this->_serverBlock->getRoot() + "/" + directory))
+				handleRequestFromLocation(directory);
+			else
+				sendErrorResponse(404, "NOT FOUND", ERROR404);
+		}
+	} catch ( const std::exception &e )
+	{
+		sendErrorResponse(403, "Forbidden", ERROR403);
+	}
 	return true;
 }
-bool	Client::postMethodHandler(void){
-	std::cout << "hey from post\n";
-	return  true;
-}
+
 
 void    Client::sendResponse1(std::string content, int len, std::string ctype)
 {
@@ -233,6 +344,68 @@ void    Client::sendResponse1(std::string content, int len, std::string ctype)
 	}
 }
 
+// ======================= POST method ==========================================
+
+int	Client::is_request_well_formed()
+{
+	std::string path = this->request->getPath();
+	std::string charAllowed = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&'()*+,/:;=?@[]";
+	int	badChar = 0;
+
+	for (int i = 0; i < (int)path.length(); i++)
+	{
+		size_t pos = charAllowed.find(path[i]);
+		if (pos == std::string::npos)
+		{
+			badChar = 1;
+			break;
+		}
+	}
+
+	std::map<std::string, std::string> ourHeaders = this->request->getHeaders();
+	std::map<std::string, std::string>::iterator it = ourHeaders.find("Transfer-Encoding");
+	// bad request
+	if (badChar == 1 || this->request->getBad() == 1 || (it == ourHeaders.end() && ourHeaders.find("Content-Length") == ourHeaders.end()))
+	{
+		sendErrorResponse(400, "Bad Request", "<html><body><h1>400 Bad Request</h1></body></html>");
+		return (-1);
+	}
+	// transfer encoding is equal to chunked
+	if (ourHeaders["Transfer-Encoding"] != "chunked")
+	{
+		sendErrorResponse(501, "Not Implemented", "<html><body><h1>501 Not Implemented</h1></body></html>");
+		return (-1);
+	}
+	// request uri containe more that 2048 char
+	if (path.length() > 2048)
+	{
+		sendErrorResponse(414, "Request-URI Too Long", "<html><body><h1>414 Request-URI Too Long</h1></body></html>");
+		return (-1);
+	}
+	// the body length larger than the max body size in the config file
+	if (true)
+	{
+		// ...
+	}
+	return (true);
+}
+
+// true -> close, flase continue;
+
+bool	Client::postMethodHandler(void)
+{
+
+	if (is_request_well_formed() == -1)
+		return true;
+	// read until body is complte:
+	
+	this->upload = new Upload(this->request, this->cpt);
+	std::cout << "the start method is called success" << std::endl;
+	this->upload->start();
+	this->cpt++;
+	return  true;
+}
+
 bool Client::run(void)  
 {
 	return this->receiveResponse();
@@ -240,6 +413,9 @@ bool Client::run(void)
 
 Client::~Client()
 {
-	delete request;
+	if (upload)
+		delete upload;
+	if (request)
+		delete request;
 	close(_fd);
 }
