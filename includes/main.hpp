@@ -41,4 +41,5 @@
 std::vector<std::string>	ft_split(std::string str, std::string needed);
 std::string&				rtrim(std::string& s, std::string t);
 std::string&				ltrim(std::string& s, std::string t);
-std::string&				trim(std::string& s, std::string trimSep);
+std::string& advanced_trim(std::string& s, std::string trimSep);
+bool	regFile(std::string path);

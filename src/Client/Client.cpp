@@ -6,7 +6,7 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/13 18:00:21 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/15 13:50:27 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,9 @@ bool	Client::receiveResponse(void)
 			this->request->parseRequest();
 			this->request->printRequest();
 			if (this->request->getMethod().compare("GET") == 0)
+			{
 				return getMethodHandler();
+			}
 			else if (this->request->getMethod().compare("POST") == 0)
 				return postMethodHandler();
 			// sendResponse();
@@ -186,6 +188,7 @@ std::string	Client::getMimeTypeFromExtension(const std::string& path) {
 		std::string extension = path.substr(dotPos);
 		if (!extension.empty()) {
 		std::map<std::string, std::string>::iterator it = extensionToMimeType.find(extension);
+		std::cout << "video extension: " << extension << "\n";
 		if (it != extensionToMimeType.end()) {
 			return it->second; // Return the corresponding MIME type
 		}
@@ -198,6 +201,8 @@ bool Client::checkIfDirectoryIsLocation( std::string path )
 {
 	struct stat st;
 
+			// std::cout << "location PATH: "<< locationPath << "\n";
+			std::cout << "PATH: "<< path << "\n";
 	if (stat(path.c_str(), &st) != 0)
 		return false;
 	if (S_ISDIR(st.st_mode)) {
@@ -205,7 +210,7 @@ bool Client::checkIfDirectoryIsLocation( std::string path )
 		{
 			std::string locationPath, initialPath;
 			initialPath = _serverBlock->getLocations().at(i).getKeyFromAttributes("path");
-			initialPath = trim(initialPath, "\"");
+			initialPath = advanced_trim(initialPath, "\"");
 			if (this->_serverBlock->getLocations().at(i).getKeyFromAttributes("root").length() > 0)
 				locationPath = this->_serverBlock->getLocations().at(i).getKeyFromAttributes("root") + initialPath;
 			else
@@ -236,23 +241,48 @@ void	Client::handleRequestFromRoot()
 	}
 }
 
-void	Client::handleRequestFromLocation( std::string dir )
+void	handleFolderRequest( std::string fullPath)
 {
-	std::string path;
-	std::cout << "ana f location handler\n";
-	for (size_t i = 0; i < this->_serverBlock->getLocations().size(); i++)
-	{
-		path = this->_serverBlock->getLocations().at(i).getKeyFromAttributes("path");
-		if (path == dir)
-		{
+	std::cout << fullPath << "\n";
+}
 
+void Client::handleRequestFromLocation(std::string dir) {
+	std::string path;
+
+	dir = "/" + dir;
+	for (size_t i = 0; i < this->_serverBlock->getLocations().size(); i++) {
+		path = this->_serverBlock->getLocations().at(i).getLocationPath();
+			// std::cout << "Dir: " << dir << std::endl;
+			// std::cout << "Patho:\t" << path << "\n";
+		// path = trim(path, "\"");
+		// Check if the requested path matches the configured location
+		if ( dir == path || (dir.size() > path.size() && dir.compare(0, path.size(), path) == 0 && dir[path.size()] == '/')) {
+			// Check if the request path refers to a specific file or a folder
+			std::string fullPath = this->_serverBlock->getRoot() + this->request->getPath();
+			std::cout << fullPath << "\n";
+			bool isFile = regFile(fullPath);
+			if (isFile) {
+				if (getMimeTypeFromExtension(fullPath).find("image") != std::string::npos ||
+					getMimeTypeFromExtension(fullPath).find("video") != std::string::npos) {
+					serveImage(fullPath);
+				} else {
+					readFile(fullPath);
+				}
+			} else {
+				// Handle request for a folder (apply index logic, etc.)
+				handleFolderRequest(fullPath);
+			}
+
+			// Break the loop since you found a matching location
+			break;
 		}
 	}
 }
 
+
 bool Client::getMethodHandler(void) {
 	std::string requestedPath = this->request->getPath();
-
+	// std::cout << "the requestedPath:\t" << this->request->getPath() << "\n";
 	try {
 		// Check if the requested path has a directory after the hostname
 		if (requestedPath == "/") {
@@ -261,10 +291,13 @@ bool Client::getMethodHandler(void) {
 			// Extract directory and handle request from location
 			size_t directoryEndPos = requestedPath.find("/", 1);
 			std::string directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(1, directoryEndPos - 1) : requestedPath.substr(1);
-			if (directory.empty()) {
-				directory = "/";
-			}
-			handleRequestFromLocation(directory);
+			// if (directory.empty()) {
+			// 	directory = "/";
+			// }
+			if (checkIfDirectoryIsLocation(this->_serverBlock->getRoot() + "/" + directory))
+				handleRequestFromLocation(directory);
+			else
+				sendErrorResponse(404, "NOT FOUND", ERROR404);
 		}
 	} catch ( const std::exception &e )
 	{

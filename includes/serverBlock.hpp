@@ -23,8 +23,8 @@ class serverBlock
         int         port;
         bool        autoIndex;
         std::map<std::string, std::string> attributes;
-        std::vector<Location> locations;
     public:
+        std::vector<Location> locations;
         serverBlock();
 
         void    setLocation( const Location &e ) ;

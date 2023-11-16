@@ -1,5 +1,5 @@
 #include "../../includes/Location.hpp"
-
+#include "../../includes/main.hpp"
 Location::Location()
 {
     root = "www";
@@ -26,9 +26,8 @@ void    Location::parseLocations( void )
         // std::cout << "*" << iterator->first<< "*" << std::endl;
         if (iterator->first == "path")
         {
-            std::cout << "Location Path in COnf file\t"<< iterator->second << "\n";
-            this->locationPath = std::string(iterator->second);
-            // std::cout << "I am here\n";
+            // std::cout << "Location Path in COnf file\t"<< iterator->second << "\n";
+            this->locationPath = advanced_trim(iterator->second, "\"");
         }
         else if (iterator->first == "root")
             parseRoot(iterator->second);

@@ -6,7 +6,7 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:59:30 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/13 16:23:14 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/15 21:53:08 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@ class Client {
 		Request	*request;
 		// Response	*response;
 		serverBlock *_serverBlock;
+		long	read;
 
 		bool	getMethodHandler(void);
 		bool	postMethodHandler(void);
