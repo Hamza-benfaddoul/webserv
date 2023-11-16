@@ -29,13 +29,15 @@ bool	Client::receiveResponse(void)
 			throw std::runtime_error("Could not read from socket");
 		this->_responseBuffer += std::string(buffer, bytesRead);
 		if (std::string(buffer, bytesRead).find("\r\n\r\n") != std::string::npos)
+		{
+			this->request = new Request(_responseBuffer);
+			this->request->parseRequest();
+			this->request->printRequest();
 			_readHeader = false;
+		}
 	}
 	if (!_readHeader)
 	{
-		this->request = new Request(_responseBuffer);
-		this->request->parseRequest();
-		this->request->printRequest();
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
