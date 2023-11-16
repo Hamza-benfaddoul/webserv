@@ -2,49 +2,58 @@
 #include "../../includes/main.hpp"
 Location::Location()
 {
-    root = "www";
-    locationPath = "/";
+	root = "www";
+	locationPath = "/";
+	GET = true;
+	POST = true;
+	DELETE = true;
 }
 
 
-void    Location::setAttribute( const std::string &key, const std::string &value )
+void    Location::setAttribute( const std::string &key, std::string value )
 {
-    //  this->locationAttributes[key] = value;
-     this->locationAttributes.insert(std::pair<std::string, std::string>(key, value));
-    }
+	//  this->locationAttributes[key] = value;
+	 this->locationAttributes.insert(std::pair<std::string, std::string>(key, advanced_trim(value, "\"")));
+	}
 
 std::string Location::getKeyFromAttributes(std::string key)
 {
-    return locationAttributes.find(key)->second;
+	std::map<std::string, std::string>::iterator it = locationAttributes.find(key);
+	if (it != locationAttributes.end() && it->second.length() > 0) {
+		return it->second;
+	} else {
+		return std::string("");
+	}
 }
+
 
 void    Location::parseLocations( void )
 {
-    std::map<std::string, std::string> location = getLocationAttributes();
-    for (std::map<std::string, std::string>::iterator iterator = location.begin(); iterator != location.end(); iterator++)
-    {
-        // std::cout << "*" << iterator->first<< "*" << std::endl;
-        if (iterator->first == "path")
-        {
-            // std::cout << "Location Path in COnf file\t"<< iterator->second << "\n";
-            this->locationPath = advanced_trim(iterator->second, "\"");
-        }
-        else if (iterator->first == "root")
-            parseRoot(iterator->second);
-        else if (iterator->first == "methods")
-            parseMethods(iterator->second);
-        else if (iterator->first == "autoindex")
+	std::map<std::string, std::string> location = getLocationAttributes();
+	for (std::map<std::string, std::string>::iterator iterator = location.begin(); iterator != location.end(); iterator++)
+	{
+		// std::cout << "*" << iterator->first<< "*" << std::endl;
+		if (iterator->first == "path")
+		{
+			// std::cout << "Location Path in COnf file\t"<< iterator->second << "\n";
+			this->locationPath = advanced_trim(iterator->second, "\"");
+		}
+		else if (iterator->first == "root")
+			parseRoot(iterator->second);
+		else if (iterator->first == "methods")
+			parseMethods(iterator->second);
+		else if (iterator->first == "autoindex")
 			parseAutoIndex(iterator->second);
-        else if (iterator->first == "index")
-            parseIndex(iterator->second);
+		else if (iterator->first == "index")
+			parseIndex(iterator->second);
 			// parsePortNumber(iterator->second);
-    	// std::cout << iterator->first << ": " << iterator->second << std::endl;
-    }
+		// std::cout << iterator->first << ": " << iterator->second << std::endl;
+	}
 }
 
 void Location::parseIndex( const std::string &value)
 {
-    (void)value;
+	(void)value;
 
 }
 
@@ -60,59 +69,62 @@ void Location::parseAutoIndex( const std::string &value)
 
 void    Location::parseRoot( const std::string &root )
 {
-    // std::cout << root << std::endl;
-    if (!root.empty())
-    {
-        struct stat s;
-        if( stat( root.c_str(), &s ) != 0 )
-            exceptionsManager("cannot access " + root );
-        else if( s.st_mode & S_IFDIR ){}  // S_ISDIR() doesn't exist on my windows
-            // exceptionsManager(root + " is a directory");
-        else
-            exceptionsManager(root +  " is not a directory");
-    }
+	// std::cout << root << std::endl;
+	if (!root.empty())
+	{
+		struct stat s;
+		if( stat( root.c_str(), &s ) != 0 )
+			exceptionsManager("cannot access " + root );
+		else if( s.st_mode & S_IFDIR ){}  // S_ISDIR() doesn't exist on my windows
+			// exceptionsManager(root + " is a directory");
+		else
+			exceptionsManager(root +  " is not a directory");
+	}
 }
 
-void    Location::parseMethods( const std::string &methods )
+void	Location::parseMethods( const std::string &methods )
 {
-    std::string method;
-    std::stringstream input_stringstream(methods);
+	GET = false;
+	POST = false;
+	DELETE = false;
+	std::string method;
+	std::stringstream input_stringstream(methods);
 	while (getline(input_stringstream,method,','))
 	{
-        method = trim(method);
-        if (method.compare("GET") == 0)
-            GET = true;
-        else if (method.compare("POST") == 0)
-            POST = true;
-        else if (method.compare("DELETE") == 0)
-            DELETE = true;
-        else
-            exceptionsManager("Unexpectod Method");
+		method = trim(method);
+		if (method.compare("GET") == 0)
+			GET = true;
+		else if (method.compare("POST") == 0)
+			POST = true;
+		else if (method.compare("DELETE") == 0)
+			DELETE = true;
+		else
+			exceptionsManager("Unexpectod Method");
 	}
 }
 
 // trim from end of string (right)
 std::string& Location::rtrim(std::string& s, const char* t)
 {
-    s.erase(s.find_last_not_of(t) + 1);
-    return s;
+	s.erase(s.find_last_not_of(t) + 1);
+	return s;
 }
 
 // trim from beginning of string (left)
 std::string& Location::ltrim(std::string& s, const char* t)
 {
-    s.erase(0, s.find_first_not_of(t));
-    return s;
+	s.erase(0, s.find_first_not_of(t));
+	return s;
 }
 
 std::string& Location::trim(std::string& s)
 {
-    return ltrim(rtrim(s, " []"), " []");
+	return ltrim(rtrim(s, " []"), " []");
 }
 
 void    Location::toString(void) const
 {
-    std::cout << "Location Content \n" << "Root: " << getRoot() << "; AutoIndex: " << getAutoIndex() << "; Methods: " << getMethods() << "\n";
+	std::cout << "Location Content \n" << "Root: " << getRoot() << "; AutoIndex: " << getAutoIndex() << "; Methods: " << getMethods() << "\n";
 }
 void Location::exceptionsManager(std::string c)
 {

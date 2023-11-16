@@ -6,7 +6,7 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:59:30 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/15 21:53:08 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/16 23:47:21 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,9 @@
 #include "Request.hpp"
 #define ERROR403 "www/error/403.html"
 #define ERROR404 "www/error/404.html"
+#define ERROR301 "www/error/301.html"
+#define ERROR302 "www/error/302.html"
+#define ERROR405 "www/error/405.html"
 class serverBlock;
 
 class Client {
@@ -26,12 +29,14 @@ class Client {
 		Request	*request;
 		// Response	*response;
 		serverBlock *_serverBlock;
-		long	read;
+		long	readd;
+		bool	checkRequestPath(std::string);
 
 		bool	getMethodHandler(void);
 		bool	postMethodHandler(void);
 		bool	receiveResponse(void);
 		bool	checkIfDirectoryIsLocation( std::string );
+		bool	checkDir( std::string );
 
 		void	sendResponse(void);
 		void	sendErrorResponse( int, std::string, std::string );

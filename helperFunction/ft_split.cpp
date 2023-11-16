@@ -34,16 +34,16 @@ std::string& ltrim(std::string& s, std::string t)
     return s;
 }
 
-std::string& trim(std::string& s, std::string trimSep)
+std::string& advanced_trim(std::string& s, std::string trimSep)
 {
     return ltrim(rtrim(s, trimSep.c_str()), trimSep.c_str());
 }
 
-bool	regFile(std::string path)
-{
-	struct stat st;
+// bool	regFile(std::string path)
+// {
+// 	struct stat st;
 
-	if (stat(path.c_str(), &st) != 0)
-		return false;
-	return S_ISREG(st.st_mode);
-}
+// 	if (stat(path.c_str(), &st) != 0)
+// 		return false;
+// 	return S_ISREG(st.st_mode);
+// }
