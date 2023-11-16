@@ -18,8 +18,13 @@
 
 */
 
-Request::Request(std::string req) : request(req)
+Request::Request(std::string req) : request(req), bad(0)
 {
+}
+
+bool Request::getBad() const
+{
+    return this->bad;
 }
 
 Request::~Request()
@@ -39,12 +44,17 @@ void    Request::parseRequest()
     part2 = this->request.substr(pos + 4, this->request.length());
     elements = ft_split(part1, "\r\n");
     firstLine = ft_split(elements.at(0), " ");
-    std::string reqMethod = firstLine.at(0);
-    if (reqMethod == "GET" || reqMethod == "POST" || reqMethod == "DELETE")
-        this->method = firstLine.at(0);
-    else
-        throw std::runtime_error("bad method requested");
+    if ((int)firstLine.size() > 3)
+    {
+        bad = 1;
+        return;
+    }
     this->path = firstLine.at(1);
+    std::string reqMethod = firstLine.at(0);
+    // if (reqMethod == "GET" || reqMethod == "POST" || reqMethod == "DELETE")
+    //     this->method = firstLine.at(0);
+    // else
+    //     throw std::runtime_error("bad method requested");
     while (i < (int)elements.size())
     {
         pos = elements.at(i).find(": ");

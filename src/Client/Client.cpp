@@ -15,7 +15,8 @@
 #include <vector>
 #include <sys/stat.h>
 
-Client::Client(size_t fd, std::vector<serverBlock> *serverBlock) :
+int Client::cpt = 0;
+Client::Client(size_t fd, serverBlock *serverBlock) :
 	_fd(fd), _serverBlock(serverBlock)
 {
 	this->request = NULL;
@@ -236,10 +237,59 @@ void    Client::sendResponse1(std::string content, int len, std::string ctype)
 
 // ======================= POST method ==========================================
 
+int	Client::is_request_well_formed()
+{
+	std::string path = this->request->getPath();
+	std::string charNotAllowed = "!#$%&'()*+,/:;=?@[]";
+	int	badChar = 0;
+
+	for (int i = 0; i < charNotAllowed.length(); i++)
+	{
+		for (int j = 0; j < path.length(); j++)
+		{
+			if (path[j] == charNotAllowed[i])
+			{
+				badChar = 1;
+				break;
+			}
+		}
+		if (badChar == 1)
+			break;
+	}
+	std::map<std::string, std::string> ourHeaders = this->request->getHeaders();
+	std::map<std::string, std::string>::iterator it = ourHeaders.find("Transfer-Encoding");
+	// bad request
+	if (badChar == 1 || this->request->getBad() == 1 || (it == ourHeaders.end() && ourHeaders.find("Content-Length") == ourHeaders.end()))
+	{
+		sendErrorResponse(400, "Bad Request", "<html><body><h1>400 Bad Request</h1></body></html>");
+		return (-1);
+	}
+	// transfer encoding is equal to chunked
+	if (ourHeaders["Transfer-Encoding"] != "chunked")
+	{
+		sendErrorResponse(501, "Not Implemented", "<html><body><h1>501 Not Implemented</h1></body></html>");
+		return (-1);
+	}
+	// request uri containe more that 2048 char
+	if (path.length() > 2048)
+	{
+		sendErrorResponse(414, "Request-URI Too Long", "<html><body><h1>414 Request-URI Too Long</h1></body></html>");
+		return (-1);
+	}
+	// the body length larger than the max body size in the config file
+	if (true)
+	{
+		// ...
+	}
+}
+
 bool	Client::postMethodHandler(void){
-	this->upload = new Upload(this->request);
+	if (is_request_well_formed() == -1)
+		return false;
+	this->upload = new Upload(this->request, this->cpt);
 	std::cout << "the start method is called success" << std::endl;
 	this->upload->start();
+	this->cpt++;
 	return  true;
 }
 

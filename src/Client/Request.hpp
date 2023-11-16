@@ -19,6 +19,7 @@ private:
     std::map<std::string, std::string> headers;
     std::vector<std::string> body;
     std::string bodyString;
+    bool    bad;
 
 public:
     Request(std::string req);
@@ -30,6 +31,8 @@ public:
     const std::map<std::string, std::string > &getHeaders() const;
     const std::vector<std::string> & getBody() const;
     const std::string& getBodyString() const;
+    int getCounter();
+    bool getBad() const;
     ~Request();
 };
 

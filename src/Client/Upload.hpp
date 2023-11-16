@@ -10,8 +10,10 @@ private:
     Upload();
     std::fstream	bodyContent;
     Request *request;
+    int cpt;
+    std::string filename;
 public:
-    Upload(Request *req);
+    Upload(Request *req, int in_cpt);
     ~Upload();
     void    start();
     void    readChunkedBody();

@@ -27,6 +27,8 @@ class Client {
 		Upload	*upload;
 		// Response	*response;
 		serverBlock *_serverBlock;
+		static int cpt;
+		
 		bool	getMethodHandler(void);
 		bool	postMethodHandler(void);
 		bool	receiveResponse(void);
@@ -39,7 +41,7 @@ class Client {
 		void	readFile( const std::string path );
 		void	readChunkedBody();
 		void	readBody();
-
+		int	is_request_well_formed();
 		std::string	getMimeTypeFromExtension(const std::string& path);
 
 
