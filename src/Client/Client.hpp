@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:59:30 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/15 21:53:08 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/16 16:29:28 by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,12 +33,11 @@ class Client {
 		Request	*request;
 		Upload	*upload;
 		// Response	*response;
-		serverBlock *_serverBlock;
 		static int cpt;
 		long	readd;
 		int totalRead;
-		
-
+		bool		_readHeader;
+		serverBlock	*_serverBlock;
 		bool	getMethodHandler(void);
 		bool	postMethodHandler(void);
 		bool	receiveResponse(void);
@@ -53,7 +52,7 @@ class Client {
 		void	readFile( const std::string path );
 		void	readChunkedBody();
 		void	readBody();
-		int	is_request_well_formed();
+		int		is_request_well_formed();
 		void	handleRequestFromRoot();
 		void	handleRequestFromLocation( std::string );
 

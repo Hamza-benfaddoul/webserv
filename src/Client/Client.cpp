@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/15 13:50:27 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/16 16:29:40 by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 
 int Client::cpt = 0;
 Client::Client(size_t fd, serverBlock *serverBlock) :
-	_fd(fd), _serverBlock(serverBlock)
+	_fd(fd),_readHeader(true), _serverBlock(serverBlock)
 {
 	this->request = NULL;
 	this->upload = NULL;
@@ -26,14 +26,17 @@ Client::Client(size_t fd, serverBlock *serverBlock) :
 
 bool	Client::receiveResponse(void)
 {
-	char buffer[2048] = {0};
-	int bytesRead;
-	int	contentLength;
+	//int bytesRead;
+	//int	contentLength;
 	this->totalRead = 0;
-	while ((bytesRead = read(_fd, buffer, 1024)))
+
+	//this->totalRead += bytesRead;
+
+	if (_readHeader)
 	{
-		this->totalRead += bytesRead;
-		// std::cout << "bytesRead: " << bytesRead << std::endl;
+		char	buffer[1024] = {0};
+		int		bytesRead;
+		bytesRead = read(_fd, buffer, 1024);
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
 		this->_responseBuffer += std::string(buffer, bytesRead);
@@ -44,17 +47,16 @@ bool	Client::receiveResponse(void)
 			this->request->parseRequest();
 			this->request->printRequest();
 			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
-			contentLength = strtod((Oheaders["Content-Length"]).c_str(), NULL);
-			if (this->request->getMethod().compare("GET") == 0)
-			{
-				return getMethodHandler();
-			}
-			else if (totalRead >= contentLength && this->request->getMethod().compare("POST") == 0)
-			{
-				return postMethodHandler();
-			}
+			//contentLength = strtod((Oheaders["Content-Length"]).c_str(), NULL);
+			_readHeader = false;
 		}
-		break;
+	}
+	if (!_readHeader)
+	{
+		if (this->request->getMethod().compare("GET") == 0)
+			return getMethodHandler();
+		else if (this->request->getMethod().compare("POST") == 0)
+			return postMethodHandler();
 	}
 	return false;
 }
@@ -388,11 +390,15 @@ int	Client::is_request_well_formed()
 	return (true);
 }
 
+// true -> close, flase continue;
+
 bool	Client::postMethodHandler(void)
 {
 
 	if (is_request_well_formed() == -1)
-		return false;
+		return true;
+	// read until body is complte:
+	
 	this->upload = new Upload(this->request, this->cpt);
 	std::cout << "the start method is called success" << std::endl;
 	this->upload->start();
