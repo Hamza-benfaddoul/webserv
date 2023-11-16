@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/13 12:53:16 by hamza            ###   ########.fr       */
+/*   Updated: 2023/11/16 16:29:40 by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,30 +16,30 @@
 #include <sys/stat.h>
 
 Client::Client(size_t fd, serverBlock *serverBlock) :
-	_fd(fd), _serverBlock(serverBlock) {};
+	_fd(fd), _readHeader(true), _serverBlock(serverBlock) {};
 
 bool	Client::receiveResponse(void)
 {
-	char buffer[1024] = {0};
-	int bytesRead;
-	while ((bytesRead = read(_fd, buffer, 1024)))
+	if (_readHeader)
 	{
-		// std::cout << "bytesRead: " << bytesRead << std::endl;
+		char	buffer[1024] = {0};
+		int		bytesRead;
+		bytesRead = read(_fd, buffer, 1024);
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
 		this->_responseBuffer += std::string(buffer, bytesRead);
 		if (std::string(buffer, bytesRead).find("\r\n\r\n") != std::string::npos)
-		{
-			this->request = new Request(_responseBuffer);
-			this->request->parseRequest();
-			this->request->printRequest();
-			if (this->request->getMethod().compare("GET") == 0)
-				return getMethodHandler();
-			else if (this->request->getMethod().compare("POST") == 0)
-				return postMethodHandler();
-			// sendResponse();
-		}
-		break;
+			_readHeader = false;
+	}
+	if (!_readHeader)
+	{
+		this->request = new Request(_responseBuffer);
+		this->request->parseRequest();
+		this->request->printRequest();
+		if (this->request->getMethod().compare("GET") == 0)
+			return getMethodHandler();
+		else if (this->request->getMethod().compare("POST") == 0)
+			return postMethodHandler();
 	}
 	return false;
 }

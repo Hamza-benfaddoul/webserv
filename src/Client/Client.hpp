@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:59:30 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/13 12:50:27 by hamza            ###   ########.fr       */
+/*   Updated: 2023/11/16 16:29:28 by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,9 +21,10 @@ class Client {
 		Client();
 		std::string _responseBuffer;
 		size_t		_fd;
-		Request	*request;
-		// Response	*response;
-		serverBlock *_serverBlock;
+		bool		_readHeader;
+
+		Request		*request;
+		serverBlock	*_serverBlock;
 		bool	getMethodHandler(void);
 		bool	postMethodHandler(void);
 		bool	receiveResponse(void);
