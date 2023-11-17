@@ -1,38 +1,34 @@
-POST / HTTP/1.1
-User-Agent: PostmanRuntime/7.33.0
-Accept: */*
-Postman-Token: 6a8c0da1-509a-4041-8c1d-09d97d3d9f08
-Host: localhost:2222
+GET /favicon.ico HTTP/1.1
+Host: 127.0.0.1:4003
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0
+Accept: image/avif,image/webp,*/*
+Accept-Language: en-US,en;q=0.5
 Accept-Encoding: gzip, deflate, br
 Connection: keep-alive
-Content-Type: multipart/form-data; boundary=--------------------------675913207616168677094182
-Content-Length: 164
-
-----------------------------675913207616168677094182
-Content-Disposition: form-data; name="name"
-
-hamza
-----------------------------675913207616168677094182--
+Referer: http://127.0.0.1:4003/bootstrap/
+Sec-Fetch-Dest: image
+Sec-Fetch-Mode: no-cors
+Sec-Fetch-Site: same-origin
+Pragma: no-cache
+Cache-Control: no-cache
 
 
 
-the method is: 
-the path is: /
+
+the method is: GET
+the path is: /favicon.ico
 the headers are: 
-Accept: */*
+Accept: image/avif,image/webp,*/*
 Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.5
+Cache-Control: no-cache
 Connection: keep-alive
-Content-Length: 164
-Content-Type: multipart/form-data; boundary=--------------------------675913207616168677094182
-Host: localhost:2222
-Postman-Token: 6a8c0da1-509a-4041-8c1d-09d97d3d9f08
-User-Agent: PostmanRuntime/7.33.0
+Host: 127.0.0.1:4003
+Pragma: no-cache
+Referer: http://127.0.0.1:4003/bootstrap/
+Sec-Fetch-Dest: image
+Sec-Fetch-Mode: no-cors
+Sec-Fetch-Site: same-origin
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0
 
 
--------------------------------------------------------
-
-->----------------------------675913207616168677094182<-
-->Content-Disposition: form-data; name="name"<-
-->hamza<-
-->----------------------------675913207616168677094182--<-
--><-

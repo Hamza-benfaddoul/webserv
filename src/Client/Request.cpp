@@ -49,12 +49,9 @@ void    Request::parseRequest()
         bad = 1;
         return;
     }
+    this->method = firstLine.at(0);
     this->path = firstLine.at(1);
     std::string reqMethod = firstLine.at(0);
-    // if (reqMethod == "GET" || reqMethod == "POST" || reqMethod == "DELETE")
-    //     this->method = firstLine.at(0);
-    // else
-    //     throw std::runtime_error("bad method requested");
     while (i < (int)elements.size())
     {
         pos = elements.at(i).find(": ");
@@ -71,12 +68,12 @@ void    Request::parseRequest()
     i = 0;
     elements.clear();
     this->bodyString = part2;
-    elements = ft_split(part2, "\r\n");
-    while (i < (int)elements.size())
-    {
-        this->body.push_back(elements.at(i));
-        i++;
-    }
+    // elements = ft_split(part2, "\r\n");
+    // while (i < (int)elements.size())
+    // {
+    //     this->body.push_back(elements.at(i));
+    //     i++;
+    // }
 }
 
 void    Request::printRequest() const
@@ -92,15 +89,16 @@ void    Request::printRequest() const
         req << it->first << ": " << it->second << std::endl;
     }
     req << std::endl << std::endl;
-    req << "-------------------------------------------------------" << std::endl << std::endl;
-    std::vector<std::string>::const_iterator itv;
-    for (itv = this->body.begin(); itv != this->body.end(); ++itv)
-    {
-        if (*itv == "\r\n")
-            req << "wrong();" << std::endl;
-        else
-            req << "->" << *itv << "<-" << std::endl;
-    }
+    // req << "-------------------------------------------------------" << std::endl << std::endl;
+    req << this->bodyString;
+    // std::vector<std::string>::const_iterator itv;
+    // for (itv = this->body.begin(); itv != this->body.end(); ++itv)
+    // {
+    //     if (*itv == "\r\n")
+    //         req << "wrong();" << std::endl;
+    //     else
+    //         req << "->" << *itv << "<-" << std::endl;
+    // }
     // std::cout << "the of the body(): " << this->body.size() << std::endl;
     req.close();
 }
@@ -114,7 +112,5 @@ const std::string &Request::getMimeType()
 {
     std::istringstream iss(headers.find("Accept")->second);
     getline(iss, mimeType, ',');
-    // std::cout << mimeType << std::endl;
-    // std::string(headers.find("Accept")->second, )
     return mimeType;
 }

@@ -6,7 +6,7 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:59:30 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/17 18:46:25 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/17 21:04:04 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,12 @@ class Client {
 		// Response	*response;
 		static int cpt;
 		long	readd;
-		int totalRead;
+		int		totalRead;
+		bool			errorCheck;
+		bool			fileCreated;
+		bool			canIRead;
+		int				totalBytesRead;
+		int				Content_Length;
 		bool		_readHeader;
 		serverBlock	*_serverBlock;
 		bool	checkRequestPath(std::string);
