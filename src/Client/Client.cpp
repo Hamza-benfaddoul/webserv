@@ -34,7 +34,7 @@ bool	Client::receiveResponse(void)
 		char	buffer[1024] = {0};
 		int		bytesRead;
 		bytesRead = read(_fd, buffer, 1024);
-		this->totalBytesRead += bytesRead;
+		// this->totalBytesRead += bytesRead;
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
 		this->_responseBuffer += std::string(buffer, bytesRead);
@@ -54,6 +54,7 @@ bool	Client::receiveResponse(void)
 	{
 		if (is_request_well_formed() == -1)
 			return true;
+		std::cout << "method " << this->request->getMethod() << std::endl;
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
@@ -368,6 +369,7 @@ int	Client::is_request_well_formed()
 	// bad request
 	if (badChar == 1 || this->request->getBad() == 1 || (it == ourHeaders.end() && ourHeaders.find("Content-Length") == ourHeaders.end()))
 	{
+		std::cout << badChar << " - " << this->request->getBad() << std::endl;
 		sendErrorResponse(400, "Bad Request", "<html><body><h1>400 Bad Request</h1></body></html>");
 		return (-1);
 	}
@@ -412,18 +414,15 @@ bool	Client::postMethodHandler(void)
 		this->upload = new Upload(this->request, this->cpt);
 		this->upload->createFile();
 		body = ltrim(firstBody, "\r\n");
+		totalBytesRead = body.length();
 		fileCreated = true;
 		this->cpt++;
 	}
 	// read until body is complte (chunk by chunk)
-	if (canIRead == true)
-		bytesRead = read(_fd, buffer, 1024);
-	std::cout << "the buffer is: " << buffer << "and: " << bytesRead << std::endl;
 	if (Headers.find("Transfer-Encoding") != Headers.end() && Headers["Transfer-Encoding"] == "chunked") // ============> chunk type
 	{
 		std::cout << "its a chunk request" << std::endl;
-		body += std::string(buffer, bytesRead);
-
+		// body += std::string(buffer, bytesRead);
 		return false;
 	}
 	else // ============> binary type
@@ -431,17 +430,19 @@ bool	Client::postMethodHandler(void)
 		std::cout << "==> " << totalBytesRead << " " << this->Content_Length << std::endl;
 		if (totalBytesRead < this->Content_Length)
 		{
+			bytesRead = read(_fd, buffer, 1024);
 			this->totalBytesRead += bytesRead;
 			body += std::string(buffer, bytesRead);
 			std::cout << this->totalBytesRead << std::endl;
 			this->upload->writeToFile(body);
-			return false; // keep reading 
+			if (totalBytesRead < this->Content_Length)
+				return false; // keep reading 
 		}
-		else
-		{
-			sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
-			return true; // close the connection
-		}
+		// else
+		// {
+		// 	sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
+		// 	return true; // close the connection
+		// }
 	}
 	sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
 	return  true; // close the connection
