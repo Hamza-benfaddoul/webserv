@@ -40,6 +40,7 @@ class Client {
 		bool			fileCreated;
 		bool			canIRead;
 		int				totalBytesRead;
+		int				Content_Length;
 
 		bool			getMethodHandler(void);
 		bool			postMethodHandler(void);

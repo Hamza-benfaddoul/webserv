@@ -34,6 +34,7 @@ bool	Client::receiveResponse(void)
 		char	buffer[1024] = {0};
 		int		bytesRead;
 		bytesRead = read(_fd, buffer, 1024);
+		this->totalBytesRead += bytesRead;
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
 		this->_responseBuffer += std::string(buffer, bytesRead);
@@ -44,11 +45,15 @@ bool	Client::receiveResponse(void)
 			this->request->parseRequest();
 			this->request->printRequest();
 			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
+			std::string C_Length = Oheaders["Content-Length"];
+			Content_Length = strtod(C_Length.c_str(), NULL);
 			_readHeader = false;
 		}
 	}
 	if (!_readHeader)
 	{
+		if (is_request_well_formed() == -1)
+			return true;
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
@@ -394,34 +399,52 @@ bool	Client::postMethodHandler(void)
 	int		bytesRead;
 	std::string body;
 
-	if (this->errorCheck == false && is_request_well_formed() == -1)
-	{
-		std::cout << "the request is bad .......... i think" << std::endl;
-		this->errorCheck = true;
-		return true;
-	}
+	// if (this->errorCheck == false && is_request_well_formed() == -1)
+	// {
+	// 	std::cout << "the request is bad .......... i think" << std::endl;
+	// 	this->errorCheck = true;
+	// 	return true;
+	// }
+
 	if (fileCreated == false)
 	{
+		std::string firstBody = this->request->getBodyString();
 		this->upload = new Upload(this->request, this->cpt);
 		this->upload->createFile();
-		body = ltrim(this->request->getBodyString(), "\r\n");
+		body = ltrim(firstBody, "\r\n");
 		fileCreated = true;
+		this->cpt++;
 	}
 	// read until body is complte (chunk by chunk)
 	if (canIRead == true)
 		bytesRead = read(_fd, buffer, 1024);
-	if (Headers.find("Transfer-Encoding") != Headers.end() && Headers["Transfer-Encoding"] == "chunked")
+	std::cout << "the buffer is: " << buffer << "and: " << bytesRead << std::endl;
+	if (Headers.find("Transfer-Encoding") != Headers.end() && Headers["Transfer-Encoding"] == "chunked") // ============> chunk type
 	{
+		std::cout << "its a chunk request" << std::endl;
+		body += std::string(buffer, bytesRead);
+
 		return false;
 	}
-	else
+	else // ============> binary type
 	{
-		this->totalBytesRead += bytesRead;
-		return false;
+		std::cout << "==> " << totalBytesRead << " " << this->Content_Length << std::endl;
+		if (totalBytesRead < this->Content_Length)
+		{
+			this->totalBytesRead += bytesRead;
+			body += std::string(buffer, bytesRead);
+			std::cout << this->totalBytesRead << std::endl;
+			this->upload->writeToFile(body);
+			return false; // keep reading 
+		}
+		else
+		{
+			sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
+			return true; // close the connection
+		}
 	}
-	//this->upload->start();
-	this->cpt++;
-	return  true;
+	sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
+	return  true; // close the connection
 }
 
 bool Client::run(void)  
