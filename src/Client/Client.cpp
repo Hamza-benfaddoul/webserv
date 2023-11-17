@@ -25,8 +25,9 @@ Client::Client(size_t fd, serverBlock *serverBlock) :
 	this->upload = NULL;
 	errorCheck = false;
 	fileCreated = false;
-	canIRead = true;
+	canIStart = false;
 	totalBytesRead = 0;
+	Content_Length = -1;
 }
 
 bool	Client::receiveResponse(void)
@@ -44,12 +45,18 @@ bool	Client::receiveResponse(void)
 		{
 			//std::cout << _responseBuffer << std::endl;
 			// std::cout << "request: " << _responseBuffer << std::endl;
+			postRequest = _responseBuffer;
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
 			this->request->printRequest();
 			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
-			std::string C_Length = Oheaders["Content-Length"];
-			Content_Length = strtod(C_Length.c_str(), NULL);
+			if (Oheaders.find("Content-Length") != Oheaders.end())
+			{
+				std::string C_Length = Oheaders["Content-Length"];
+				std::cout << "the content length in string " << C_Length << std::endl;
+				Content_Length = strtod(C_Length.c_str(), NULL);
+				std::cout << "yup there is a content length and its value is: " << Content_Length << std::endl;
+			}
 			_readHeader = false;
 		}
 	}
@@ -416,22 +423,34 @@ bool	Client::postMethodHandler(void)
 	}
 	else // ============> binary type
 	{
-		// std::cout << "==> " << totalBytesRead << " " << this->Content_Length << std::endl;
-		if (totalBytesRead < this->Content_Length)
+		std::cout << "==> " << totalBytesRead << " " << this->Content_Length << std::endl;
+		if (totalBytesRead < this->Content_Length || Content_Length == -1)
 		{
 			bytesRead = read(_fd, buffer, 1024);
-			this->totalBytesRead += bytesRead;
-			body += std::string(buffer, bytesRead);
-			// std::cout << this->totalBytesRead << std::endl;
-			this->upload->writeToFile(body);
-			if (totalBytesRead < this->Content_Length)
-				return false; // keep reading
+			postRequest += std::string(buffer, bytesRead);
+			if (postRequest.find("Content-Length") != std::string::npos)
+				canIStart = true;
+			// there is a case where the content length not exist in the first read() call 
+			if (canIStart && Content_Length == -1)
+			{
+				delete	this->request;
+				canIStart = false;
+				this->request = new Request(postRequest);
+				this->request->parseRequest();
+				std::map<std::string, std::string> Oheaders = this->request->getHeaders();
+				std::string C_Length = Oheaders["Content-Length"];
+				Content_Length = strtod(C_Length.c_str(), NULL);
+			}
+			if (this->request->getBodyString().length() > 0)
+			{
+				this->totalBytesRead += bytesRead;
+				body += std::string(buffer, bytesRead);
+				// std::cout << this->totalBytesRead << std::endl;
+				this->upload->writeToFile(body);
+				if (totalBytesRead < this->Content_Length)
+					return false; // keep reading
+			}
 		}
-		// else
-		// {
-		// 	sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
-		// 	return true; // close the connection
-		// }
 	}
 	sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
 	return  true; // close the connection

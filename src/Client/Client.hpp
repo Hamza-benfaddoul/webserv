@@ -36,16 +36,18 @@ class Client {
 		Request	*request;
 		Upload	*upload;
 		// Response	*response;
-		static int cpt;
-		long	readd;
-		int		totalRead;
+		std::string postRequest;
+		static int 		cpt;
+		long			readd;
+		int				totalRead;
 		bool			errorCheck;
 		bool			fileCreated;
-		bool			canIRead;
+		bool			canIStart;
 		int				totalBytesRead;
 		int				Content_Length;
-		bool		_readHeader;
-		serverBlock	*_serverBlock;
+		bool			_readHeader;
+		serverBlock		*_serverBlock;
+
 		bool	checkRequestPath(std::string);
 		bool	getMethodHandler(void);
 		bool	postMethodHandler(void);
