@@ -17,21 +17,22 @@ private:
 	std::string	fastCgiindex;
 	std::string	fastCgiParam;
 	std::string	include;
-	bool		GET;
-	bool		POST;
-	bool		DELETE;
 	bool		autoIndex;
 	std::map<std::string, std::string>	locationAttributes;
 
 public:
+	bool		GET;
+	bool		POST;
+	bool		DELETE;
+	std::string	index;
 	Location();
-	void			setAttribute( const std::string &key, const std::string &value ) ;
+	void			setAttribute( const std::string &key, std::string value ) ;
 	std::map<std::string, std::string>	getLocationAttributes() const { return locationAttributes; }
 	void			parseLocations( void );
 	void			parseMethods( const std::string & );
 	void			parseRoot( const std::string & );
 	void			parseAutoIndex( const std::string & );
-	void			parseIndex( const std::string & );
+	void			parseIndex( std::string );
 	std::string		getKeyFromAttributes( std::string );
 	void	toString( void ) const;
 

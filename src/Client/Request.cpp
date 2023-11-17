@@ -44,7 +44,6 @@ void    Request::parseRequest()
     part2 = this->request.substr(pos + 4, this->request.length());
     elements = ft_split(part1, "\r\n");
     firstLine = ft_split(elements.at(0), " ");
-    std::cout << "the size of the first line: " << firstLine.size() << std::endl;
     if ((int)firstLine.size() > 3)
     {
         bad = 1;
@@ -90,7 +89,7 @@ void    Request::printRequest() const
         req << it->first << ": " << it->second << std::endl;
     }
     req << std::endl << std::endl;
-    req << "-------------------------------------------------------" << std::endl << std::endl;
+    // req << "-------------------------------------------------------" << std::endl << std::endl;
     req << this->bodyString;
     // std::vector<std::string>::const_iterator itv;
     // for (itv = this->body.begin(); itv != this->body.end(); ++itv)

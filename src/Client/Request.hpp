@@ -13,7 +13,6 @@ class Request
 private:
     Request();
     std::string request;
-    std::string method;
     std::string path;
     std::string mimeType;
     std::map<std::string, std::string> headers;
@@ -22,6 +21,7 @@ private:
     bool    bad;
 
 public:
+    std::string method;
     Request(std::string req);
     void parseRequest();
     void    printRequest() const;
