@@ -6,7 +6,7 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/17 12:27:40 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/17 16:02:03 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,13 +121,19 @@ bool	Client::handleDirs() {
 				} else if (test.getAutoIndex() == true)
 				{
 					// process listing
-					sendErrorResponse(202, "OK", "www/error/comming.html");
+					directoryListing(_serverBlock->getRoot() + "/" + directory );
 				}
 			}
 		}
 	}
 	return true;
 }
+
+void	Client::directoryListing(std::string path)
+{
+
+}
+
 bool	Client::handleFiles( std::string path) {
 	std::cout << "hellofrom handlefiles\n" << "path is:\t" << path << "\n";
 	return true;
