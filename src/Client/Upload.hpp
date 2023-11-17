@@ -15,9 +15,9 @@ private:
 public:
     Upload(Request *req, int in_cpt);
     ~Upload();
+    void    writeToFile(const std::string &content);
+    void	createFile();
     void    start();
-    void    readChunkedBody();
-    void    readBody();
 };
 
 
