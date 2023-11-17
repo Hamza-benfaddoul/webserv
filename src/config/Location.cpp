@@ -51,10 +51,9 @@ void    Location::parseLocations( void )
 	}
 }
 
-void Location::parseIndex( const std::string &value)
+void Location::parseIndex( std::string value)
 {
-	(void)value;
-
+	this->index = trim(value);
 }
 
 void Location::parseAutoIndex( const std::string &value)
@@ -62,8 +61,10 @@ void Location::parseAutoIndex( const std::string &value)
 	// std::cout << value.find("on") << std::endl;
 	if (std::string("on").compare(value) != 0 && std::string("off").compare(value) != 0 )
 		throw std::runtime_error("ERROR: Auto Index EXPECTS just `on` or `off` !!!.");
-	else
+	else if (value == "on")
 		autoIndex = true;
+	else
+		autoIndex = false;
 	// else if ( std::string("off").compare(value) != 0 )
 }
 

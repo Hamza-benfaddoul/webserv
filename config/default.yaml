@@ -14,7 +14,6 @@ server:
     - root:   www
     - autoindex: on
     - methods: [DELETE, POST]
-    - index:  [index.html, index.htm]
 
 server:
   listen: 2222

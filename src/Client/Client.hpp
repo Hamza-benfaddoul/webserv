@@ -6,7 +6,7 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:59:30 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/16 23:47:21 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/17 12:10:15 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,8 +37,12 @@ class Client {
 		bool	receiveResponse(void);
 		bool	checkIfDirectoryIsLocation( std::string );
 		bool	checkDir( std::string );
+		bool	handleFiles( std::string );
+		bool	handleDirs();
+		bool	checkType();
 
 		void	sendResponse(void);
+		void	sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string location);
 		void	sendErrorResponse( int, std::string, std::string );
 		void	sendResponse1(std::string , int , std::string );
 		void	closeConnection(void);

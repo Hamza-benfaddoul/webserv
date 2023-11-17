@@ -24,6 +24,7 @@ public:
 	bool		GET;
 	bool		POST;
 	bool		DELETE;
+	std::string	index;
 	Location();
 	void			setAttribute( const std::string &key, std::string value ) ;
 	std::map<std::string, std::string>	getLocationAttributes() const { return locationAttributes; }
@@ -31,7 +32,7 @@ public:
 	void			parseMethods( const std::string & );
 	void			parseRoot( const std::string & );
 	void			parseAutoIndex( const std::string & );
-	void			parseIndex( const std::string & );
+	void			parseIndex( std::string );
 	std::string		getKeyFromAttributes( std::string );
 	void	toString( void ) const;
 
