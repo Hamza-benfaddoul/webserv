@@ -6,7 +6,7 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/17 18:24:15 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/17 20:53:26 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,33 +16,52 @@
 #include <sys/stat.h>
 #include "dirent.h"
 
+int Client::cpt = 0;
 Client::Client(size_t fd, serverBlock *serverBlock) :
-	_fd(fd), _serverBlock(serverBlock) {};
+	_fd(fd), _serverBlock(serverBlock)
+{
+	this->_readHeader = true;
+	this->request = NULL;
+	this->upload = NULL;
+	this->totalRead = 0;
+}
 
 bool	Client::receiveResponse(void)
 {
-	char buffer[1024] = {0};
-	int bytesRead;
-	while ((bytesRead = read(_fd, buffer, 1024)))
+	//int bytesRead;
+	//int	contentLength;
+	this->totalRead = 0;
+
+	//this->totalRead += bytesRead;
+
+	if (_readHeader)
 	{
-		// std::cout << "bytesRead: " << bytesRead << std::endl;
+		char	buffer[1024] = {0};
+		int		bytesRead;
+		bytesRead = read(_fd, buffer, 1024);
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
 		this->_responseBuffer += std::string(buffer, bytesRead);
 		if (std::string(buffer, bytesRead).find("\r\n\r\n") != std::string::npos)
 		{
+			//std::cout << _responseBuffer << std::endl;
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
 			this->request->printRequest();
-			if (this->request->getMethod().compare("GET") == 0)
-			{
-				return getMethodHandler();
-			}
-			else if (this->request->getMethod().compare("POST") == 0)
-				return postMethodHandler();
-			// sendResponse();
+			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
+			//contentLength = strtod((Oheaders["Content-Length"]).c_str(), NULL);
+			_readHeader = false;
+		  std::cout << "hamza" << request->getMethod() << "*";
 		}
-		break;
+	}
+	if (!_readHeader)
+	{
+		std::cout << "daz\n";
+		std::cout << "*" << request->getMethod() << "*";
+		if (this->request->getMethod().compare("GET") == 0)
+			return getMethodHandler();
+		else if (this->request->getMethod().compare("POST") == 0)
+			return postMethodHandler();
 	}
 	return false;
 }
@@ -219,10 +238,6 @@ bool Client::getMethodHandler(void) {
 	return true;
 }
 
-bool	Client::postMethodHandler(void){
-	std::cout << "hey from post\n";
-	return  true;
-}
 
 bool Client::run(void)
 {
@@ -298,4 +313,87 @@ void Client::readFile(const std::string path) {
 		// Handle file not found
 		sendErrorResponse(404, "Not Found", "<html><body><h1>404 Not Found</h1></body></html>");
 	}
+}
+
+// void    Client::sendResponse1(std::string content, int len, std::string ctype)
+// {
+// 	std::stringstream ss;
+// 	ss << len;
+
+// 	std::string response =
+// 		"HTTP/1.1 200 OK\r\n"
+// 		"Content-Type: " + ctype + "; charset=UTF-8\r\n"
+// 		"Content-Length: " + ss.str() + "\r\n"
+// 		"Connection: close\r\n\r\n";
+
+// 	write(_fd, response.c_str(), response.length());
+// 	write(_fd, content.c_str(), len);
+
+// 	fsync(_fd);
+
+// 	if (write(_fd, "Connection: close\r\n", 19) == -1) {
+// 		perror("Error writing connection close header");
+// 	}
+// }
+
+// ======================= POST method ==========================================
+
+int	Client::is_request_well_formed()
+{
+	std::string path = this->request->getPath();
+	std::string charAllowed = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&'()*+,/:;=?@[]";
+	int	badChar = 0;
+
+	for (int i = 0; i < (int)path.length(); i++)
+	{
+		size_t pos = charAllowed.find(path[i]);
+		if (pos == std::string::npos)
+		{
+			badChar = 1;
+			break;
+		}
+	}
+
+	std::map<std::string, std::string> ourHeaders = this->request->getHeaders();
+	std::map<std::string, std::string>::iterator it = ourHeaders.find("Transfer-Encoding");
+	// bad request
+	if (badChar == 1 || this->request->getBad() == 1 || (it == ourHeaders.end() && ourHeaders.find("Content-Length") == ourHeaders.end()))
+	{
+		sendErrorResponse(400, "Bad Request", "<html><body><h1>400 Bad Request</h1></body></html>");
+		return (-1);
+	}
+	// transfer encoding is equal to chunked
+	if (ourHeaders["Transfer-Encoding"] != "chunked")
+	{
+		sendErrorResponse(501, "Not Implemented", "<html><body><h1>501 Not Implemented</h1></body></html>");
+		return (-1);
+	}
+	// request uri containe more that 2048 char
+	if (path.length() > 2048)
+	{
+		sendErrorResponse(414, "Request-URI Too Long", "<html><body><h1>414 Request-URI Too Long</h1></body></html>");
+		return (-1);
+	}
+	// the body length larger than the max body size in the config file
+	if (true)
+	{
+		// ...
+	}
+	return (true);
+}
+
+// true -> close, flase continue;
+
+bool	Client::postMethodHandler(void)
+{
+
+	if (is_request_well_formed() == -1)
+		return true;
+	// read until body is complte:
+
+	this->upload = new Upload(this->request, this->cpt);
+	std::cout << "the start method is called success" << std::endl;
+	this->upload->start();
+	this->cpt++;
+	return  true;
 }

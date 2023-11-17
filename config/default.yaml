@@ -1,7 +1,9 @@
 server:
-  listen: 4002
+  listen: 4001
   server_name: localhost
   root: www
+
+
   location:
     - path: "/"
     - root:   www
@@ -32,3 +34,25 @@ server:
     - autoindex: on
     - methods: [GET, POST]
     - index:  [index.html, index.htm]
+
+  location:
+    - path: "~ \.php$"
+    - methods: [GET, POST]
+    - fastcgi_pass:   127.0.0.1:9000 #fdkgvldjsld
+    - fastcgi_index:  index.php
+    - fastcgi_param:  SCRIPT_FILENAME  /scripts$fastcgi_script_name
+    - include:        fastcgi_params
+    - client_max_body_size: 20m
+    - proxy_pass: 127.0.0.1:8081/cgi-scritps/upload.php
+    - cgi_path: "cgi-bin/"
+
+  location:
+    - path: "/"
+    - root:   www
+    - autoindex: on
+    - methods: [GET, POST]
+    - index:  [index.html, index.htm]
+    - redirect: ["index.html"]
+    - client_max_body_size: "20m"
+    - upload_path: uploads
+

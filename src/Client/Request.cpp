@@ -18,8 +18,13 @@
 
 */
 
-Request::Request(std::string req) : request(req)
+Request::Request(std::string req) : request(req), bad(0)
 {
+}
+
+bool Request::getBad() const
+{
+    return this->bad;
 }
 
 Request::~Request()
@@ -28,19 +33,28 @@ Request::~Request()
 
 void    Request::parseRequest()
 {
+    std::string part1;
+    std::string part2;
     std::vector<std::string> elements;
     std::vector<std::string> firstLine;
+    size_t pos = this->request.find("\r\n\r\n");
     int i = 1;
 
-    elements = ft_split(this->request, "\r\n");
+    part1 = this->request.substr(0, pos);
+    part2 = this->request.substr(pos + 4, this->request.length());
+    elements = ft_split(part1, "\r\n");
     firstLine = ft_split(elements.at(0), " ");
-    std::string reqMethod = firstLine.at(0);
-    if (reqMethod == "GET" || reqMethod == "POST" || reqMethod == "DELETE")
-        this->method = firstLine.at(0);
-    else
-        throw std::runtime_error("bad method requested");
+    if ((int)firstLine.size() > 3)
+    {
+        bad = 1;
+        return;
+    }
     this->path = firstLine.at(1);
-   size_t   pos;
+    std::string reqMethod = firstLine.at(0);
+    // if (reqMethod == "GET" || reqMethod == "POST" || reqMethod == "DELETE")
+    //     this->method = firstLine.at(0);
+    // else
+    //     throw std::runtime_error("bad method requested");
     while (i < (int)elements.size())
     {
         pos = elements.at(i).find(": ");
@@ -48,13 +62,16 @@ void    Request::parseRequest()
         {
             std::vector<std::string> mapElements;
             mapElements = ft_split(elements.at(i), ": ");
-            // std::cout << "elements at i: " << elements.at(i) << std::endl;
             this->headers[mapElements.at(0)] = mapElements.at(1);
         }
         else
             break;
         i++;
     }
+    i = 0;
+    elements.clear();
+    this->bodyString = part2;
+    elements = ft_split(part2, "\r\n");
     while (i < (int)elements.size())
     {
         this->body.push_back(elements.at(i));
@@ -74,14 +91,15 @@ void    Request::printRequest() const
     {
         req << it->first << ": " << it->second << std::endl;
     }
-    req << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << std::endl;
+    req << std::endl << std::endl;
+    req << "-------------------------------------------------------" << std::endl << std::endl;
     std::vector<std::string>::const_iterator itv;
     for (itv = this->body.begin(); itv != this->body.end(); ++itv)
     {
         if (*itv == "\r\n")
             req << "wrong();" << std::endl;
         else
-            req << *itv << std::endl;
+            req << "->" << *itv << "<-" << std::endl;
     }
     // std::cout << "the of the body(): " << this->body.size() << std::endl;
     req.close();
@@ -89,6 +107,9 @@ void    Request::printRequest() const
 
 const std::string &Request::getMethod() const { return method; }
 const std::string &Request::getPath() const { return path; }
+const std::map<std::string, std::string> &Request::getHeaders() const {return this->headers; }
+const std::vector<std::string> & Request::getBody() const { return this->body; }
+const std::string &Request::getBodyString() const { return this->bodyString; }
 const std::string &Request::getMimeType()
 {
     std::istringstream iss(headers.find("Accept")->second);

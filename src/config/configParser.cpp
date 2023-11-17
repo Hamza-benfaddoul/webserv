@@ -17,15 +17,6 @@ configParser::~configParser()
 {
 }
 
-bool	regFile(std::string path)
-{
-	struct stat st;
-
-	if (stat(path.c_str(), &st) != 0)
-		return false;
-	return S_ISREG(st.st_mode);
-}
-
 long	getFileSize( std::string path ) {
 	struct stat st;
 	int rc = stat(path.c_str(), &st);
