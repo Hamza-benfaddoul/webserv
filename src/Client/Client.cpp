@@ -65,7 +65,10 @@ bool	Client::receiveResponse(void)
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
-			return postMethodHandler();
+		{
+			bool check = postMethodHandler();
+			return check;
+		}
 	}
 	return false;
 }
@@ -401,7 +404,7 @@ bool	Client::postMethodHandler(void)
 	// 	this->errorCheck = true;
 	// 	return true;
 	// }
-	std::cout << "how many this function get called" << std::endl;
+	std::cout << "cpt" << std::endl;
 	if (fileCreated == false)
 	{
 		std::string firstBody = this->request->getBodyString();
@@ -421,22 +424,26 @@ bool	Client::postMethodHandler(void)
 	}
 	else // ============> binary type
 	{
-		std::cout << "total readed: " << this->totalBytesRead << " and the content length: " << this->Content_Length << std::endl;
+		std::cout << "outside total readed: " << this->totalBytesRead << " and the content length: " << this->Content_Length << std::endl;
 		if (totalBytesRead < this->Content_Length)
 		{
-			bytesRead = read(_fd, buffer, 1024);
+			std::cout << "entred but still before read" << std::endl;
+			bytesRead = read(_fd, buffer, 1024);	
 			std::cout << "we read: " << bytesRead << std::endl;
 			//postRequest += std::string(buffer, bytesRead);
 			this->totalBytesRead += bytesRead;
 			body += std::string(buffer, bytesRead);
 			// std::cout << "the body: " << body << std::endl;
 			this->upload->writeToFile(body);
+			std::cout << "inside total readed: " << this->totalBytesRead << " and the content length: " << this->Content_Length << std::endl;
 			if (totalBytesRead < this->Content_Length)
 			{
+				std::cout << "====> keep reading" << std::endl;
 				return false; // keep reading
 			}
 		}
 	}
+	std::cout << "!!!! exit from reading" << std::endl;
 	sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
 	return  true; // close the connection
 }

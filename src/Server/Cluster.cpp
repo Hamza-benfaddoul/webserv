@@ -84,6 +84,7 @@ void Cluster::run(void)
 			else {
 				if (_clients.at(events[n].data.fd)->run()) // return true when client close the connection
 				{
+					std::cout << "ther eno true" << std::endl;
 					epoll_ctl(epollfd, EPOLL_CTL_DEL, events[n].data.fd, &ev);
 					close(events[n].data.fd);
 					delete _clients.at(events[n].data.fd);
