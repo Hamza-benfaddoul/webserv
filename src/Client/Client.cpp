@@ -41,11 +41,11 @@ bool	Client::receiveResponse(void)
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
 		this->_responseBuffer += std::string(buffer, bytesRead);
+		postRequest = _responseBuffer;
 		if (std::string(buffer, bytesRead).find("\r\n\r\n") != std::string::npos)
 		{
 			//std::cout << _responseBuffer << std::endl;
 			// std::cout << "request: " << _responseBuffer << std::endl;
-			postRequest = _responseBuffer;
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
 			this->request->printRequest();
@@ -53,9 +53,7 @@ bool	Client::receiveResponse(void)
 			if (Oheaders.find("Content-Length") != Oheaders.end())
 			{
 				std::string C_Length = Oheaders["Content-Length"];
-				std::cout << "the content length in string " << C_Length << std::endl;
 				Content_Length = strtod(C_Length.c_str(), NULL);
-				std::cout << "yup there is a content length and its value is: " << Content_Length << std::endl;
 			}
 			_readHeader = false;
 		}
@@ -403,7 +401,7 @@ bool	Client::postMethodHandler(void)
 	// 	this->errorCheck = true;
 	// 	return true;
 	// }
-
+	std::cout << "how many this function get called" << std::endl;
 	if (fileCreated == false)
 	{
 		std::string firstBody = this->request->getBodyString();
@@ -423,32 +421,19 @@ bool	Client::postMethodHandler(void)
 	}
 	else // ============> binary type
 	{
-		std::cout << "==> " << totalBytesRead << " " << this->Content_Length << std::endl;
-		if (totalBytesRead < this->Content_Length || Content_Length == -1)
+		std::cout << "total readed: " << this->totalBytesRead << " and the content length: " << this->Content_Length << std::endl;
+		if (totalBytesRead < this->Content_Length)
 		{
 			bytesRead = read(_fd, buffer, 1024);
-			postRequest += std::string(buffer, bytesRead);
-			if (postRequest.find("Content-Length") != std::string::npos)
-				canIStart = true;
-			// there is a case where the content length not exist in the first read() call 
-			if (canIStart && Content_Length == -1)
+			std::cout << "we read: " << bytesRead << std::endl;
+			//postRequest += std::string(buffer, bytesRead);
+			this->totalBytesRead += bytesRead;
+			body += std::string(buffer, bytesRead);
+			// std::cout << "the body: " << body << std::endl;
+			this->upload->writeToFile(body);
+			if (totalBytesRead < this->Content_Length)
 			{
-				delete	this->request;
-				canIStart = false;
-				this->request = new Request(postRequest);
-				this->request->parseRequest();
-				std::map<std::string, std::string> Oheaders = this->request->getHeaders();
-				std::string C_Length = Oheaders["Content-Length"];
-				Content_Length = strtod(C_Length.c_str(), NULL);
-			}
-			if (this->request->getBodyString().length() > 0)
-			{
-				this->totalBytesRead += bytesRead;
-				body += std::string(buffer, bytesRead);
-				// std::cout << this->totalBytesRead << std::endl;
-				this->upload->writeToFile(body);
-				if (totalBytesRead < this->Content_Length)
-					return false; // keep reading
+				return false; // keep reading
 			}
 		}
 	}
