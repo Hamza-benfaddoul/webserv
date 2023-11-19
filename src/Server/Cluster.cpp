@@ -75,7 +75,7 @@ void Cluster::run(void)
 				}
 				// std::cout << " server index " << events[n].data.fd - _servers[0]->getFd() << std::endl;
 				_clients.at(client_fd) = new Client(client_fd,_servers[events[n].data.fd - _servers[0]->getFd()]->_serverBlock);
-				ev.events = EPOLLIN | EPOLLET;
+				ev.events = EPOLLIN;
 				ev.data.fd = client_fd;
 				if (epoll_ctl(epollfd, EPOLL_CTL_ADD, client_fd, &ev) == -1) {
 					throw std::runtime_error("epoll_ctl");
