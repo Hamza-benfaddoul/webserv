@@ -6,7 +6,7 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:59:30 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/18 20:49:52 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/19 00:17:44 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,6 +72,7 @@ class Client {
 		void	handleRequestFromLocation( std::string );
 
 		std::string	getMimeTypeFromExtension(const std::string& path);
+		std::string	getErrorPage( std::string path );
 
 
 	public:

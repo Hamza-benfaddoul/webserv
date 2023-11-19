@@ -6,7 +6,7 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/18 21:40:38 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/19 00:27:10 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -189,10 +189,32 @@ bool	Client::handleFiles( std::string path) {
 	return true;
 }
 
+std::string	Client::getErrorPage( std::string requestedPath ) {
+	for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) {
+		Location test = this->_serverBlock->getLocations().at(i);
+		size_t directoryEndPos = requestedPath.find("/", 1);
+		std::string directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(1, directoryEndPos -1) : requestedPath.substr(1);
+
+		if ("/" + directory == test.getLocationPath())
+		{
+			// std::cout << test.getKeyFromAttributes("error_page") << "\n";
+			while ( test.getKeyFromAttributes("error_pages").length() > 0)
+			{
+				std::cout << test.getKeyFromAttributes("error_pages") << "\n";
+			}
+			// std::string errorPage = test.getKeyFromAttributes("error_page");
+			// if (error)
+		}
+	}
+	return ERROR404;
+}
+
 bool Client::getMethodHandler(void) {
 	std::string requestedPath = this->request->getPath();
 	if (access((_serverBlock->getRoot() + requestedPath).c_str(), R_OK) == -1)
-		sendErrorResponse(404, "Not Found", ERROR404);
+	{
+		sendErrorResponse(404, "Not Found", getErrorPage(requestedPath));
+	}
 	else if (checkType() == true)
 		return handleDirs();
 	else if (checkType() == false)
