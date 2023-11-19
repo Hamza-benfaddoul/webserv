@@ -26,6 +26,7 @@ Client::Client(size_t fd, serverBlock *serverBlock) :
 	errorCheck = false;
 	fileCreated = false;
 	canIStart = false;
+	isLocationExist = false;
 	totalBytesRead = 0;
 	Content_Length = -1;
 }
@@ -60,8 +61,9 @@ bool	Client::receiveResponse(void)
 	}
 	if (!_readHeader)
 	{
-		// if (is_request_well_formed() == -1)
-		// 	return true;
+		get_match_location_for_request_uri(this->request->getPath()); // get the desired location from the uri ("check the boolean called isLocationExist, true->exit, flae->!exist")
+		if (is_request_well_formed() == -1)
+			return true;
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
@@ -253,6 +255,7 @@ bool Client::run(void)
 
 Client::~Client()
 {
+	// delete upload;
 	delete request;
 	close(_fd);
 }
@@ -288,6 +291,25 @@ void	Client::sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string 
 	response << "\r\n";
 
 	write(_fd, response.str().c_str(), response.str().length());
+}
+
+void Client::get_match_location_for_request_uri(const std::string &uri)
+{
+	std::vector<Location> allLocations = this->_serverBlock->getLocations();
+	std::string locationPath;
+	Location location;
+
+	for (int i = 0; i < (int)allLocations.size(); i++)
+	{
+		location = allLocations.at(i);
+		locationPath = location.getLocationPath();
+		if (locationPath == uri)
+		{
+			ourLocation = location.getLocationAttributes();
+			isLocationExist = true;
+			break;
+		}
+	}
 }
 
 void Client::readFile(const std::string path) {
@@ -366,10 +388,10 @@ int	Client::is_request_well_formed()
 	// bad request
 	if (badChar == 1 || this->request->getBad() == 1 || (it == ourHeaders.end() && ourHeaders.find("Content-Length") == ourHeaders.end()))
 	{
-		// std::cout << badChar << " - " << this->request->getBad() << std::endl;
-		sendErrorResponse(400, "Bad Request", "<html><body><h1>400 Bad Request</h1></body></html>");
-		return (-1);
-	}
+	// 	// std::cout << badChar << " - " << this->request->getBad() << std::endl;
+	// 	sendErrorResponse(400, "Bad Request", "<html><body><h1>400 Bad Request</h1></body></html>");
+	// 	return (-1);
+	 }
 	// transfer encoding is equal to chunked
 	if (ourHeaders.find("Transfer-Encoding") != ourHeaders.end() && ourHeaders["Transfer-Encoding"] != "chunked")
 	{
@@ -381,6 +403,12 @@ int	Client::is_request_well_formed()
 	{
 		sendErrorResponse(414, "Request-URI Too Long", "<html><body><h1>414 Request-URI Too Long</h1></body></html>");
 		return (-1);
+	}
+	// if no location match the request uri ==> 404 not found
+	if (isLocationExist == false)
+	{
+	// 	sendErrorResponse(404, "Not Found", ERROR404);
+	// 	return (-1);
 	}
 	// the body length larger than the max body size in the config file
 	if (true)
@@ -398,12 +426,6 @@ bool	Client::postMethodHandler(void)
 	int		bytesRead;
 	std::string body;
 
-	// if (this->errorCheck == false && is_request_well_formed() == -1)
-	// {
-	// 	std::cout << "the request is bad .......... i think" << std::endl;
-	// 	this->errorCheck = true;
-	// 	return true;
-	// }
 	std::cout << "cpt" << std::endl;
 	if (fileCreated == false)
 	{
@@ -424,25 +446,34 @@ bool	Client::postMethodHandler(void)
 	}
 	else // ============> binary type
 	{
-		std::cout << "outside total readed: " << this->totalBytesRead << " and the content length: " << this->Content_Length << std::endl;
 		if (totalBytesRead < this->Content_Length)
 		{
-			std::cout << "entred but still before read" << std::endl;
-			bytesRead = read(_fd, buffer, 1024);	
+			// bytesRead = read(_fd, buffer, 1024);	
+			while (1) // this code should be deleted when hamza fix the bug of re-reading
+			{
+				bytesRead = read(_fd, buffer, 1024);
+				this->totalBytesRead += bytesRead;
+				body += std::string(buffer, bytesRead);
+				std::cout << "--> " << totalBytesRead << std::endl;
+				if (this->totalBytesRead + 1 >= this->Content_Length)
+					break;
+			} // all this code ofcourse.!!!
 			std::cout << "we read: " << bytesRead << std::endl;
 			//postRequest += std::string(buffer, bytesRead);
-			this->totalBytesRead += bytesRead;
-			body += std::string(buffer, bytesRead);
+			//this->totalBytesRead += bytesRead;// this line should be decommented it after hamza ....
+			//body += std::string(buffer, bytesRead); // this line should be decommented it after hamza ....
 			// std::cout << "the body: " << body << std::endl;
 			this->upload->writeToFile(body);
 			std::cout << "inside total readed: " << this->totalBytesRead << " and the content length: " << this->Content_Length << std::endl;
-			if (totalBytesRead < this->Content_Length)
-			{
-				std::cout << "====> keep reading" << std::endl;
-				return false; // keep reading
-			}
+			// if (totalBytesRead < this->Content_Length) // this also 
+			// {
+			// 	std::cout << "====> keep reading" << std::endl;
+			// 	return false; // keep reading
+			// } // this the end !!!!
+
 		}
 	}
+	this->upload->start();
 	std::cout << "!!!! exit from reading" << std::endl;
 	sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
 	return  true; // close the connection

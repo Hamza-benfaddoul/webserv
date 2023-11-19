@@ -60,6 +60,7 @@ void Cluster::run(void)
 			throw std::runtime_error("epoll_ctl");
 		}
 	}
+
 	for (;;) {
 		nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
 		if (nfds == -1) {
@@ -84,7 +85,7 @@ void Cluster::run(void)
 			else {
 				if (_clients.at(events[n].data.fd)->run()) // return true when client close the connection
 				{
-					std::cout << "ther eno true" << std::endl;
+					std::cout << "client allh irahmo\n";
 					epoll_ctl(epollfd, EPOLL_CTL_DEL, events[n].data.fd, &ev);
 					close(events[n].data.fd);
 					delete _clients.at(events[n].data.fd);

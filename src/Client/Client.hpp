@@ -47,6 +47,8 @@ class Client {
 		int				Content_Length;
 		bool			_readHeader;
 		serverBlock		*_serverBlock;
+		bool 			isLocationExist;
+		std::map<std::string, std::string>	ourLocation;
 
 		bool	checkRequestPath(std::string);
 		bool	getMethodHandler(void);
@@ -72,6 +74,7 @@ class Client {
 		int		is_request_well_formed();
 		void	handleRequestFromRoot();
 		void	handleRequestFromLocation( std::string );
+		void get_match_location_for_request_uri(const std::string &uri);
 
 		std::string	getMimeTypeFromExtension(const std::string& path);
 

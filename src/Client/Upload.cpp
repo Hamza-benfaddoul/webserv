@@ -7,6 +7,7 @@ Upload::Upload(Request *req, int in_cpt) : request(req), cpt(in_cpt)
 
 Upload::~Upload()
 {
+	std::cout << "the file should be removed is: " << this->filename << std::endl;
 	unlink(this->filename.c_str());
 	std::remove(this->filename.c_str());
 }
@@ -27,22 +28,7 @@ void	Upload::createFile()
 
 void Upload::start()
 {
-    // std::map <std::string, std::string> headers = this->request->getHeaders();
-	// std::map<std::string , std::string>::const_iterator it = headers.find("Transfer-Encoding");
 	
-	// int pid = fork();
-	// // REDIRECT_STATUS=100, SCRIPT_FILENAME, REQUEST_METHOD, QUERY_STRING, HTTP_COOKIE, HTTP_CONTENT_TYPE, CONTENT_TYPE
-	// char *arr[] = 
-	// {
-
-	// };
-	// if (pid == 0)
-	// {
-	// 	if (execve("cgi-bin/upload.php", arr, NULL) < 0)
-	// 		std::cout << "wait what the script not found but realy ......................" << std::endl;
-	// }
-	// bodyContent.close();
-	// unlink("www/bodyFiles/bodyContent");
 }
 
 void	Upload::writeToFile(const std::string &content)
