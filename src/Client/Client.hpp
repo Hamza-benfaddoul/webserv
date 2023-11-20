@@ -6,7 +6,7 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:59:30 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/19 00:17:44 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/19 17:38:38 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ class Client {
 		size_t		_fd;
 		Request	*request;
 		Upload	*upload;
+		int		_fdFile;
 		// Response	*response;
 		static int cpt;
 		bool	isRead;
@@ -56,7 +57,7 @@ class Client {
 		bool	handleDirs();
 		bool	checkType();
 		bool	readFile( const std::string, std::ifstream &);
-		bool	serveImage(std::ifstream & );
+		bool	serveImage();
 
 		void	directoryListing(std::string);
 		void	sendResponse(void);
@@ -72,7 +73,7 @@ class Client {
 		void	handleRequestFromLocation( std::string );
 
 		std::string	getMimeTypeFromExtension(const std::string& path);
-		std::string	getErrorPage( std::string path );
+		std::string	getErrorPage( int );
 
 
 	public:

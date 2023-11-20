@@ -6,7 +6,7 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/19 00:27:10 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/20 22:29:48 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,11 +15,13 @@
 #include <vector>
 #include <sys/stat.h>
 #include "dirent.h"
+#include <fcntl.h>
 
 int Client::cpt = 0;
 Client::Client(size_t fd, serverBlock *serverBlock) :
 	_fd(fd), _serverBlock(serverBlock)
 {
+	_fdFile = -1;
 	this->_readHeader = true;
 	this->request = NULL;
 	this->upload = NULL;
@@ -58,6 +60,7 @@ bool	Client::receiveResponse(void)
 	{
 		// if (is_request_well_formed() == -1)
 		// 	return true;
+		// std::cout << "here\n";
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
@@ -86,7 +89,7 @@ bool	Client::checkType()
 
 bool	Client::checkDir( std::string path )
 {
-	std::cout << "path:\t" << path << "\n";
+	// std::cout << "path:\t" << path << "\n";
 	for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) // LOcations
 	{
 		std::string locationPath, initialPath;
@@ -98,9 +101,7 @@ bool	Client::checkDir( std::string path )
 }
 
 bool	Client::handleDirs() {
-	std::cout << "ana f handledirs\n";
 	std::string requestedPath = this->request->getPath();
-	// std::cout << requestedPath << "\n";
 	if (requestedPath[requestedPath.length() - 1] != '/')
 		sendRedirectResponse(301, "Moved Permanently", requestedPath + '/');
 	else {
@@ -110,7 +111,6 @@ bool	Client::handleDirs() {
 			std::string directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(1, directoryEndPos -1) : requestedPath.substr(1);
 			if ("/" + directory == test.getLocationPath())
 			{
-				// here check for index files
 				if (test.index.length() > 0)
 				{
 					std::stringstream index(test.index);
@@ -126,8 +126,6 @@ bool	Client::handleDirs() {
 							return 1;
 						}
 						while ((pDirent = readdir(pDir)) != NULL) {
-							std::cout << "iter:\t*" << iter << "*\n";
-							std::cout << "pDir:\t*" << pDirent->d_name << "*\n";
 							if (strcmp(iter.c_str(), pDirent->d_name) == 0)
 							{
 								handleFiles(_serverBlock->getRoot() + "/" + directory + "/" + iter);
@@ -136,11 +134,9 @@ bool	Client::handleDirs() {
 						}
 					}
 				} else if(test.getAutoIndex() == false) {
-					// if server doesn't support auto index
 					sendErrorResponse(403, "Forbidden", ERROR403);
 				} else if (test.getAutoIndex() == true)
 				{
-					// process listing
 					directoryListing(_serverBlock->getRoot() + "/" + directory );
 				}
 			}
@@ -154,33 +150,43 @@ bool	Client::handleFiles( std::string path) {
 	for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) {
 		Location test = this->_serverBlock->getLocations().at(i);
 		size_t directoryEndPos = requestedPath.find("/", 1);
-		std::string directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(1, directoryEndPos -1) : requestedPath.substr(1);
-		if ("/" + directory == test.getLocationPath())
+		std::string directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(0, directoryEndPos) : requestedPath;
+		if (regFile(test.getRoot() + directory))
+		{
+			std::cout << directory << "\n";
+			directory = "/";
+		}
+		if (directory == test.getLocationPath())
 		{
 			if (test.getKeyFromAttributes("cgi_path").length() > 0)
 			{
-
+				std::cout << path << "\n";
 			} else {
-				std::ifstream file(path.c_str(), std::ios::binary);
-				if (file.is_open()) {
-					std::string mimeType = this->request->getMimeType();
+				if (_fdFile == -1)
+				{
+					_fdFile = open(path.c_str(), O_RDONLY);
+				}
+				if (_fdFile > -1) {
+					std::string mimeType = getMimeTypeFromExtension(path);
+					std::cout << mimeType << "\n";
 					if (isRead == false)
 					{
 						std::stringstream headers;
 						headers << "HTTP/1.1 200 OK\r\n";
 						headers << "Content-Type: " << mimeType << "\r\n";
 						headers << "Transfer-Encoding: chunked\r\n";
-						headers << "Content-Disposition: inline\r\n";  // Add this line
-						headers << "Connection: close\r\n";
+						headers << "Content-Disposition: inline\r\n";
+						headers << "Connection: close\r\n\r\n";
+						// std::cout << "*" << headers.str();
 						// Write headers to socket
 						write(_fd, headers.str().c_str(), headers.str().length());
 						isRead = true;
 					}
 					if (isRead == true)
 					{
-						return serveImage(file);
+						// std::cout << "ana hna" << std::endl;
+						return serveImage();
 					}
-					file.close();
 				}
 				// return readFile(path);
 			}
@@ -189,36 +195,58 @@ bool	Client::handleFiles( std::string path) {
 	return true;
 }
 
-std::string	Client::getErrorPage( std::string requestedPath ) {
-	for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) {
-		Location test = this->_serverBlock->getLocations().at(i);
-		size_t directoryEndPos = requestedPath.find("/", 1);
-		std::string directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(1, directoryEndPos -1) : requestedPath.substr(1);
-
-		if ("/" + directory == test.getLocationPath())
-		{
-			// std::cout << test.getKeyFromAttributes("error_page") << "\n";
-			while ( test.getKeyFromAttributes("error_pages").length() > 0)
-			{
-				std::cout << test.getKeyFromAttributes("error_pages") << "\n";
+bool Client::serveImage() {
+	if (_fdFile > -1){
+		size_t chunkSize = 1024;
+		char buffer[chunkSize];
+		int	bytesRead = read(_fdFile, buffer, chunkSize);
+		if ( bytesRead > 0){
+			std::stringstream chunkHeader;
+			chunkHeader << std::hex << bytesRead << "\r\n";
+			chunkHeader.write(buffer, bytesRead);
+			chunkHeader << "\r\n";
+			ssize_t bytes_written = write(_fd, chunkHeader.str().c_str(), chunkHeader.str().length());
+			if (bytes_written == -1) {
+				return true;
 			}
-			// std::string errorPage = test.getKeyFromAttributes("error_page");
-			// if (error)
+			fsync(_fd);
+			return false;
+		}else{
+			write(_fd, "0\r\n\r\n", 5);
+			close(_fdFile);
+			_fdFile = -1;
+			return true;
 		}
 	}
-	return ERROR404;
+	return true;
+}
+
+std::string	Client::getErrorPage( int errorCode ) {
+	for(size_t i = 0; i < _serverBlock->errorPages.size(); i++)
+	{
+		if (_serverBlock->errorPages.at(i).first == errorCode)
+			return _serverBlock->errorPages.at(i).second;
+	}
+	std::stringstream ss;
+	ss << errorCode;
+	return "www/error/" + ss.str() + ".html";
 }
 
 bool Client::getMethodHandler(void) {
 	std::string requestedPath = this->request->getPath();
 	if (access((_serverBlock->getRoot() + requestedPath).c_str(), R_OK) == -1)
 	{
-		sendErrorResponse(404, "Not Found", getErrorPage(requestedPath));
+		sendErrorResponse(404, "Not Found", getErrorPage(404));
 	}
 	else if (checkType() == true)
+	{
+		std::cout << "dir\n";
 		return handleDirs();
+	}
 	else if (checkType() == false)
+	{
 		return handleFiles(_serverBlock->getRoot() + requestedPath);
+	}
 	return true;
 }
 
@@ -266,34 +294,6 @@ void	Client::sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string 
 	response << "\r\n";
 
 	write(_fd, response.str().c_str(), response.str().length());
-}
-
-bool Client::serveImage(std::ifstream &imageFile) {
-	// if (imageFile.is_open()) {
-		// Write file content to socket in chunks
-		size_t chunkSize = 1024;
-		char buffer[chunkSize];
-		if (!imageFile.eof()) {
-			std::cout << "-------------------------------------------->\n";
-			imageFile.read(buffer, chunkSize);
-			int bytesRead = imageFile.gcount();
-			// Send the current chunk
-			std::cout << "buffer:\n" << buffer << "\n";
-			std::stringstream chunkHeader;
-			chunkHeader << std::hex << bytesRead << "\r\n";
-			write(_fd, chunkHeader.str().c_str(), chunkHeader.str().length());
-			write(_fd, buffer, bytesRead);
-			write(_fd, "\r\n", 2);
-			return false;
-		}else{
-			std::cout << "ana hna\n";
-			write(_fd, "0\r\n\r\n", 5);
-			close(_fd);
-			imageFile.close();
-			return true;
-
-		}
-	// }
 }
 
 
@@ -492,4 +492,37 @@ void	Client::directoryListing(std::string path)
 
     // Write HTML content to socket
     write(_fd, html.c_str(), html.length());
+}
+
+std::string	Client::getMimeTypeFromExtension(const std::string& path) {
+	std::map<std::string, std::string> extensionToMimeType;
+		extensionToMimeType[".jpg"] = "image/jpeg";
+		extensionToMimeType[".jpeg"] = "image/jpeg";
+		extensionToMimeType[".png"] = "image/png";
+		extensionToMimeType[".gif"] = "image/gif";
+		extensionToMimeType[".bmp"] = "image/bmp";
+		extensionToMimeType[".ico"] = "image/x-icon";
+		extensionToMimeType[".mp4"] = "video/mp4";
+		extensionToMimeType[".ogg"] = "video/ogg";
+		extensionToMimeType[".avi"] = "video/x-msvideo";
+		extensionToMimeType[".mov"] = "video/quicktime";
+		extensionToMimeType[".3gp"] = "video/3gpp";
+		extensionToMimeType[".wmv"] = "video/x-ms-wmv";
+		extensionToMimeType[".ts"] = "video/mp2t";
+		extensionToMimeType[".pdf"] = "application/pdf";
+		extensionToMimeType[".html"] = "text/html";
+		extensionToMimeType[".css"] = "text/css";
+	// Find the last dot in the path
+	size_t dotPos = path.find_last_of('.');
+	if (dotPos != std::string::npos) {
+		std::string extension = path.substr(dotPos);
+		if (!extension.empty()) {
+			std::map<std::string, std::string>::iterator it = extensionToMimeType.find(extension);
+			// std::cout << "video extension: " << extension << "\n";
+			if (it != extensionToMimeType.end()) {
+				return it->second; // Return the corresponding MIME type
+			}
+		}
+	}
+	return "application/octet-stream";
 }

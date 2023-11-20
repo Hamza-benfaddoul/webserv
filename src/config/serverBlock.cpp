@@ -6,13 +6,13 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:15:12 by rakhsas           #+#    #+#             */
-/*   Updated: 2023/11/14 15:57:22 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/19 12:30:14 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../includes/serverBlock.hpp"
 #include "cstdlib"
-
+#include "../../includes/main.hpp"
 serverBlock::serverBlock(): locations() {
 	port = -1;
 	autoIndex = 0;
@@ -85,14 +85,6 @@ void serverBlock::parseRoot(std::string value) {
 	}
 }
 
-bool containsOnlyDigits(const std::string &str) {
-	for (size_t i = 0; i < str.length(); ++i) {
-		if (!isdigit(str[i])) {
-			return false;
-		}
-	}
-	return true;
-}
 bool containsOnlyAlphabets(const std::string &str) {
 	for (size_t i = 0; i < str.length(); ++i) {
 		if (!isalpha(str[i])) {
@@ -160,10 +152,22 @@ void    serverBlock::parseHost(std::string value)
 }
 void serverBlock::parseAutoIndex(std::string value)
 {
-	// std::cout << value.find("on") << std::endl;
 	if (std::string("on").compare(value) != 0 && std::string("off").compare(value) != 0 )
 		throw std::runtime_error("ERROR: Auto Index EXPECTS just `on` or `off` !!!.");
-	else
+	else if (value == "on")
 		autoIndex = true;
-	// else if ( std::string("off").compare(value) != 0 )
+	else
+		autoIndex = false;
+}
+
+Location	serverBlock::getLocationByPath(std::string path)
+{
+	for (size_t i = 0; i != locations.size(); i++) {
+		Location location = locations.at(i);
+		if (path == location.getLocationPath())
+		{
+			return location;
+		}
+	}
+	throw std::runtime_error("No Location Found");
 }

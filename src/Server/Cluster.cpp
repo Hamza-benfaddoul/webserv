@@ -75,7 +75,7 @@ void Cluster::run(void)
 				}
 				// std::cout << " server index " << events[n].data.fd - _servers[0]->getFd() << std::endl;
 				_clients.at(client_fd) = new Client(client_fd,_servers[events[n].data.fd - _servers[0]->getFd()]->_serverBlock);
-				ev.events = EPOLLIN | EPOLLET;
+				ev.events = EPOLLIN | EPOLLOUT;
 				ev.data.fd = client_fd;
 				if (epoll_ctl(epollfd, EPOLL_CTL_ADD, client_fd, &ev) == -1) {
 					throw std::runtime_error("epoll_ctl");
@@ -84,6 +84,7 @@ void Cluster::run(void)
 			else {
 				if (_clients.at(events[n].data.fd)->run()) // return true when client close the connection
 				{
+					std::cout << "lah irahmo\n";
 					epoll_ctl(epollfd, EPOLL_CTL_DEL, events[n].data.fd, &ev);
 					close(events[n].data.fd);
 					delete _clients.at(events[n].data.fd);

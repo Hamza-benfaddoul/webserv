@@ -6,18 +6,19 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/25 11:41:00 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/13 22:37:30 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/20 21:40:03 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/main.hpp"
-
+#include "signal.h"
 int main(int ac, char **av)
 {
     if (ac <= 2)
     {
         try
         {
+            signal(SIGPIPE, SIG_IGN);
             if (av[1])
             {
                 configParser webserv(av[1]);

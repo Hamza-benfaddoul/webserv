@@ -47,3 +47,12 @@ bool	regFile(std::string path)
 		return false;
 	return S_ISREG(st.st_mode);
 }
+
+bool containsOnlyDigits(const std::string &str) {
+	for (size_t i = 0; i < str.length(); ++i) {
+		if (!isdigit(str[i])) {
+			return false;
+		}
+	}
+	return true;
+}
