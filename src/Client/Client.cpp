@@ -38,18 +38,16 @@ bool	Client::receiveResponse(void)
 		char	buffer[1024] = {0};
 		int		bytesRead;
 		bytesRead = read(_fd, buffer, 1024);
-		// this->totalBytesRead += bytesRead;
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
 		this->_responseBuffer += std::string(buffer, bytesRead);
 		postRequest = _responseBuffer;
 		if (std::string(buffer, bytesRead).find("\r\n\r\n") != std::string::npos)
 		{
-			//std::cout << _responseBuffer << std::endl;
-			// std::cout << "request: " << _responseBuffer << std::endl;
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
 			this->request->printRequest();
+			// std::cout << "the body content: " << this->request->getBodyString() << std::endl;
 			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
 			if (Oheaders.find("Content-Length") != Oheaders.end())
 			{
@@ -61,9 +59,9 @@ bool	Client::receiveResponse(void)
 	}
 	if (!_readHeader)
 	{
-		get_match_location_for_request_uri(this->request->getPath()); // get the desired location from the uri ("check the boolean called isLocationExist, true->exit, flae->!exist")
-		if (is_request_well_formed() == -1)
-			return true;
+		// get_match_location_for_request_uri(this->request->getPath()); // get the desired location from the uri ("check the boolean called isLocationExist, true->exit, flae->!exist")
+		// if (is_request_well_formed() == -1)
+		// 	return true;
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
@@ -295,6 +293,14 @@ void	Client::sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string 
 
 void Client::get_match_location_for_request_uri(const std::string &uri)
 {
+	/*
+		if ((request->getMethod() == "GET" && ourLocation.GET == false) ||
+			(request->getMethod() == "POST" && ourLocation.POST == false) ||
+			(request->getMethod() == "DELETE" && ourLocation.DELETE == false))
+		{
+			sendErrorResponse(405, "405 Method Not Allowed", ERROR405);
+		}
+	*/
 	std::vector<Location> allLocations = this->_serverBlock->getLocations();
 	std::string locationPath;
 	Location location;
@@ -424,9 +430,7 @@ bool	Client::postMethodHandler(void)
 	std::map<std::string, std::string> Headers = this->request->getHeaders();
 	char	buffer[1024] = {0};
 	int		bytesRead;
-	std::string body;
 
-	std::cout << "cpt" << std::endl;
 	if (fileCreated == false)
 	{
 		std::string firstBody = this->request->getBodyString();
@@ -434,42 +438,45 @@ bool	Client::postMethodHandler(void)
 		this->upload->createFile();
 		body = ltrim(firstBody, "\r\n");
 		totalBytesRead = body.length();
+		std::cout << "the length of the body is: " << body.length() << std::endl;
 		fileCreated = true;
 		this->cpt++;
 	}
 	// read until body is complte (chunk by chunk)
 	if (Headers.find("Transfer-Encoding") != Headers.end() && Headers["Transfer-Encoding"] == "chunked") // ============> chunk type
 	{
-		std::cout << "its a chunk request" << std::endl;
-		// body += std::string(buffer, bytesRead);
-		return false;
+		// std::cout << "---->>" << body << "<<-----" << std::endl;
+		int endChunk = body.compare(body.length() - 3, body.length(), "0\r\n");
+		std::cout << "the boooool end chunk: " << endChunk << std::endl;
+		if (endsWith(body, "0\r\n\r\n") == false)
+		{
+			bytesRead = read(_fd, buffer, 1024);
+			// postRequest += std::string(buffer, bytesRead);
+			this->totalBytesRead += bytesRead;
+			body  += std::string(buffer, bytesRead);
+			this->upload->writeToFile(body);
+			std::cout << "should be false" << std::endl;
+			return false;
+		}
+		else
+		{
+			std::cout << "the total readed is: " << this->totalBytesRead << std::endl;
+			sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
+			return true;
+		}
 	}
 	else // ============> binary type
 	{
+		std::cout << this->totalBytesRead << " : " << this->Content_Length << std::endl;
 		if (totalBytesRead < this->Content_Length)
 		{
-			// bytesRead = read(_fd, buffer, 1024);	
-			while (1) // this code should be deleted when hamza fix the bug of re-reading
-			{
-				bytesRead = read(_fd, buffer, 1024);
-				this->totalBytesRead += bytesRead;
-				body += std::string(buffer, bytesRead);
-				std::cout << "--> " << totalBytesRead << std::endl;
-				if (this->totalBytesRead + 1 >= this->Content_Length)
-					break;
-			} // all this code ofcourse.!!!
-			std::cout << "we read: " << bytesRead << std::endl;
-			//postRequest += std::string(buffer, bytesRead);
-			//this->totalBytesRead += bytesRead;// this line should be decommented it after hamza ....
-			//body += std::string(buffer, bytesRead); // this line should be decommented it after hamza ....
-			// std::cout << "the body: " << body << std::endl;
+			bytesRead = read(_fd, buffer, 1024);	
+			postRequest += std::string(buffer, bytesRead);
+			this->totalBytesRead += bytesRead;
+			body += std::string(buffer, bytesRead);
 			this->upload->writeToFile(body);
-			std::cout << "inside total readed: " << this->totalBytesRead << " and the content length: " << this->Content_Length << std::endl;
-			// if (totalBytesRead < this->Content_Length) // this also 
-			// {
-			// 	std::cout << "====> keep reading" << std::endl;
-			// 	return false; // keep reading
-			// } // this the end !!!!
+			if (totalBytesRead + 1 < this->Content_Length)
+				return false; // keep reading
 
 		}
 	}

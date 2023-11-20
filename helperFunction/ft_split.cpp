@@ -47,3 +47,21 @@ bool	regFile(std::string path)
 		return false;
 	return S_ISREG(st.st_mode);
 }
+
+
+bool endsWith(const std::string& str, const std::string& suffix) {
+    if (str.length() < suffix.length()) {
+        return false; // The string is shorter than the suffix, can't end with it
+    }
+
+    return str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;
+}
+
+int main()
+{
+    std::string text = "walid and med are brothers sense 20.. so yeah thats it 0\r\n";
+    if (endsWith(text, "0\r") == false)
+        std::cout << "not in text" << std::endl;
+    else
+        std::cout << "in text" << std::endl;
+}

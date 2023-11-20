@@ -43,3 +43,4 @@ std::string&				rtrim(std::string& s, std::string t);
 std::string&				ltrim(std::string& s, std::string t);
 std::string&                advanced_trim(std::string& s, std::string trimSep);
 bool                        regFile(std::string path);
+bool endsWith(const std::string& str, const std::string& suffix);

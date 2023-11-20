@@ -48,6 +48,7 @@ class Client {
 		bool			_readHeader;
 		serverBlock		*_serverBlock;
 		bool 			isLocationExist;
+		std::string body;
 		std::map<std::string, std::string>	ourLocation;
 
 		bool	checkRequestPath(std::string);
