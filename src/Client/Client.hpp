@@ -50,6 +50,7 @@ class Client {
 		bool 			isLocationExist;
 		std::string body;
 		std::map<std::string, std::string>	ourLocation;
+		int	bytes;
 
 		bool	checkRequestPath(std::string);
 		bool	getMethodHandler(void);

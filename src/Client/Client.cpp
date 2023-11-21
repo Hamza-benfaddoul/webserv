@@ -29,6 +29,7 @@ Client::Client(size_t fd, serverBlock *serverBlock) :
 	isLocationExist = false;
 	totalBytesRead = 0;
 	Content_Length = -1;
+	bytes = 1024;
 }
 
 bool	Client::receiveResponse(void)
@@ -429,6 +430,7 @@ bool	Client::postMethodHandler(void)
 {
 	std::map<std::string, std::string> Headers = this->request->getHeaders();
 	char	buffer[1024] = {0};
+	char *bufferChunked;
 	int		bytesRead;
 
 	if (fileCreated == false)
@@ -445,22 +447,20 @@ bool	Client::postMethodHandler(void)
 	// read until body is complte (chunk by chunk)
 	if (Headers.find("Transfer-Encoding") != Headers.end() && Headers["Transfer-Encoding"] == "chunked") // ============> chunk type
 	{
-		// std::cout << "---->>" << body << "<<-----" << std::endl;
-		int endChunk = body.compare(body.length() - 3, body.length(), "0\r\n");
-		std::cout << "the boooool end chunk: " << endChunk << std::endl;
-		if (endsWith(body, "0\r\n\r\n") == false)
+		bool endChunk = endsWith(body, "0\r\n\r\n");
+		if (endChunk == false)
 		{
-			bytesRead = read(_fd, buffer, 1024);
-			// postRequest += std::string(buffer, bytesRead);
+			// bytes = ?;
+			bufferChunked = new char[bytes];
+			bytesRead = read(_fd, bufferChunked, 1024);
 			this->totalBytesRead += bytesRead;
-			body  += std::string(buffer, bytesRead);
+			body  += std::string(bufferChunked, bytesRead);
+			delete[] bufferChunked;
 			this->upload->writeToFile(body);
-			std::cout << "should be false" << std::endl;
 			return false;
 		}
 		else
 		{
-			std::cout << "the total readed is: " << this->totalBytesRead << std::endl;
 			sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
 			return true;
 		}
