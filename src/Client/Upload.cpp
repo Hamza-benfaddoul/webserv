@@ -31,7 +31,8 @@ void Upload::start()
 	
 }
 
-void	Upload::writeToFile(const char *ptr, size_t size)
+void	Upload::writeToFile(const std::vector<char> & source)
 {
-	bodyContent.write(ptr, size);
+	for (int i = 0; i < (int) source.size(); i++)
+		bodyContent.put(source.at(i));
 }

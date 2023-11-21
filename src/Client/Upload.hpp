@@ -1,6 +1,7 @@
 #ifndef UPLOAD_HPP
 #define UPLOAD_HPP
 #include <fstream>
+#include <vector>
 
 class Request;
 
@@ -15,7 +16,7 @@ private:
 public:
     Upload(Request *req, int in_cpt);
     ~Upload();
-    void	writeToFile(const char *ptr, size_t size);
+    void	writeToFile(const std::vector<char> & source);
     void	createFile();
     void    start();
 };

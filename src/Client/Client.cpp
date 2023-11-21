@@ -445,16 +445,14 @@ bool	Client::postMethodHandler(void)
 {
 	std::map<std::string, std::string> Headers = this->request->getHeaders();
 	char	buffer[1024] = {0};
-	// char *bufferChunked;
 	int		bytesRead;
+
 	if (fileCreated == false)
 	{
 		std::string firstBody = this->request->getBodyString();
 		this->upload = new Upload(this->request, this->cpt);
 		this->upload->createFile();
 		body = ltrim(firstBody, "\r\n");
-		// converte body string to char arr[...]
-
 		totalBytesRead = body.length();
 		fileCreated = true;
 		this->cpt++;
@@ -465,14 +463,9 @@ bool	Client::postMethodHandler(void)
 		bool endChunk = endsWithString(chunkBody, "0\r\n\r\n");
 		if (endChunk == false)
 		{
-			// bytes = ?;
 			bytes = bytesToBeRead();
-			// bufferChunked = new char[bytes];
 			bytesRead = read(_fd, buffer, 1024);
-			//this->totalBytesRead += bytesRead;
 			body  += std::string(buffer, bytesRead);
-			//delete[] bufferChunked;
-			// this->upload->writeToFile(bodyToWrite);
 			return false;
 		}
 		else
@@ -485,14 +478,18 @@ bool	Client::postMethodHandler(void)
 	}
 	else // ============> binary type
 	{
-		std::cout << this->totalBytesRead << " : " << this->Content_Length << std::endl;
+		// std::cout << this->totalBytesRead << " : " << this->Content_Length << std::endl;
 		if (totalBytesRead < this->Content_Length)
 		{
-			bytesRead = read(_fd, buffer, 1024);	
+			bytesRead = read(_fd, buffer, 1024);
+			for (int i = 0; i < bytesRead; i++)
+				_responseBufferVector.push_back(buffer[i]);
+			std::cout << "the size of vector is: " << _responseBufferVector.size() << std::endl;
 			//postRequest += std::string(buffer, bytesRead);
 			this->totalBytesRead += bytesRead;
-			this->upload->writeToFile(buffer, bytesRead);
-			if (totalBytesRead + 1 < this->Content_Length)
+			this->upload->writeToFile(_responseBufferVector);
+			_responseBufferVector.clear();
+			if (totalBytesRead < this->Content_Length)
 				return false; // keep reading
 
 		}
