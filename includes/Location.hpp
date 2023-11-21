@@ -19,7 +19,6 @@ private:
 	std::string	include;
 	bool		autoIndex;
 	std::map<std::string, std::string>	locationAttributes;
-
 public:
 	bool		GET;
 	bool		POST;

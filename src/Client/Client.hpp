@@ -6,7 +6,7 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:59:30 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/17 21:04:04 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/19 17:38:38 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,9 +35,10 @@ class Client {
 		size_t		_fd;
 		Request	*request;
 		Upload	*upload;
+		int		_fdFile;
 		// Response	*response;
 		static int cpt;
-		long	readd;
+		bool	isRead;
 		int		totalRead;
 		bool			errorCheck;
 		bool			fileCreated;
@@ -55,16 +56,16 @@ class Client {
 		bool	handleFiles( std::string );
 		bool	handleDirs();
 		bool	checkType();
-		void	directoryListing(std::string);
+		bool	readFile( const std::string, std::ifstream &);
+		bool	serveImage();
 
+		void	directoryListing(std::string);
 		void	sendResponse(void);
 		void	sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string location);
 		void	sendErrorResponse( int, std::string, std::string );
 		void	sendResponse1(std::string , int , std::string );
 		void	closeConnection(void);
-		void	serveImage(std::string);
 		void	sendImageResponse(const std::string&, const std::string&);
-		void	readFile( const std::string path );
 		void	readChunkedBody();
 		void	readBody();
 		int		is_request_well_formed();
@@ -72,6 +73,7 @@ class Client {
 		void	handleRequestFromLocation( std::string );
 
 		std::string	getMimeTypeFromExtension(const std::string& path);
+		std::string	getErrorPage( int );
 
 
 	public:

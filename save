@@ -153,6 +153,7 @@
 // 		extensionToMimeType[".3gp"] = "video/3gpp";
 // 		extensionToMimeType[".wmv"] = "video/x-ms-wmv";
 // 		extensionToMimeType[".ts"] = "video/mp2t";
+// 		extensionToMimeType[".pdf"] = "application/pdf";
 // 	// Find the last dot in the path
 // 	size_t dotPos = path.find_last_of('.');
 // 	if (dotPos != std::string::npos) {
