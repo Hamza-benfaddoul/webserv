@@ -452,8 +452,15 @@ bool	Client::postMethodHandler(void)
 		std::string firstBody = this->request->getBodyString();
 		this->upload = new Upload(this->request, this->cpt);
 		this->upload->createFile();
-		body = ltrim(firstBody, "\r\n");
-		totalBytesRead = body.length();
+		totalBytesRead = _responseBufferVector.size();
+		if (totalBytesRead >= Content_Length)
+		{
+			std::cout << "first break" << std::endl;
+			this->upload->writeToFile(_responseBufferVector);
+			this->upload->endLine();
+			sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
+			return true;
+		}
 		fileCreated = true;
 		this->cpt++;
 	}
@@ -482,18 +489,18 @@ bool	Client::postMethodHandler(void)
 		if (totalBytesRead < this->Content_Length)
 		{
 			bytesRead = read(_fd, buffer, 1024);
-			for (int i = 0; i < bytesRead; i++)
-				_responseBufferVector.push_back(buffer[i]);
-			std::cout << "the size of vector is: " << _responseBufferVector.size() << std::endl;
+			_responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
+			// for (int i = 0; i < bytesRead; i++)
+			// 	_responseBufferVector.push_back(buffer[i]);
 			//postRequest += std::string(buffer, bytesRead);
 			this->totalBytesRead += bytesRead;
 			this->upload->writeToFile(_responseBufferVector);
 			_responseBufferVector.clear();
 			if (totalBytesRead < this->Content_Length)
 				return false; // keep reading
-
 		}
 	}
+	this->upload->endLine();
 	this->upload->start();
 	std::cout << "!!!! exit from reading" << std::endl;
 	sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");

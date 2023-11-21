@@ -17,6 +17,8 @@ public:
     Upload(Request *req, int in_cpt);
     ~Upload();
     void	writeToFile(const std::vector<char> & source);
+    void    writeToFileString(const std::string &source);
+    void    endLine();
     void	createFile();
     void    start();
 };

@@ -84,9 +84,11 @@ void    Request::printRequest() const
     }
     req << std::endl << std::endl;
     // req << "-------------------------------------------------------" << std::endl << std::endl;
-    req << this->bodyString;
-    req << "in index 0 we have: ";
-    req.put(bodyVector.at(0));
+    // req << this->bodyString;
+    for (int i = 0; i < (int)bodyVector.size(); i++)
+    {
+        req << bodyVector.at(i);
+    }
     // for (int i = 0; i < (int) bodyVector.size(); i++)
     // {
     //     if (bodyVector.at(i) == '\r' || bodyVector.at(i) == '\n')

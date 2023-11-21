@@ -31,8 +31,17 @@ void Upload::start()
 	
 }
 
+void    Upload::writeToFileString(const std::string &source)
+{
+	this->bodyContent << source;
+}
+
 void	Upload::writeToFile(const std::vector<char> & source)
 {
-	for (int i = 0; i < (int) source.size(); i++)
-		bodyContent.put(source.at(i));
+	bodyContent.write(source.data(), source.size());
+}
+
+void Upload::endLine()
+{
+	this->bodyContent << std::endl;
 }
