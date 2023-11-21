@@ -31,7 +31,7 @@ void Upload::start()
 	
 }
 
-void	Upload::writeToFile(const std::string &content)
+void	Upload::writeToFile(const char *ptr, size_t size)
 {
-	bodyContent << content;
+	bodyContent.write(ptr, size);
 }

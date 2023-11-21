@@ -37,6 +37,7 @@ class Client {
 		Upload	*upload;
 		// Response	*response;
 		std::string postRequest;
+		std::vector<char> _responseBufferVector;
 		static int 		cpt;
 		long			readd;
 		int				totalRead;
@@ -48,7 +49,8 @@ class Client {
 		bool			_readHeader;
 		serverBlock		*_serverBlock;
 		bool 			isLocationExist;
-		std::string body;
+		std::string 	body;
+		char 			chunkBody[1024];
 		std::map<std::string, std::string>	ourLocation;
 		int	bytes;
 
@@ -76,8 +78,8 @@ class Client {
 		int		is_request_well_formed();
 		void	handleRequestFromRoot();
 		void	handleRequestFromLocation( std::string );
-		void get_match_location_for_request_uri(const std::string &uri);
-
+		void 	get_match_location_for_request_uri(const std::string &uri);
+		int		bytesToBeRead();
 		std::string	getMimeTypeFromExtension(const std::string& path);
 
 

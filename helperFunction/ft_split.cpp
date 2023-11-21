@@ -56,11 +56,43 @@ bool endsWith(const std::string& str, const std::string& suffix) {
     return str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;
 }
 
-// int main()
-// {
-//     std::string text = "walid and med are brothers sense 20.. so yeah thats it 0\r";
-//     if (endsWith(text, "0\r\n") == false)
-//         std::cout << "not in text" << std::endl;
-//     else
-//         std::cout << "in text" << std::endl;
-// }
+bool endsWithString(const char* str, const char* suffix) {
+    size_t strLen = std::strlen(str);
+    size_t suffixLen = std::strlen(suffix);
+
+    // Check if the string is at least as long as the suffix
+    if (strLen >= suffixLen) {
+        // Compare the last 'suffixLen' characters with the provided suffix
+        return std::strcmp(str + strLen - suffixLen, suffix) == 0;
+    }
+
+    // If the string is shorter than the suffix, it cannot end with the suffix
+    return false;
+}
+
+int isInclude(const std::vector <char> & source, const char *needed)
+{
+    for (int i = 0; i < (int) source.size();)
+    {
+        int j = 0;
+        if (source.at(i) == needed[j])
+        {
+            i++;
+            for (int k = j + 1; k < (int)strlen(needed);)
+            {
+                if (needed[k] == source.at(i))
+                {    
+                    k++;
+                    i++;
+                }
+                else
+                    break;
+                if (k == (int)strlen(needed) - 1)
+                    return i - (strlen(needed) - 1);
+            }
+        }
+        else
+            i++;
+    }
+    return -1;
+}

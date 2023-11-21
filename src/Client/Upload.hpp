@@ -15,7 +15,7 @@ private:
 public:
     Upload(Request *req, int in_cpt);
     ~Upload();
-    void    writeToFile(const std::string &content);
+    void	writeToFile(const char *ptr, size_t size);
     void	createFile();
     void    start();
 };

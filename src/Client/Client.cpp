@@ -41,14 +41,19 @@ bool	Client::receiveResponse(void)
 		bytesRead = read(_fd, buffer, 1024);
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
-		this->_responseBuffer += std::string(buffer, bytesRead);
-		postRequest = _responseBuffer;
-		if (std::string(buffer, bytesRead).find("\r\n\r\n") != std::string::npos)
+		for (int i = 0; i < bytesRead; i++)
+			_responseBufferVector.push_back(buffer[i]);
+		// this->_responseBuffer += std::string(buffer, bytesRead);
+		// postRequest = _responseBuffer;
+		// if (std::string(buffer, bytesRead).find("\r\n\r\n") != std::string::npos)
+		int	pos = isInclude(_responseBufferVector, "\r\n\r\n");
+		if (pos != -1)
 		{
-			this->request = new Request(_responseBuffer);
+			_responseBuffer += std::string(_responseBufferVector.begin(), _responseBufferVector.begin() + pos);
+			_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + pos + 4);
+			this->request = new Request(_responseBuffer, _responseBufferVector);
 			this->request->parseRequest();
 			this->request->printRequest();
-			// std::cout << "the body content: " << this->request->getBodyString() << std::endl;
 			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
 			if (Oheaders.find("Content-Length") != Oheaders.end())
 			{
@@ -56,6 +61,11 @@ bool	Client::receiveResponse(void)
 				Content_Length = strtod(C_Length.c_str(), NULL);
 			}
 			_readHeader = false;
+		}
+		else
+		{
+			_responseBuffer += std::string(_responseBufferVector.begin(), _responseBufferVector.end());
+			_responseBufferVector.clear();
 		}
 	}
 	if (!_readHeader)
@@ -425,42 +435,50 @@ int	Client::is_request_well_formed()
 	return (true);
 }
 
+int	Client::bytesToBeRead()
+{
+	return 0;
+}
+
 // true -> close, flase continue;
 bool	Client::postMethodHandler(void)
 {
 	std::map<std::string, std::string> Headers = this->request->getHeaders();
 	char	buffer[1024] = {0};
-	char *bufferChunked;
+	// char *bufferChunked;
 	int		bytesRead;
-
 	if (fileCreated == false)
 	{
 		std::string firstBody = this->request->getBodyString();
 		this->upload = new Upload(this->request, this->cpt);
 		this->upload->createFile();
 		body = ltrim(firstBody, "\r\n");
+		// converte body string to char arr[...]
+
 		totalBytesRead = body.length();
-		std::cout << "the length of the body is: " << body.length() << std::endl;
 		fileCreated = true;
 		this->cpt++;
 	}
 	// read until body is complte (chunk by chunk)
 	if (Headers.find("Transfer-Encoding") != Headers.end() && Headers["Transfer-Encoding"] == "chunked") // ============> chunk type
 	{
-		bool endChunk = endsWith(body, "0\r\n\r\n");
+		bool endChunk = endsWithString(chunkBody, "0\r\n\r\n");
 		if (endChunk == false)
 		{
 			// bytes = ?;
-			bufferChunked = new char[bytes];
-			bytesRead = read(_fd, bufferChunked, 1024);
-			this->totalBytesRead += bytesRead;
-			body  += std::string(bufferChunked, bytesRead);
-			delete[] bufferChunked;
-			this->upload->writeToFile(body);
+			bytes = bytesToBeRead();
+			// bufferChunked = new char[bytes];
+			bytesRead = read(_fd, buffer, 1024);
+			//this->totalBytesRead += bytesRead;
+			body  += std::string(buffer, bytesRead);
+			//delete[] bufferChunked;
+			// this->upload->writeToFile(bodyToWrite);
 			return false;
 		}
 		else
 		{
+			bytesToBeRead();
+			// this->upload->writeToFile(bodyToWrite);
 			sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
 			return true;
 		}
@@ -471,10 +489,9 @@ bool	Client::postMethodHandler(void)
 		if (totalBytesRead < this->Content_Length)
 		{
 			bytesRead = read(_fd, buffer, 1024);	
-			postRequest += std::string(buffer, bytesRead);
+			//postRequest += std::string(buffer, bytesRead);
 			this->totalBytesRead += bytesRead;
-			body += std::string(buffer, bytesRead);
-			this->upload->writeToFile(body);
+			this->upload->writeToFile(buffer, bytesRead);
 			if (totalBytesRead + 1 < this->Content_Length)
 				return false; // keep reading
 
