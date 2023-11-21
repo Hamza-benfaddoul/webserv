@@ -29,7 +29,6 @@ Client::Client(size_t fd, serverBlock *serverBlock) :
 	isLocationExist = false;
 	totalBytesRead = 0;
 	Content_Length = -1;
-	bytes = 1024;
 }
 
 bool	Client::receiveResponse(void)
@@ -435,10 +434,7 @@ int	Client::is_request_well_formed()
 	return (true);
 }
 
-int	Client::bytesToBeRead()
-{
-	return 0;
-}
+
 
 // true -> close, flase continue;
 bool	Client::postMethodHandler(void)
@@ -453,9 +449,8 @@ bool	Client::postMethodHandler(void)
 		this->upload = new Upload(this->request, this->cpt);
 		this->upload->createFile();
 		totalBytesRead = _responseBufferVector.size();
-		if (totalBytesRead >= Content_Length)
+		if (Headers.find("Content-Length") != Headers.end() && totalBytesRead >= Content_Length)
 		{
-			std::cout << "first break" << std::endl;
 			this->upload->writeToFile(_responseBufferVector);
 			this->upload->endLine();
 			sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
@@ -467,32 +462,26 @@ bool	Client::postMethodHandler(void)
 	// read until body is complte (chunk by chunk)
 	if (Headers.find("Transfer-Encoding") != Headers.end() && Headers["Transfer-Encoding"] == "chunked") // ============> chunk type
 	{
-		bool endChunk = endsWithString(chunkBody, "0\r\n\r\n");
-		if (endChunk == false)
-		{
-			bytes = bytesToBeRead();
-			bytesRead = read(_fd, buffer, 1024);
-			body  += std::string(buffer, bytesRead);
-			return false;
-		}
-		else
-		{
-			bytesToBeRead();
-			// this->upload->writeToFile(bodyToWrite);
-			sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
-			return true;
-		}
+		// isInclude();
+		int	pos = isInclude(_responseBufferVector, "\r\n");
+		std::cout << "the pos is: " << pos << std::endl;
+		chunkSizeString.append(_responseBufferVector.begin(), _responseBufferVector.begin() + pos);
+		std::istringstream iss(chunkSizeString);
+		iss >> std::hex >> chunkSizeInt;
+		std::cout << "the chunk size is: " << chunkSizeInt << std::endl;
+		_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + pos + 2);
+		this->upload->writeToFile(_responseBufferVector);
+		this->upload->endLine();
+		// tomorrow start writing what you need from each chunk now you have the size of the chunk and vector of char need to be writed
+		// in you vector you have 400 char and the size of chunk is 4000 so 4000 - 400 = 3600, the next time you read 1024 you will write
+		// 3600 - 1024 = 2576, and so on good luck lah lmo3in
 	}
 	else // ============> binary type
 	{
-		// std::cout << this->totalBytesRead << " : " << this->Content_Length << std::endl;
 		if (totalBytesRead < this->Content_Length)
 		{
 			bytesRead = read(_fd, buffer, 1024);
 			_responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
-			// for (int i = 0; i < bytesRead; i++)
-			// 	_responseBufferVector.push_back(buffer[i]);
-			//postRequest += std::string(buffer, bytesRead);
 			this->totalBytesRead += bytesRead;
 			this->upload->writeToFile(_responseBufferVector);
 			_responseBufferVector.clear();

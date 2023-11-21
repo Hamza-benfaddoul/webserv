@@ -87,8 +87,8 @@ int isInclude(const std::vector <char> & source, const char *needed)
                 }
                 else
                     break;
-                if (k == (int)strlen(needed) - 1)
-                    return i - (strlen(needed) - 1);
+                if (k == (int)strlen(needed))
+                    return i - (strlen(needed));
             }
         }
         else
