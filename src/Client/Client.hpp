@@ -53,7 +53,9 @@ class Client {
 		std::map<std::string, std::string>	ourLocation;
 		int	rest;
 		std::string chunkSizeString;
-		int chunkSizeInt;
+		size_t chunkSizeInt;
+		int pos;
+		bool	isChunkComplete;
 
 		bool	checkRequestPath(std::string);
 		bool	getMethodHandler(void);
@@ -65,6 +67,7 @@ class Client {
 		bool	handleDirs();
 		bool	checkType();
 		void	directoryListing(std::string);
+		void	parseChunk();
 
 		void	sendResponse(void);
 		void	sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string location);

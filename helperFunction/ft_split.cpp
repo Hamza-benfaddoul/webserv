@@ -75,12 +75,12 @@ int isInclude(const std::vector <char> & source, const char *needed)
     for (int i = 0; i < (int) source.size();)
     {
         int j = 0;
-        if (source.at(i) == needed[j])
+        if ( source.at(i) == needed[j])
         {
             i++;
             for (int k = j + 1; k < (int)strlen(needed);)
             {
-                if (needed[k] == source.at(i))
+                if (i < (int)source.size() && needed[k] == source.at(i))
                 {    
                     k++;
                     i++;

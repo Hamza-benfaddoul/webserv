@@ -29,6 +29,8 @@ Client::Client(size_t fd, serverBlock *serverBlock) :
 	isLocationExist = false;
 	totalBytesRead = 0;
 	Content_Length = -1;
+	rest = 0;
+	isChunkComplete = true;
 }
 
 bool	Client::receiveResponse(void)
@@ -463,15 +465,51 @@ bool	Client::postMethodHandler(void)
 	if (Headers.find("Transfer-Encoding") != Headers.end() && Headers["Transfer-Encoding"] == "chunked") // ============> chunk type
 	{
 		// isInclude();
-		int	pos = isInclude(_responseBufferVector, "\r\n");
-		std::cout << "the pos is: " << pos << std::endl;
-		chunkSizeString.append(_responseBufferVector.begin(), _responseBufferVector.begin() + pos);
-		std::istringstream iss(chunkSizeString);
-		iss >> std::hex >> chunkSizeInt;
-		std::cout << "the chunk size is: " << chunkSizeInt << std::endl;
-		_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + pos + 2);
-		this->upload->writeToFile(_responseBufferVector);
-		this->upload->endLine();
+		if (isChunkComplete == true)
+		{
+			// pos = isInclude(_responseBufferVector, "\r\n");
+			std::string result(_responseBufferVector.begin(), _responseBufferVector.end());
+			pos = result.find("\r\n");
+			std::cout << "the pos is: " << pos << std::endl;
+			chunkSizeString.append(_responseBufferVector.begin(), _responseBufferVector.begin() + pos);
+			std::istringstream iss(chunkSizeString);
+			iss >> std::hex >> chunkSizeInt;
+			_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + pos + 2);
+			isChunkComplete = false;
+		}
+		std::string result(_responseBufferVector.begin(), _responseBufferVector.end());
+		if (result.find("0\r\n\r\n") != std::string::npos)
+		{
+		// }
+		// if (isInclude(_responseBufferVector, "0\r\n\r\n") != -1)
+		// {
+			_responseBufferVector.erase(_responseBufferVector.end() - 5, _responseBufferVector.end());
+			this->upload->writeToFile(_responseBufferVector, _responseBufferVector.size());
+		}
+		else
+		{
+			if (chunkSizeInt > _responseBufferVector.size())
+			{
+				this->upload->writeToFile(_responseBufferVector);
+				_responseBufferVector.clear();
+			}
+			else
+			{
+				this->upload->writeToFile(_responseBufferVector, chunkSizeInt);
+				if (chunkSizeInt < _responseBufferVector.size())
+					_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + chunkSizeInt);
+				isChunkComplete = true;
+			}
+			bytesRead = read(_fd, buffer, 1024);
+			_responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
+			this->totalBytesRead += bytesRead;
+			return (false);
+		}
+
+		
+
+		// this->upload->writeToFile(_responseBufferVector);
+		// this->upload->endLine(); 
 		// tomorrow start writing what you need from each chunk now you have the size of the chunk and vector of char need to be writed
 		// in you vector you have 400 char and the size of chunk is 4000 so 4000 - 400 = 3600, the next time you read 1024 you will write
 		// 3600 - 1024 = 2576, and so on good luck lah lmo3in

@@ -18,6 +18,7 @@ public:
     ~Upload();
     void	writeToFile(const std::vector<char> & source);
     void    writeToFileString(const std::string &source);
+    void    writeToFile(const std::vector<char> & source, size_t end);
     void    endLine();
     void	createFile();
     void    start();
