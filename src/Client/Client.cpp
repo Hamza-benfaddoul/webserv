@@ -467,10 +467,13 @@ bool	Client::postMethodHandler(void)
 		// isInclude();
 		if (isChunkComplete == true)
 		{
-			// pos = isInclude(_responseBufferVector, "\r\n");
+			std::vector<char>::iterator it = _responseBufferVector.begin(); // trim the vector if there is \r or \n in the beginning.
+			while (it != _responseBufferVector.end() && (*it == '\r' || *it == '\n')) {
+				++it;
+			}
+			_responseBufferVector.erase(_responseBufferVector.begin(), it);
 			std::string result(_responseBufferVector.begin(), _responseBufferVector.end());
 			pos = result.find("\r\n");
-			std::cout << "the pos is: " << pos << std::endl;
 			chunkSizeString.append(_responseBufferVector.begin(), _responseBufferVector.begin() + pos);
 			std::istringstream iss(chunkSizeString);
 			iss >> std::hex >> chunkSizeInt;
@@ -480,9 +483,6 @@ bool	Client::postMethodHandler(void)
 		std::string result(_responseBufferVector.begin(), _responseBufferVector.end());
 		if (result.find("0\r\n\r\n") != std::string::npos)
 		{
-		// }
-		// if (isInclude(_responseBufferVector, "0\r\n\r\n") != -1)
-		// {
 			_responseBufferVector.erase(_responseBufferVector.end() - 5, _responseBufferVector.end());
 			this->upload->writeToFile(_responseBufferVector, _responseBufferVector.size());
 		}
@@ -491,18 +491,17 @@ bool	Client::postMethodHandler(void)
 			if (chunkSizeInt > _responseBufferVector.size())
 			{
 				this->upload->writeToFile(_responseBufferVector);
+				chunkSizeInt -= _responseBufferVector.size();
 				_responseBufferVector.clear();
 			}
 			else
 			{
 				this->upload->writeToFile(_responseBufferVector, chunkSizeInt);
-				if (chunkSizeInt < _responseBufferVector.size())
-					_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + chunkSizeInt);
+				_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + chunkSizeInt);
 				isChunkComplete = true;
 			}
 			bytesRead = read(_fd, buffer, 1024);
 			_responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
-			this->totalBytesRead += bytesRead;
 			return (false);
 		}
 
