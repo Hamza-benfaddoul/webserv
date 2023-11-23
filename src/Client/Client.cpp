@@ -29,7 +29,8 @@ Client::Client(size_t fd, serverBlock *serverBlock) :
 	isLocationExist = false;
 	totalBytesRead = 0;
 	Content_Length = -1;
-	bytes = 1024;
+	rest = 0;
+	isChunkComplete = true;
 }
 
 bool	Client::receiveResponse(void)
@@ -41,19 +42,25 @@ bool	Client::receiveResponse(void)
 		bytesRead = read(_fd, buffer, 1024);
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
-		for (int i = 0; i < bytesRead; i++)
-			_responseBufferVector.push_back(buffer[i]);
+		// for (int i = 0; i < bytesRead; i++)
+		// 	_responseBufferVector.push_back(buffer[i]);
+		_responseBuffer.append(buffer, bytesRead);
 		// this->_responseBuffer += std::string(buffer, bytesRead);
 		// postRequest = _responseBuffer;
 		// if (std::string(buffer, bytesRead).find("\r\n\r\n") != std::string::npos)
-		int	pos = isInclude(_responseBufferVector, "\r\n\r\n");
+		// int	pos = isInclude(_responseBufferVector, "\r\n\r\n");
+		
+		int pos = _responseBuffer.find("\r\n\r\n");
 		if (pos != -1)
 		{
-			_responseBuffer += std::string(_responseBufferVector.begin(), _responseBufferVector.begin() + pos);
-			_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + pos + 4);
-			this->request = new Request(_responseBuffer, _responseBufferVector);
+			// _responseBuffer += std::string(_responseBufferVector.begin(), _responseBufferVector.begin() + pos);
+			// _responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + pos + 4);
+			// _responseBuffer.erase(0, pos + 4);
+			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
 			this->request->printRequest();
+			this->body = this->request->getBodyString();
+			//std::cout << "the body is: " << this->body << std::endl;
 			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
 			if (Oheaders.find("Content-Length") != Oheaders.end())
 			{
@@ -71,8 +78,8 @@ bool	Client::receiveResponse(void)
 	if (!_readHeader)
 	{
 		// get_match_location_for_request_uri(this->request->getPath()); // get the desired location from the uri ("check the boolean called isLocationExist, true->exit, flae->!exist")
-		// if (is_request_well_formed() == -1)
-		// 	return true;
+		if (is_request_well_formed() == -1)
+			return true;
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
@@ -405,9 +412,9 @@ int	Client::is_request_well_formed()
 	// bad request
 	if (badChar == 1 || this->request->getBad() == 1 || (it == ourHeaders.end() && ourHeaders.find("Content-Length") == ourHeaders.end()))
 	{
-	// 	// std::cout << badChar << " - " << this->request->getBad() << std::endl;
-	// 	sendErrorResponse(400, "Bad Request", "<html><body><h1>400 Bad Request</h1></body></html>");
-	// 	return (-1);
+		std::cout << badChar << " - " << this->request->getBad() << std::endl;
+		sendErrorResponse(400, "Bad Request", "<html><body><h1>400 Bad Request</h1></body></html>");
+		return (-1);
 	 }
 	// transfer encoding is equal to chunked
 	if (ourHeaders.find("Transfer-Encoding") != ourHeaders.end() && ourHeaders["Transfer-Encoding"] != "chunked")
@@ -435,10 +442,7 @@ int	Client::is_request_well_formed()
 	return (true);
 }
 
-int	Client::bytesToBeRead()
-{
-	return 0;
-}
+
 
 // true -> close, flase continue;
 bool	Client::postMethodHandler(void)
@@ -449,51 +453,75 @@ bool	Client::postMethodHandler(void)
 
 	if (fileCreated == false)
 	{
-		std::string firstBody = this->request->getBodyString();
 		this->upload = new Upload(this->request, this->cpt);
 		this->upload->createFile();
-		body = ltrim(firstBody, "\r\n");
 		totalBytesRead = body.length();
+		if (Headers.find("Content-Length") != Headers.end() && totalBytesRead >= Content_Length)
+		{
+			this->upload->writeToFileString(body.data(), body.length());
+			this->upload->endLine();
+			sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
+			return true;
+		}
 		fileCreated = true;
 		this->cpt++;
 	}
 	// read until body is complte (chunk by chunk)
 	if (Headers.find("Transfer-Encoding") != Headers.end() && Headers["Transfer-Encoding"] == "chunked") // ============> chunk type
 	{
-		bool endChunk = endsWithString(chunkBody, "0\r\n\r\n");
-		if (endChunk == false)
+		if (isChunkComplete == true)
 		{
-			bytes = bytesToBeRead();
-			bytesRead = read(_fd, buffer, 1024);
-			body  += std::string(buffer, bytesRead);
-			return false;
+			ltrim(this->body, "\r\n");
+			pos = body.find("\r\n"); 
+			chunkSizeString.append(body.substr(0, pos));
+			std::istringstream iss(chunkSizeString);
+			iss >> std::hex >> chunkSizeInt;
+			if (chunkSizeInt != 0)
+			{
+				chunkSizeString.clear();
+				body.erase(0, pos + 2);
+				isChunkComplete = false;
+			}
+		}
+		if (body.find("0\r\n\r\n") != std::string::npos)
+		{
+			body.erase(body.length() - 5, body.length());
+			this->upload->writeToFileString(body);
 		}
 		else
 		{
-			bytesToBeRead();
-			// this->upload->writeToFile(bodyToWrite);
-			sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
-			return true;
+			if (chunkSizeInt > body.length())
+			{
+				bytesRead = read(_fd, buffer, 1024);
+				body.append(buffer, bytesRead);
+			}
+			else
+			{
+				this->upload->writeToFileString(body, chunkSizeInt);
+				body.erase(0, chunkSizeInt);
+				isChunkComplete = true;
+				bytesRead = read(_fd, buffer, 1024);
+				body.append(buffer, bytesRead);
+			}
+			return false;
 		}
+		this->upload->endLine();
 	}
 	else // ============> binary type
 	{
-		// std::cout << this->totalBytesRead << " : " << this->Content_Length << std::endl;
 		if (totalBytesRead < this->Content_Length)
 		{
 			bytesRead = read(_fd, buffer, 1024);
-			for (int i = 0; i < bytesRead; i++)
-				_responseBufferVector.push_back(buffer[i]);
-			std::cout << "the size of vector is: " << _responseBufferVector.size() << std::endl;
-			//postRequest += std::string(buffer, bytesRead);
 			this->totalBytesRead += bytesRead;
-			this->upload->writeToFile(_responseBufferVector);
-			_responseBufferVector.clear();
+			this->body.append(buffer, bytesRead);
+			this->upload->writeToFileString(body);
+			this->body.clear();
+			this->upload->endLine();
 			if (totalBytesRead < this->Content_Length)
 				return false; // keep reading
-
 		}
 	}
+	this->upload->endLine();
 	this->upload->start();
 	std::cout << "!!!! exit from reading" << std::endl;
 	sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");

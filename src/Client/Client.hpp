@@ -50,9 +50,12 @@ class Client {
 		serverBlock		*_serverBlock;
 		bool 			isLocationExist;
 		std::string 	body;
-		char 			chunkBody[1024];
 		std::map<std::string, std::string>	ourLocation;
-		int	bytes;
+		int	rest;
+		std::string chunkSizeString;
+		size_t chunkSizeInt;
+		int pos;
+		bool	isChunkComplete;
 
 		bool	checkRequestPath(std::string);
 		bool	getMethodHandler(void);
@@ -64,6 +67,7 @@ class Client {
 		bool	handleDirs();
 		bool	checkType();
 		void	directoryListing(std::string);
+		void	parseChunk();
 
 		void	sendResponse(void);
 		void	sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string location);
@@ -79,7 +83,6 @@ class Client {
 		void	handleRequestFromRoot();
 		void	handleRequestFromLocation( std::string );
 		void 	get_match_location_for_request_uri(const std::string &uri);
-		int		bytesToBeRead();
 		std::string	getMimeTypeFromExtension(const std::string& path);
 
 
