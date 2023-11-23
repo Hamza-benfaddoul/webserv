@@ -1,5 +1,5 @@
 server:
-  listen: 4003
+  listen: 6666
   server_name: localhost
   root: www
 
@@ -18,7 +18,7 @@ server:
     - methods: [DELETE, POST]
 
 server:
-  listen: 2222
+  listen: 1234
   server_name: localhost
   root: www
   location:
