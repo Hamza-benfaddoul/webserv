@@ -42,19 +42,25 @@ bool	Client::receiveResponse(void)
 		bytesRead = read(_fd, buffer, 1024);
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
-		for (int i = 0; i < bytesRead; i++)
-			_responseBufferVector.push_back(buffer[i]);
+		// for (int i = 0; i < bytesRead; i++)
+		// 	_responseBufferVector.push_back(buffer[i]);
+		_responseBuffer.append(buffer, bytesRead);
 		// this->_responseBuffer += std::string(buffer, bytesRead);
 		// postRequest = _responseBuffer;
 		// if (std::string(buffer, bytesRead).find("\r\n\r\n") != std::string::npos)
-		int	pos = isInclude(_responseBufferVector, "\r\n\r\n");
+		// int	pos = isInclude(_responseBufferVector, "\r\n\r\n");
+		
+		int pos = _responseBuffer.find("\r\n\r\n");
 		if (pos != -1)
 		{
-			_responseBuffer += std::string(_responseBufferVector.begin(), _responseBufferVector.begin() + pos);
-			_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + pos + 4);
-			this->request = new Request(_responseBuffer, _responseBufferVector);
+			// _responseBuffer += std::string(_responseBufferVector.begin(), _responseBufferVector.begin() + pos);
+			// _responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + pos + 4);
+			// _responseBuffer.erase(0, pos + 4);
+			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
 			this->request->printRequest();
+			this->body = this->request->getBodyString();
+			//std::cout << "the body is: " << this->body << std::endl;
 			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
 			if (Oheaders.find("Content-Length") != Oheaders.end())
 			{
@@ -447,13 +453,12 @@ bool	Client::postMethodHandler(void)
 
 	if (fileCreated == false)
 	{
-		std::string firstBody = this->request->getBodyString();
 		this->upload = new Upload(this->request, this->cpt);
 		this->upload->createFile();
-		totalBytesRead = _responseBufferVector.size();
+		totalBytesRead = body.length();
 		if (Headers.find("Content-Length") != Headers.end() && totalBytesRead >= Content_Length)
 		{
-			this->upload->writeToFile(_responseBufferVector);
+			this->upload->writeToFileString(body.data(), body.length());
 			this->upload->endLine();
 			sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
 			return true;
@@ -464,64 +469,153 @@ bool	Client::postMethodHandler(void)
 	// read until body is complte (chunk by chunk)
 	if (Headers.find("Transfer-Encoding") != Headers.end() && Headers["Transfer-Encoding"] == "chunked") // ============> chunk type
 	{
-		// isInclude();
+
 		if (isChunkComplete == true)
 		{
-			std::vector<char>::iterator it = _responseBufferVector.begin(); // trim the vector if there is \r or \n in the beginning.
-			while (it != _responseBufferVector.end() && (*it == '\r' || *it == '\n')) {
-				++it;
-			}
-			_responseBufferVector.erase(_responseBufferVector.begin(), it);
-			std::string result(_responseBufferVector.begin(), _responseBufferVector.end());
-			pos = result.find("\r\n");
-			chunkSizeString.append(_responseBufferVector.begin(), _responseBufferVector.begin() + pos);
+			ltrim(this->body, "\r\n");
+			pos = body.find("\r\n"); 
+			chunkSizeString.append(body.substr(0, pos));
 			std::istringstream iss(chunkSizeString);
 			iss >> std::hex >> chunkSizeInt;
-			_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + pos + 2);
-			isChunkComplete = false;
+			if (chunkSizeInt != 0)
+			{
+				chunkSizeString.clear();
+				body.erase(0, pos + 2);
+				isChunkComplete = false;
+			}
 		}
-		std::string result(_responseBufferVector.begin(), _responseBufferVector.end());
-		if (result.find("0\r\n\r\n") != std::string::npos)
+		if (body.find("0\r\n\r\n") != std::string::npos)
 		{
-			_responseBufferVector.erase(_responseBufferVector.end() - 5, _responseBufferVector.end());
-			this->upload->writeToFile(_responseBufferVector, _responseBufferVector.size());
+			body.erase(body.length() - 5, body.length());
+			this->upload->writeToFileString(body, body.length());
 		}
 		else
 		{
-			if (chunkSizeInt > _responseBufferVector.size())
+			if (chunkSizeInt > body.length())
 			{
-				this->upload->writeToFile(_responseBufferVector);
-				chunkSizeInt -= _responseBufferVector.size();
-				_responseBufferVector.clear();
+				bytesRead = read(_fd, buffer, 1024);
+				body.append(buffer, bytesRead);
+				// _responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
 			}
 			else
 			{
-				this->upload->writeToFile(_responseBufferVector, chunkSizeInt);
-				_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + chunkSizeInt);
+				// this->upload->writeToFile(_responseBufferVector, chunkSizeInt);
+				this->upload->writeToFileString(body, chunkSizeInt);
+				// _responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + chunkSizeInt);
+				body.erase(0, chunkSizeInt);
 				isChunkComplete = true;
+				bytesRead = read(_fd, buffer, 1024);
+				body.append(buffer, bytesRead);
+				// _responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
 			}
-			bytesRead = read(_fd, buffer, 1024);
-			_responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
-			return (false);
+			return false;
 		}
+		this->upload->endLine();
 
-		
 
-		// this->upload->writeToFile(_responseBufferVector);
-		// this->upload->endLine(); 
-		// tomorrow start writing what you need from each chunk now you have the size of the chunk and vector of char need to be writed
-		// in you vector you have 400 char and the size of chunk is 4000 so 4000 - 400 = 3600, the next time you read 1024 you will write
-		// 3600 - 1024 = 2576, and so on good luck lah lmo3in
+		// if (isChunkComplete == true)
+		// {
+		// 	std::vector<char>::iterator it = _responseBufferVector.begin(); // trim the vector if there is \r or \n in the beginning.
+		// 	while (it != _responseBufferVector.end() && (*it == '\r' || *it == '\n')) {
+		// 		++it;
+		// 	}
+		// 	_responseBufferVector.erase(_responseBufferVector.begin(), it);
+		// 	std::string result(_responseBufferVector.begin(), _responseBufferVector.end());
+		// 	pos = result.find("\r\n"); 
+		// 	chunkSizeString.append(_responseBufferVector.begin(), _responseBufferVector.begin() + pos);
+		// 	std::istringstream iss(chunkSizeString);
+		// 	iss >> std::hex >> chunkSizeInt;
+		// 	if (chunkSizeInt != 0)
+		// 	{
+		// 		chunkSizeString.clear();
+		// 		_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + pos + 2);
+		// 		isChunkComplete = false;
+		// 	}
+		// }
+		// std::string result(_responseBufferVector.begin(), _responseBufferVector.end());
+		// if (result.find("0\r\n\r\n") != std::string::npos)
+		// {
+		// 	_responseBufferVector.erase(_responseBufferVector.end() - 5, _responseBufferVector.end());
+		// 	this->upload->writeToFile(_responseBufferVector, _responseBufferVector.size());
+		// }
+		// else
+		// {
+		// 	if (chunkSizeInt > _responseBufferVector.size())
+		// 	{
+		// 		bytesRead = read(_fd, buffer, 1024);
+		// 		_responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
+		// 	}
+		// 	else
+		// 	{
+		// 		this->upload->writeToFile(_responseBufferVector, chunkSizeInt);
+		// 		_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + chunkSizeInt);
+		// 		isChunkComplete = true;
+		// 		bytesRead = read(_fd, buffer, 1024);
+		// 		_responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
+		// 	}
+		// 	return false;
+		// }
+		// this->upload->endLine();
+
+
+
+		// isInclude();
+		// if (isChunkComplete == true)
+		// {
+		// 	std::vector<char>::iterator it = _responseBufferVector.begin(); // trim the vector if there is \r or \n in the beginning.
+		// 	while (it != _responseBufferVector.end() && (*it == '\r' || *it == '\n')) {
+		// 		++it;
+		// 	}
+		// 	_responseBufferVector.erase(_responseBufferVector.begin(), it);
+		// 	std::string result(_responseBufferVector.begin(), _responseBufferVector.end());
+		// 	pos = result.find("\r\n"); 
+		// 	chunkSizeString.append(_responseBufferVector.begin(), _responseBufferVector.begin() + pos);
+		// 	std::istringstream iss(chunkSizeString);
+		// 	iss >> std::hex >> chunkSizeInt;
+		// 	_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + pos + 2);
+		// 	isChunkComplete = false;
+		// }
+		// std::string result(_responseBufferVector.begin(), _responseBufferVector.end());
+		// if (result.find("0\r\n\r\n") != std::string::npos)
+		// {
+		// 	_responseBufferVector.erase(_responseBufferVector.end() - 5, _responseBufferVector.end());
+		// 	this->upload->writeToFile(_responseBufferVector, _responseBufferVector.size());
+		// 	this->upload->endLine();
+		// }
+		// else
+		// {
+		// 	if (chunkSizeInt > _responseBufferVector.size())
+		// 	{
+		// 		this->upload->writeToFile(_responseBufferVector);
+		// 		chunkSizeInt -= _responseBufferVector.size();
+		// 		_responseBufferVector.clear();
+		// 	}
+		// 	else
+		// 	{
+		// 		this->upload->writeToFile(_responseBufferVector, chunkSizeInt);
+		// 		_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + chunkSizeInt);
+		// 		isChunkComplete = true;
+		// 	}
+		// 	this->upload->endLine();
+		// 	bytesRead = read(_fd, buffer, 1024);
+		// 	_responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
+		// 	return (false);
+		// }
 	}
 	else // ============> binary type
 	{
 		if (totalBytesRead < this->Content_Length)
 		{
 			bytesRead = read(_fd, buffer, 1024);
-			_responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
+			// _responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
 			this->totalBytesRead += bytesRead;
-			this->upload->writeToFile(_responseBufferVector);
-			_responseBufferVector.clear();
+			this->body.append(buffer, bytesRead);
+			// this->upload->writeToFile(_responseBufferVector);
+			// this->upload->writeToFileString(body.data(), body.length());
+			this->upload->writeToFileString(body);
+			// _responseBufferVector.clear();
+			this->body.clear();
+			this->upload->endLine();
 			if (totalBytesRead < this->Content_Length)
 				return false; // keep reading
 		}

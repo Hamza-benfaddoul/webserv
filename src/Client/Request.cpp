@@ -18,7 +18,11 @@
 
 */
 
-Request::Request(std::string req, std::vector<char> bv) : request(req), bodyVector(bv),bad(0)
+// Request::Request(std::string req, std::vector<char> bv) : request(req), bodyVector(bv),bad(0)
+// {
+// }
+
+Request::Request(std::string req) : request(req), bad(0)
 {
 }
 
@@ -40,9 +44,9 @@ void    Request::parseRequest()
     size_t pos = this->request.find("\r\n\r\n");
     int i = 1;
 
-    // part1 = this->request.substr(0, pos);
-    part1 = this->request;
-    // part2 = this->request.substr(pos + 4, this->request.length());
+    part1 = this->request.substr(0, pos);
+    // part1 = this->request;
+    part2 = this->request.substr(pos + 4, this->request.length());
     elements = ft_split(part1, "\r\n");
     firstLine = ft_split(elements.at(0), " ");
     if ((int)firstLine.size() > 3)
@@ -67,7 +71,7 @@ void    Request::parseRequest()
         i++;
     }
     elements.clear();
-    // this->bodyString = part2;
+    this->bodyString = part2;
 }
 
 void    Request::printRequest() const

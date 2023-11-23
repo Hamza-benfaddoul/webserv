@@ -23,7 +23,8 @@ private:
 
 public:
     std::string method;
-    Request(std::string req, std::vector<char> bv);
+    Request(std::string req);
+    // Request(std::string req, std::vector<char> bv);
     void parseRequest();
     void    printRequest() const;
     const std::string &getMethod() const;
