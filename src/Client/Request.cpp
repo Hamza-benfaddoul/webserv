@@ -18,9 +18,7 @@
 
 */
 
-// Request::Request(std::string req, std::vector<char> bv) : request(req), bodyVector(bv),bad(0)
-// {
-// }
+
 
 Request::Request(std::string req) : request(req), bad(0)
 {
@@ -88,18 +86,12 @@ void    Request::printRequest() const
     }
     req << std::endl << std::endl;
     // req << "-------------------------------------------------------" << std::endl << std::endl;
-    // req << this->bodyString;
+
     for (int i = 0; i < (int)bodyVector.size(); i++)
     {
         req << bodyVector.at(i);
     }
-    // for (int i = 0; i < (int) bodyVector.size(); i++)
-    // {
-    //     if (bodyVector.at(i) == '\r' || bodyVector.at(i) == '\n')
-    //         req.put('-');
-    //     else
-    //         req.put(bodyVector.at(i));
-    // }
+
     req.close();
 }
 

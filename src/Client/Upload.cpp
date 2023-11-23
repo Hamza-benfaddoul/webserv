@@ -34,12 +34,10 @@ void Upload::start()
 void    Upload::writeToFileString(const std::string &source, size_t size)
 {
 	bodyContent.write(source.data(), size);
-	// this->bodyContent << source;
 }
 
 void    Upload::writeToFileString(const std::string &source)
 {
-	// bodyContent.write(source.data(), size);
 	this->bodyContent << source;
 }
 
@@ -56,6 +54,5 @@ void	Upload::writeToFile(const std::vector<char> & source)
 void Upload::endLine()
 {
 	this->bodyContent.flush();
-		// this->bodyContent << std::endl;
 }
 

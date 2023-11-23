@@ -78,8 +78,8 @@ bool	Client::receiveResponse(void)
 	if (!_readHeader)
 	{
 		// get_match_location_for_request_uri(this->request->getPath()); // get the desired location from the uri ("check the boolean called isLocationExist, true->exit, flae->!exist")
-		// if (is_request_well_formed() == -1)
-		// 	return true;
+		if (is_request_well_formed() == -1)
+			return true;
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
@@ -412,9 +412,9 @@ int	Client::is_request_well_formed()
 	// bad request
 	if (badChar == 1 || this->request->getBad() == 1 || (it == ourHeaders.end() && ourHeaders.find("Content-Length") == ourHeaders.end()))
 	{
-	// 	// std::cout << badChar << " - " << this->request->getBad() << std::endl;
-	// 	sendErrorResponse(400, "Bad Request", "<html><body><h1>400 Bad Request</h1></body></html>");
-	// 	return (-1);
+		std::cout << badChar << " - " << this->request->getBad() << std::endl;
+		sendErrorResponse(400, "Bad Request", "<html><body><h1>400 Bad Request</h1></body></html>");
+		return (-1);
 	 }
 	// transfer encoding is equal to chunked
 	if (ourHeaders.find("Transfer-Encoding") != ourHeaders.end() && ourHeaders["Transfer-Encoding"] != "chunked")
@@ -469,7 +469,6 @@ bool	Client::postMethodHandler(void)
 	// read until body is complte (chunk by chunk)
 	if (Headers.find("Transfer-Encoding") != Headers.end() && Headers["Transfer-Encoding"] == "chunked") // ============> chunk type
 	{
-
 		if (isChunkComplete == true)
 		{
 			ltrim(this->body, "\r\n");
@@ -487,7 +486,7 @@ bool	Client::postMethodHandler(void)
 		if (body.find("0\r\n\r\n") != std::string::npos)
 		{
 			body.erase(body.length() - 5, body.length());
-			this->upload->writeToFileString(body, body.length());
+			this->upload->writeToFileString(body);
 		}
 		else
 		{
@@ -495,125 +494,27 @@ bool	Client::postMethodHandler(void)
 			{
 				bytesRead = read(_fd, buffer, 1024);
 				body.append(buffer, bytesRead);
-				// _responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
 			}
 			else
 			{
-				// this->upload->writeToFile(_responseBufferVector, chunkSizeInt);
 				this->upload->writeToFileString(body, chunkSizeInt);
-				// _responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + chunkSizeInt);
 				body.erase(0, chunkSizeInt);
 				isChunkComplete = true;
 				bytesRead = read(_fd, buffer, 1024);
 				body.append(buffer, bytesRead);
-				// _responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
 			}
 			return false;
 		}
 		this->upload->endLine();
-
-
-		// if (isChunkComplete == true)
-		// {
-		// 	std::vector<char>::iterator it = _responseBufferVector.begin(); // trim the vector if there is \r or \n in the beginning.
-		// 	while (it != _responseBufferVector.end() && (*it == '\r' || *it == '\n')) {
-		// 		++it;
-		// 	}
-		// 	_responseBufferVector.erase(_responseBufferVector.begin(), it);
-		// 	std::string result(_responseBufferVector.begin(), _responseBufferVector.end());
-		// 	pos = result.find("\r\n"); 
-		// 	chunkSizeString.append(_responseBufferVector.begin(), _responseBufferVector.begin() + pos);
-		// 	std::istringstream iss(chunkSizeString);
-		// 	iss >> std::hex >> chunkSizeInt;
-		// 	if (chunkSizeInt != 0)
-		// 	{
-		// 		chunkSizeString.clear();
-		// 		_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + pos + 2);
-		// 		isChunkComplete = false;
-		// 	}
-		// }
-		// std::string result(_responseBufferVector.begin(), _responseBufferVector.end());
-		// if (result.find("0\r\n\r\n") != std::string::npos)
-		// {
-		// 	_responseBufferVector.erase(_responseBufferVector.end() - 5, _responseBufferVector.end());
-		// 	this->upload->writeToFile(_responseBufferVector, _responseBufferVector.size());
-		// }
-		// else
-		// {
-		// 	if (chunkSizeInt > _responseBufferVector.size())
-		// 	{
-		// 		bytesRead = read(_fd, buffer, 1024);
-		// 		_responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
-		// 	}
-		// 	else
-		// 	{
-		// 		this->upload->writeToFile(_responseBufferVector, chunkSizeInt);
-		// 		_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + chunkSizeInt);
-		// 		isChunkComplete = true;
-		// 		bytesRead = read(_fd, buffer, 1024);
-		// 		_responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
-		// 	}
-		// 	return false;
-		// }
-		// this->upload->endLine();
-
-
-
-		// isInclude();
-		// if (isChunkComplete == true)
-		// {
-		// 	std::vector<char>::iterator it = _responseBufferVector.begin(); // trim the vector if there is \r or \n in the beginning.
-		// 	while (it != _responseBufferVector.end() && (*it == '\r' || *it == '\n')) {
-		// 		++it;
-		// 	}
-		// 	_responseBufferVector.erase(_responseBufferVector.begin(), it);
-		// 	std::string result(_responseBufferVector.begin(), _responseBufferVector.end());
-		// 	pos = result.find("\r\n"); 
-		// 	chunkSizeString.append(_responseBufferVector.begin(), _responseBufferVector.begin() + pos);
-		// 	std::istringstream iss(chunkSizeString);
-		// 	iss >> std::hex >> chunkSizeInt;
-		// 	_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + pos + 2);
-		// 	isChunkComplete = false;
-		// }
-		// std::string result(_responseBufferVector.begin(), _responseBufferVector.end());
-		// if (result.find("0\r\n\r\n") != std::string::npos)
-		// {
-		// 	_responseBufferVector.erase(_responseBufferVector.end() - 5, _responseBufferVector.end());
-		// 	this->upload->writeToFile(_responseBufferVector, _responseBufferVector.size());
-		// 	this->upload->endLine();
-		// }
-		// else
-		// {
-		// 	if (chunkSizeInt > _responseBufferVector.size())
-		// 	{
-		// 		this->upload->writeToFile(_responseBufferVector);
-		// 		chunkSizeInt -= _responseBufferVector.size();
-		// 		_responseBufferVector.clear();
-		// 	}
-		// 	else
-		// 	{
-		// 		this->upload->writeToFile(_responseBufferVector, chunkSizeInt);
-		// 		_responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + chunkSizeInt);
-		// 		isChunkComplete = true;
-		// 	}
-		// 	this->upload->endLine();
-		// 	bytesRead = read(_fd, buffer, 1024);
-		// 	_responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
-		// 	return (false);
-		// }
 	}
 	else // ============> binary type
 	{
 		if (totalBytesRead < this->Content_Length)
 		{
 			bytesRead = read(_fd, buffer, 1024);
-			// _responseBufferVector.insert(_responseBufferVector.end(), buffer, buffer + bytesRead);
 			this->totalBytesRead += bytesRead;
 			this->body.append(buffer, bytesRead);
-			// this->upload->writeToFile(_responseBufferVector);
-			// this->upload->writeToFileString(body.data(), body.length());
 			this->upload->writeToFileString(body);
-			// _responseBufferVector.clear();
 			this->body.clear();
 			this->upload->endLine();
 			if (totalBytesRead < this->Content_Length)
