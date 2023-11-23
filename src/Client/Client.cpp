@@ -58,8 +58,8 @@ bool	Client::receiveResponse(void)
 	}
 	if (!_readHeader)
 	{
-		// if (is_request_well_formed() == -1)
-		// 	return true;
+		if (is_request_well_formed() == -1)
+			return true;
 		// std::cout << "here\n";
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
@@ -324,27 +324,27 @@ int	Client::is_request_well_formed()
 {
 	std::string path = this->request->getPath();
 	std::string charAllowed = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&'()*+,/:;=?@[]";
-	int	badChar = 0;
+	// int	badChar = 0;
 
-	for (int i = 0; i < (int)path.length(); i++)
-	{
-		size_t pos = charAllowed.find(path[i]);
-		if (pos == std::string::npos)
-		{
-			badChar = 1;
-			break;
-		}
-	}
+	// for (int i = 0; i < (int)path.length(); i++)
+	// {
+	// 	size_t pos = charAllowed.find(path[i]);
+	// 	if (pos == std::string::npos)
+	// 	{
+	// 		badChar = 1;
+	// 		break;
+	// 	}
+	// }
 
 	std::map<std::string, std::string> ourHeaders = this->request->getHeaders();
-	std::map<std::string, std::string>::iterator it = ourHeaders.find("Transfer-Encoding");
+	// std::map<std::string, std::string>::iterator it = ourHeaders.find("Transfer-Encoding");
 	// bad request
-	if (badChar == 1 || this->request->getBad() == 1 || (it == ourHeaders.end() && ourHeaders.find("Content-Length") == ourHeaders.end()))
-	{
-		// std::cout << badChar << " - " << this->request->getBad() << std::endl;
-		sendErrorResponse(400, "Bad Request", "<html><body><h1>400 Bad Request</h1></body></html>");
-		return (-1);
-	}
+	// if (badChar == 1 || this->request->getBad() == 1 || (it == ourHeaders.end() && ourHeaders.find("Content-Length") == ourHeaders.end()))
+	// {
+	// 	// std::cout << badChar << " - " << this->request->getBad() << std::endl;
+	// 	sendErrorResponse(400, "Bad Request", "<html><body><h1>400 Bad Request</h1></body></html>");
+	// 	return (-1);
+	// }
 	// transfer encoding is equal to chunked
 	if (ourHeaders.find("Transfer-Encoding") != ourHeaders.end() && ourHeaders["Transfer-Encoding"] != "chunked")
 	{
@@ -356,6 +356,27 @@ int	Client::is_request_well_formed()
 	{
 		sendErrorResponse(414, "Request-URI Too Long", "<html><body><h1>414 Request-URI Too Long</h1></body></html>");
 		return (-1);
+	}
+	std::string requestedPath = this->request->getPath();
+	for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) {
+		Location test = this->_serverBlock->getLocations().at(i);
+		size_t directoryEndPos = requestedPath.find("/", 1);
+		std::string directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(0, directoryEndPos) : requestedPath;
+		if (regFile(test.getRoot() + directory))
+		{
+			std::cout << directory << "\n";
+			directory = "/";
+		}
+		if (directory == test.getLocationPath())
+		{
+			if ((request->getMethod() == "GET" && test.GET == false) ||
+                    (request->getMethod() == "POST" && test.POST == false) ||
+                        (request->getMethod() == "DELETE" && test.DELETE == false))
+                {
+                    sendErrorResponse(405, "405 Method Not Allowed", ERROR405);
+					return -1;
+                }
+		}
 	}
 	// the body length larger than the max body size in the config file
 	if (true)
