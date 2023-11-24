@@ -32,24 +32,60 @@ void	Upload::createFile()
 void Upload::start()
 {
 	std::map<std::string, std::string> ourLocations = location.getLocationAttributes();
+	std::map<std::string, std::string> ourHeaders = this->request->getHeaders();
+	std::map<std::string, std::string>::const_iterator it = ourHeaders.find("Content-Type");
 
+	std::string content_type;
+	if (it != ourHeaders.end())
+		content_type = it->second;
+	std::cout << "the content type is: " << content_type << std::endl;
 	if (ourLocations.find("cgi") != ourLocations.end() && ourLocations["cgi"] == "on")
 	{
 		char *env[] = 
 		{
-			strdup(std::string("REDIRECT_STATUS=100").c_str()),
-			strdup(std::string("SCRIPT_FILENAME=" + this->filename).c_str()),
-			strdup(std::string("REQUEST_METHOD=").c_str()),
+			strdup(std::string("REDIRECT_STATUS=200").c_str()),
+			strdup(std::string("SCRIPT_FILENAME=" + this->request->getPath()).c_str()),
+			strdup(std::string("REQUEST_METHOD=" + this->request->getMethod()).c_str()),
 			strdup(std::string("QUERY_STRING=").c_str()),
 			strdup(std::string("HTTP_COOKIE=").c_str()),
-			strdup(std::string("HTTP_CONTENT_TYPE=").c_str()),
-			strdup(std::string("CONTENT_TYPE=").c_str()),
+			strdup(std::string("HTTP_CONTENT_TYPE=" + content_type).c_str()),
+			strdup(std::string("CONTENT_TYPE=" + content_type).c_str()),
+			NULL
+		};
+		// Create an array of arguments for execve
+		char* argv[] = 
+		{
+			strdup(std::string("/usr/bin/php").c_str()),
+			strdup(std::string("cgi-bin/upload.php").c_str()), // here i need to take the path of cgi from the config file
 			NULL
 		};
 
-		
-
-		(void)env;
+		// Execute the PHP script
+		pid_t pid = fork();
+		int	fd_file = open(this->filename.data(), O_RDONLY);
+		if (fd_file < 0)
+			throw std::ios_base::failure("Failed to open file");
+		if (pid == 0)
+		{
+			dup2(fd_file, 0);
+			if (execve("/usr/bin/php", argv, env) == -1) {
+				std::cerr << "Error executing PHP script.\n";
+			}
+		}
+		bool envBool, argvBool = true;
+		for (int i = 0; env[i] || argv[i]; i++)
+		{
+			if (envBool && env[i])
+			{
+				free(env[i]);
+				envBool = false;
+			}
+			if (argvBool && argv[i])
+			{
+				free(argv[i]);
+				argvBool = false;
+			}	
+		}
 	}
 	else if (ourLocations.find("upload") != ourLocations.end() && ourLocations["upload"] == "on")
 	{

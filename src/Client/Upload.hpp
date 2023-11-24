@@ -2,6 +2,9 @@
 #define UPLOAD_HPP
 #include <fstream>
 #include <vector>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "../../includes/Location.hpp"
 class Request;
