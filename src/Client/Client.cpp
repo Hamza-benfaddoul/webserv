@@ -31,7 +31,19 @@ Client::Client(size_t fd, serverBlock *serverBlock) :
 	Content_Length = -1;
 	rest = 0;
 	isChunkComplete = true;
+	location = this->_serverBlock->getLocations().at(0);
+	ourLocations = location.getLocationAttributes();
 }
+
+// ================ Start getters ======================================
+
+std::map<std::string, std::string> Client::getOurLocations() const
+{
+	return ourLocations;
+}
+
+// ================ End getters ========================================
+
 
 bool	Client::receiveResponse(void)
 {
@@ -42,25 +54,14 @@ bool	Client::receiveResponse(void)
 		bytesRead = read(_fd, buffer, 1024);
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
-		// for (int i = 0; i < bytesRead; i++)
-		// 	_responseBufferVector.push_back(buffer[i]);
 		_responseBuffer.append(buffer, bytesRead);
-		// this->_responseBuffer += std::string(buffer, bytesRead);
-		// postRequest = _responseBuffer;
-		// if (std::string(buffer, bytesRead).find("\r\n\r\n") != std::string::npos)
-		// int	pos = isInclude(_responseBufferVector, "\r\n\r\n");
-		
 		int pos = _responseBuffer.find("\r\n\r\n");
 		if (pos != -1)
 		{
-			// _responseBuffer += std::string(_responseBufferVector.begin(), _responseBufferVector.begin() + pos);
-			// _responseBufferVector.erase(_responseBufferVector.begin(), _responseBufferVector.begin() + pos + 4);
-			// _responseBuffer.erase(0, pos + 4);
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
 			this->request->printRequest();
 			this->body = this->request->getBodyString();
-			//std::cout << "the body is: " << this->body << std::endl;
 			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
 			if (Oheaders.find("Content-Length") != Oheaders.end())
 			{
@@ -329,7 +330,7 @@ void Client::get_match_location_for_request_uri(const std::string &uri)
 		locationPath = location.getLocationPath();
 		if (locationPath == uri)
 		{
-			ourLocation = location.getLocationAttributes();
+			ourLocations = location.getLocationAttributes();
 			isLocationExist = true;
 			break;
 		}
@@ -447,13 +448,14 @@ int	Client::is_request_well_formed()
 // true -> close, flase continue;
 bool	Client::postMethodHandler(void)
 {
+	// std::cout << data["upload"] << std::endl;
 	std::map<std::string, std::string> Headers = this->request->getHeaders();
 	char	buffer[1024] = {0};
 	int		bytesRead;
 
 	if (fileCreated == false)
 	{
-		this->upload = new Upload(this->request, this->cpt);
+		this->upload = new Upload(this->request, this->cpt, *this);
 		this->upload->createFile();
 		totalBytesRead = body.length();
 		if (Headers.find("Content-Length") != Headers.end() && totalBytesRead >= Content_Length)

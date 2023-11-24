@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include "../Client/Client.hpp"
 #include "../../includes/serverBlock.hpp"
 #include "Server.hpp"
-#include "../Client/Client.hpp"
 class Server;
 
 class Cluster

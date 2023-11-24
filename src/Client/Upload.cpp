@@ -5,6 +5,10 @@ Upload::Upload(Request *req, int in_cpt) : request(req), cpt(in_cpt)
 {
 }
 
+// Upload::Upload(Request *req, int in_cpt, Client in_client) : request(req), cpt(in_cpt), client(in_client)
+// {
+// }
+
 Upload::~Upload()
 {
 	std::cout << "the file should be removed is: " << this->filename << std::endl;
@@ -26,9 +30,20 @@ void	Upload::createFile()
 	}
 }
 
+// start the proccess of uploading files ...
+
 void Upload::start()
 {
+	std::map<std::string, std::string> ourLocations = client.getOurLocations();
 	
+	if (ourLocations.find("cgi") != ourLocations.end() && ourLocations["cgi"] == "on")
+	{
+
+	}
+	else if (ourLocations.find("upload") != ourLocations.end() && ourLocations["upload"] == "on")
+	{
+		
+	}
 }
 
 void    Upload::writeToFileString(const std::string &source, size_t size)

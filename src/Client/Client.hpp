@@ -14,7 +14,10 @@
 
 #include "../../includes/main.hpp"
 #include "Request.hpp"
-#include "Upload.hpp"
+#include "../../includes/Location.hpp"
+// #include "Upload.hpp"
+// class Upload;
+
 
 // those are not exist :   414 - 413 - 301 - 201 - 405
 
@@ -50,12 +53,13 @@ class Client {
 		serverBlock		*_serverBlock;
 		bool 			isLocationExist;
 		std::string 	body;
-		std::map<std::string, std::string>	ourLocation;
+		std::map<std::string, std::string>	ourLocations;
 		int	rest;
 		std::string chunkSizeString;
 		size_t chunkSizeInt;
 		int pos;
 		bool	isChunkComplete;
+		Location location;
 
 		bool	checkRequestPath(std::string);
 		bool	getMethodHandler(void);
@@ -88,6 +92,7 @@ class Client {
 
 	public:
 		Client(size_t fd, serverBlock *serverBlock);
+		std::map<std::string, std::string> getOurLocations() const;
 		~Client();
 
 		bool	run(void);
