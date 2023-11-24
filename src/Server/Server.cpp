@@ -28,7 +28,8 @@ void    Server::run(void)
 {
 	initServerSocket();
 	listenToClient();
-}   
+	setsockopt(_socketfd, SOL_SOCKET, SO_REUSEADDR, NULL, sizeof(int));
+}
 
 void    Server::initServerSocket()
 {
