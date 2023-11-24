@@ -3,11 +3,8 @@
 #include <fstream>
 #include <vector>
 
-#include "../../includes/main.hpp"
-
-#include "Client.hpp"
-#include "Request.hpp"
-// class Request;
+#include "../../includes/Location.hpp"
+class Request;
 // class Client;
 
 class Upload
@@ -18,11 +15,13 @@ private:
     Request *request;
     int cpt;
     std::string filename;
+    Location location;
     // Client client;
 
 public:
     // Upload(Request *req, int in_cpt, Client in_client);
-    Upload(Request *req, int in_cpt, Client in_client);
+    Upload(Request *req, int in_cpt, Location in_location);
+    // Upload(Request *req, int in_cpt);
     ~Upload();
     void	writeToFile(const std::vector<char> & source);
     void    writeToFileString(const std::string &source, size_t size);

@@ -455,7 +455,7 @@ bool	Client::postMethodHandler(void)
 
 	if (fileCreated == false)
 	{
-		this->upload = new Upload(this->request, this->cpt, *this);
+		this->upload = new Upload(this->request, this->cpt, location);
 		this->upload->createFile();
 		totalBytesRead = body.length();
 		if (Headers.find("Content-Length") != Headers.end() && totalBytesRead >= Content_Length)

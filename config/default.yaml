@@ -3,10 +3,6 @@ server:
   server_name: localhost
   root: www
 
-  location:
-    - path: "/"
-    - methods: [GET]
-    - index: [index.html]
  
   location:
     - path: "/"
@@ -41,14 +37,14 @@ server:
     - methods: [GET, POST]
     - index:  [index.html, index.htm]
 
-  location:
-    - path: "/cgi"
-    - root: /Users/woumecht/Desktop/http2/cgi-bin
-    - methods: [GET, POST]
-    - upload: on
-    - cgi_path: [.py, /user/bin/python3]
-    - cgi_path: [.php, ...]
-    - cgi_path: [.sh, /bin/bash]
+  # location:
+  #   - path: "/cgi"
+  #   - root: /Users/woumecht/Desktop/http2/cgi-bin
+  #   - methods: [GET, POST]
+  #   - upload: on
+  #   - cgi_path: [.py, /user/bin/python3]
+  #   - cgi_path: [.php, ...]
+  #   - cgi_path: [.sh, /bin/bash]
 
 
   location:

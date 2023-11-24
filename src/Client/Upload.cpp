@@ -1,13 +1,10 @@
 #include "Upload.hpp"
 #include "../../includes/main.hpp"
 
-Upload::Upload(Request *req, int in_cpt) : request(req), cpt(in_cpt)
+Upload::Upload(Request *req, int in_cpt, Location in_location) : request(req), cpt(in_cpt), location(in_location)
 {
-}
 
-// Upload::Upload(Request *req, int in_cpt, Client in_client) : request(req), cpt(in_cpt), client(in_client)
-// {
-// }
+}
 
 Upload::~Upload()
 {
@@ -21,7 +18,7 @@ void	Upload::createFile()
 	std::stringstream ss;
 	ss << this->cpt;
 	std::string cptAsString = ss.str();
-	filename = "www/bodyFiles/content" + cptAsString;
+	filename = "www/uploads/file" + cptAsString;
 	this->bodyContent.open(filename.c_str(), std::ios::in | std::ios::out | std::ios::trunc);
 	if (!this->bodyContent.is_open())
 	{
@@ -34,11 +31,25 @@ void	Upload::createFile()
 
 void Upload::start()
 {
-	std::map<std::string, std::string> ourLocations = client.getOurLocations();
-	
+	std::map<std::string, std::string> ourLocations = location.getLocationAttributes();
+
 	if (ourLocations.find("cgi") != ourLocations.end() && ourLocations["cgi"] == "on")
 	{
+		char *env[] = 
+		{
+			strdup(std::string("REDIRECT_STATUS=100").c_str()),
+			strdup(std::string("SCRIPT_FILENAME=" + this->filename).c_str()),
+			strdup(std::string("REQUEST_METHOD=").c_str()),
+			strdup(std::string("QUERY_STRING=").c_str()),
+			strdup(std::string("HTTP_COOKIE=").c_str()),
+			strdup(std::string("HTTP_CONTENT_TYPE=").c_str()),
+			strdup(std::string("CONTENT_TYPE=").c_str()),
+			NULL
+		};
 
+		
+
+		(void)env;
 	}
 	else if (ourLocations.find("upload") != ourLocations.end() && ourLocations["upload"] == "on")
 	{

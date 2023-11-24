@@ -39,4 +39,4 @@ request.txt
 *.mp4
 www/index.html
 TODO
-www/bodyFiles/*
+www/uploads/*

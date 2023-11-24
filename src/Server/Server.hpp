@@ -13,9 +13,10 @@
 #pragma once
 
 #include "../../includes/main.hpp"
-
+#include "../Client/Client.hpp"
 class Client;
 class serverBlock;
+
 class Server {
 	public:
 		Server(uint32_t ip=INADDR_ANY, unsigned short port=80, serverBlock *serverBlock=NULL);
