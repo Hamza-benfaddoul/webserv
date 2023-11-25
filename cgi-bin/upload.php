@@ -1,50 +1,41 @@
 #!/usr/bin/php-cgi
 <?php
+    // Accessing CGI environment variables in PHP
+    $requestMethod = $_SERVER['REQUEST_METHOD'];
+    $contentType = $_SERVER['CONTENT_TYPE'];
+    // $queryString = $_SERVER['QUERY_STRING'];
 
-// function generateUniqueFileName($originalName) {
-//     $timestamp = time();
-//     $randomString = bin2hex(random_bytes(8)); // Generate a random string
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Read binary content from stdin
+        $bodyContent = stream_get_contents(STDIN);
 
-//     $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+        // Check if binary content is not empty
+        if ($bodyContent !== false && !empty($bodyContent)) {
+            // Specify the directory where you want to store the uploaded files
+            $uploadDir = 'www/uploads/';
+            // $uploadDir = __DIR__ . '/uploads/';
 
-//     return "{$timestamp}_{$randomString}.{$extension}";
-// }
+            // Create the upload directory if it doesn't exist
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
 
-// // Perform file handling and storage operations
-// $uploadedFile = $_FILES['file'];
-// $storagePath = '/path/to/uploads/';
-// $uniqueFileName = generateUniqueFileName($uploadedFile['name']);
-// $destination = $storagePath . $uniqueFileName;
+            // Generate a unique filename (you may adjust this based on your needs)
+            $fileName = $uploadDir . '_uploaded_file' . uniqid();
 
-// if (move_uploaded_file($uploadedFile['tmp_name'], $destination)) {
-//     chmod($destination, 0644);
-//     echo "File uploaded successfully!";
-// } else {
-//     echo "Error handling file upload.";
-// }
+            // Write the binary content to the file
+            if (file_put_contents($fileName, $bodyContent) !== false) {
+                echo 'File uploaded successfully! Stored as: ' . $fileName;
+            } else {
+                echo 'Error storing file.';
+            }
+        } else {
+            echo 'No binary content received.';
+        }
+    }
 
-
-
-
-// Accessing CGI environment variables in PHP
-$requestMethod = $_SERVER['REQUEST_METHOD'];
-// $queryString = $_SERVER['QUERY_STRING'];
-$contentType = $_SERVER['CONTENT_TYPE'];
-
-
-
-// if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    //     $uploadDir = 'uploads/';
-    //     $uploadFile = $uploadDir . basename($_FILES['fileToUpload']['name']);
-    
-    //     if (move_uploaded_file($_FILES['fileToUpload']['tmp_name'], $uploadFile)) {
-        //         echo 'File is valid, and was successfully uploaded.';
-        //     } else {
-            //         echo 'Upload failed.';
-            //     }
-            // }
-    // header("Location: http://127.0.0.1:8081/form.html");
-    // exit();
-
+    // header("Location: http://127.0.0.1:6666/");
     echo "hellow webser from php";
+    exit();
+
 ?>

@@ -86,11 +86,15 @@ void Upload::start()
 				argvBool = false;
 			}	
 		}
+		// remove the file when pass to cgi
+		// unlink(this->filename.c_str());
+		std::remove(this->filename.c_str());
 	}
 	else if (ourLocations.find("upload") != ourLocations.end() && ourLocations["upload"] == "on")
 	{
 		
 	}
+
 }
 
 void    Upload::writeToFileString(const std::string &source, size_t size)
