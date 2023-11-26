@@ -74,7 +74,6 @@ class Client {
 		void	handleRequestFromRoot();
 		void	handleRequestFromLocation( std::string );
 
-		std::string	getMimeTypeFromExtension(const std::string& path);
 		std::string	getErrorPage( int );
 
 		Location	getCurrentLocation();
