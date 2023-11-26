@@ -23,6 +23,7 @@ private:
     std::string cgi_output_filename;
     Location location;
     int     fd_socket;
+    bool    forked;
     // Client client;
 
 public:

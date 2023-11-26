@@ -10,7 +10,14 @@
     // build function that send error 
     function sendError()
     {
-            
+        echo "response << HTTP/1.1 500 Internal Server Error" . PHP_EOL;
+        echo "Content-Type: " . "text/html" . PHP_EOL;
+        $size_body = 56;
+        echo "Content-Length: " . $size_body . PHP_EOL;
+        echo PHP_EOL;
+        print("<html><body>");
+        echo '<h2>Internal Server Error</h2>';
+        print("</body></html>");
     }
 
 
@@ -34,12 +41,19 @@
 
             // Write the binary content to the file
             if (file_put_contents($fileName, $bodyContent) !== false) {
-                echo 'File uploaded successfully! Stored as: ' . $fileName;
+                echo "HTTP/1.1 200 Success" . PHP_EOL;
+                echo "Content-Type: " . "text/html" . PHP_EOL;
+                $size_body = 63 + strlen($fileName);
+                echo "Content-Length: " . $size_body . PHP_EOL;
+                echo PHP_EOL;
+                print("<html><body>");
+                echo '<h2>File Upload Successful in: </h2>' . $fileName;
+                print("</body></html>");
             } else {
-                echo 'Error storing file.';
+                sendError();
             }
         } else {
-            echo 'No binary content received.';
+            sendError();
         }
     }
 

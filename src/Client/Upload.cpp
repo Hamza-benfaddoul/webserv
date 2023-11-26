@@ -3,7 +3,7 @@
 
 Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd) : request(req), cpt(in_cpt), location(in_location), fd_socket(in_fd)
 {
-
+	forked = false;
 }
 
 Upload::~Upload()
@@ -38,7 +38,8 @@ void	Upload::sendResponse(int CODE, std::string TYPE, std::string content, std::
 	response << "Content-Type: " << c_type <<"; charset=UTF-8\r\n";
 	response << "Content-Length: " << content.length() << "\r\n";
 	response << "\r\n";
-	response << content;
+	std::string newContent = content.substr(0, content.length());
+	response << newContent;
 
 	write(this->fd_socket, response.str().c_str(), response.str().length());
 }
@@ -50,7 +51,7 @@ bool Upload::start()
 	std::map<std::string, std::string> ourLocations = location.getLocationAttributes();
 	std::map<std::string, std::string> ourHeaders = this->request->getHeaders();
 	std::map<std::string, std::string>::const_iterator it = ourHeaders.find("Content-Type");
-	double timeUsed;
+	double timeUsed = 0;
 	std::string content_type;
 	// bool	returnValue;
 
@@ -85,40 +86,52 @@ bool Upload::start()
 		ss << this->cpt;
 		std::string cptAsString = ss.str();
 		cgi_output_filename = "www/TempFiles/cgi_output" + cptAsString;
-		int	cgi_output_fd = open(cgi_output_filename.c_str(), O_RDWR | O_CREAT);
+		int	cgi_output_fd = open(cgi_output_filename.c_str(), O_RDWR | O_CREAT, 0644);
+		std::cout << "not here " << cgi_output_fd << std::endl;
 		if (cgi_output_fd < 0)
 			throw std::ios_base::failure("Failed to open file");
 		// Execute the PHP script << fork, dup and execve >>
-		pid_t pid = fork();
-		int	fd_file = open(this->filename.data(), O_RDONLY);
-		if (fd_file < 0)
-			throw std::ios_base::failure("Failed to open file");
-		if (pid == 0) // the child proccess
+		pid_t pid;
+		if (forked == false)
 		{
-			dup2(cgi_output_fd, 1);
-			dup2(fd_file, 0);
-			close(fd_file);
-			timeUsed = ((double)clock() / CLOCKS_PER_SEC);
-			if (execve("/usr/bin/php", argv, env) == -1) {
-				std::cerr << "Error executing PHP script.\n";
-			}
-		}
-		close(fd_file);
-		close(cgi_output_fd);
-		if (waitpid(pid, NULL, 0) == pid) // 0 for no hange, Success case ==> build response and send it.
-		{
-			// ...
-		}
-		else // calculate the time to live of the child proccess if > 5 means timeout();
-		{
-			double currentTime = ((double)clock() / CLOCKS_PER_SEC);
-			if (currentTime - timeUsed > 5)
+			int	fd_file = open(this->filename.data(), O_RDONLY);
+			if (fd_file < 0)
+				throw std::ios_base::failure("Failed to open file");
+			pid = fork();
+			if (pid == 0) // the child proccess
 			{
-				kill(pid, SIGKILL);
-				this->bodyContent.close();
-				// send respone time out !!!!!
+				dup2(cgi_output_fd, 1);
+				dup2(fd_file, 0);
+				close(fd_file);
+				timeUsed = ((double)clock() / CLOCKS_PER_SEC);
+				if (execve("/usr/bin/php", argv, env) == -1) {
+					std::cerr << "Error executing PHP script.\n";
+				}
 			}
+			close(fd_file);
+			//close(cgi_output_fd);
+			forked = true;
 		}
+		// else
+		// {
+			if (waitpid(pid, NULL, 0) == pid) // 0 for no hange, Success case ==> build response and send it.
+			{
+				
+			}
+			else // calculate the time to live of the child proccess if > 5 means timeout();
+			{
+				double currentTime = ((double)clock() / CLOCKS_PER_SEC);
+				if (currentTime - timeUsed > 6)
+				{
+					// send respone time out !!!!!
+					kill(pid, SIGKILL);
+					close(cgi_output_fd);
+					this->bodyContent.close();
+					sendResponse(408, "Request Timeout", "<html><body><h1>408 Request Timeout</h1></body></html>", "text/html");
+					return (true);
+				}
+			}
+		// }
 
 		// free all ressources of argv and env.
 		bool envBool, argvBool = true;
