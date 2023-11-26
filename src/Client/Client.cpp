@@ -14,8 +14,8 @@
 #include <string>
 #include <vector>
 #include <sys/stat.h>
-#include "dirent.h"
 #include <fcntl.h>
+#include "dirent.h"
 
 int Client::cpt = 0;
 Client::Client(size_t fd, serverBlock *serverBlock) :
@@ -83,6 +83,7 @@ Location	Client::getCurrentLocation()
 		}
 		if (directory == test.getLocationPath())
 		{
+			test.directory = directory;
 			return test;
 		}
 	}
@@ -98,6 +99,7 @@ Location	Client::getCurrentLocation()
 			}
 			if (directory == test.getLocationPath())
 			{
+				test.directory = directory;
 				return test;
 			}
 		}
@@ -141,94 +143,68 @@ bool	Client::handleDirs() {
 	if (requestedPath[requestedPath.length() - 1] != '/')
 		sendRedirectResponse(301, "Moved Permanently", requestedPath + '/');
 	else {
-		for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) {
-			Location test = this->_serverBlock->getLocations().at(i);
-			size_t directoryEndPos = requestedPath.find("/", 1);
-			std::string directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(1, directoryEndPos -1) : requestedPath.substr(1);
-			if ("/" + directory == test.getLocationPath())
+		if (location.index.length() > 0)
+		{
+			std::stringstream index(location.index);
+			std::string iter;
+			while (getline(index,iter,','))
 			{
-				if (test.index.length() > 0)
-				{
-					std::stringstream index(test.index);
-					std::string iter;
-					while (getline(index,iter,','))
+				iter = advanced_trim(iter, " ");
+				struct dirent *pDirent;
+				DIR *pDir;
+				pDir = opendir ((location.getRoot() + "/" + location.directory).c_str());
+				if (pDir == NULL) {
+					std::cout << "Cannot open directory\n";
+					return 1;
+				}
+				while ((pDirent = readdir(pDir)) != NULL) {
+					if (strcmp(iter.c_str(), pDirent->d_name) == 0)
 					{
-						iter = advanced_trim(iter, " ");
-						struct dirent *pDirent;
-						DIR *pDir;
-						pDir = opendir ((_serverBlock->getRoot() + "/" + directory).c_str());
-						if (pDir == NULL) {
-							std::cout << "Cannot open directory\n";
-							return 1;
-						}
-						while ((pDirent = readdir(pDir)) != NULL) {
-							if (strcmp(iter.c_str(), pDirent->d_name) == 0)
-							{
-								handleFiles(_serverBlock->getRoot() + "/" + directory + "/" + iter);
-								return true;
-							}
-						}
+						handleFiles(location.getRoot() + "/" + location.directory + "/" + iter);
+						return true;
 					}
-				} else if(test.getAutoIndex() == false) {
-					sendErrorResponse(403, "Forbidden", ERROR403);
-				} else if (test.getAutoIndex() == true)
-				{
-					directoryListing(_serverBlock->getRoot() + "/" + directory );
 				}
 			}
+		} else if(location.getAutoIndex() == false) {
+			sendErrorResponse(403, "Forbidden", ERROR403);
+		} else if (location.getAutoIndex() == true)
+		{
+			directoryListing(location.getRoot() + "/" + location.directory );
 		}
 	}
 	return true;
 }
 
 bool	Client::handleFiles( std::string path) {
-	std::string requestedPath = this->request->getPath();
-	for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) {
-		Location test = this->_serverBlock->getLocations().at(i);
-		size_t directoryEndPos = requestedPath.find("/", 1);
-		std::string directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(0, directoryEndPos) : requestedPath;
-		if (regFile(test.getRoot() + directory))
-		{
-			std::cout << directory << "\n";
-			directory = "/";
-		}
-		if (directory == test.getLocationPath())
-		{
-			if (test.getKeyFromAttributes("cgi_path").length() > 0)
+	if (location.getKeyFromAttributes("cgi_path").length() > 0)
+	{
+		std::cout << path << "\n";
+		return true;
+	} else {
+		if (_fdFile == -1)
+			_fdFile = open(path.c_str(), O_RDONLY);
+		if (_fdFile > -1) {
+			std::string mimeType = getMimeTypeFromExtension(path);
+			std::cout << mimeType << "\n";
+			if (isRead == false)
 			{
-				std::cout << path << "\n";
-			} else {
-				if (_fdFile == -1)
-				{
-					_fdFile = open(path.c_str(), O_RDONLY);
-				}
-				if (_fdFile > -1) {
-					std::string mimeType = getMimeTypeFromExtension(path);
-					std::cout << mimeType << "\n";
-					if (isRead == false)
-					{
-						std::stringstream headers;
-						headers << "HTTP/1.1 200 OK\r\n";
-						headers << "Content-Type: " << mimeType << "\r\n";
-						headers << "Transfer-Encoding: chunked\r\n";
-						headers << "Content-Disposition: inline\r\n";
-						headers << "Connection: close\r\n\r\n";
-						// std::cout << "*" << headers.str();
-						// Write headers to socket
-						write(_fd, headers.str().c_str(), headers.str().length());
-						isRead = true;
-					}
-					if (isRead == true)
-					{
-						// std::cout << "ana hna" << std::endl;
-						return serveImage();
-					}
-				}
-				// return readFile(path);
+				std::stringstream headers;
+				headers << "HTTP/1.1 200 OK\r\n";
+				headers << "Content-Type: " << mimeType << "\r\n";
+				headers << "Transfer-Encoding: chunked\r\n";
+				headers << "Content-Disposition: inline\r\n";
+				headers << "Connection: close\r\n\r\n";
+				write(_fd, headers.str().c_str(), headers.str().length());
+				isRead = true;
+			}
+			if (isRead == true)
+			{
+				return serveImage();
 			}
 		}
+		// return readFile(path);
+		return true;
 	}
-	return true;
 }
 
 bool Client::serveImage() {
@@ -398,27 +374,13 @@ int	Client::is_request_well_formed()
 		sendErrorResponse(414, "Request-URI Too Long", "<html><body><h1>414 Request-URI Too Long</h1></body></html>");
 		return (-1);
 	}
-	std::string requestedPath = this->request->getPath();
-	for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) {
-		Location test = this->_serverBlock->getLocations().at(i);
-		size_t directoryEndPos = requestedPath.find("/", 1);
-		std::string directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(0, directoryEndPos) : requestedPath;
-		if (regFile(test.getRoot() + directory))
+	if ((request->getMethod() == "GET" && location.GET == false) ||
+		(request->getMethod() == "POST" && location.POST == false) ||
+			(request->getMethod() == "DELETE" && location.DELETE == false))
 		{
-			std::cout << directory << "\n";
-			directory = "/";
+			sendErrorResponse(405, "405 Method Not Allowed", ERROR405);
+			return -1;
 		}
-		if (directory == test.getLocationPath())
-		{
-			if ((request->getMethod() == "GET" && test.GET == false) ||
-                    (request->getMethod() == "POST" && test.POST == false) ||
-                        (request->getMethod() == "DELETE" && test.DELETE == false))
-                {
-                    sendErrorResponse(405, "405 Method Not Allowed", ERROR405);
-					return -1;
-                }
-		}
-	}
 	// the body length larger than the max body size in the config file
 	if (true)
 	{
@@ -482,62 +444,6 @@ bool	Client::postMethodHandler(void)
 	return  true; // close the connection
 }
 
-std::string generateDirectoryListing(const std::string& directoryPath) {
-    std::stringstream html;
-    html << "<html><head><title>Directory Listing</title>";
-    html << "<style>body { margin: 0; font-family: \"HelveticaNeue-Light\", \"Helvetica Neue Light\", \"Helvetica Neue\", Helvetica, Arial, \"Lucida Grande\", sans-serif;";
-    html << "font-weight: 300; color: #404040; }";
-    html << "h2 { width: 93%; margin-left: auto; margin-right: auto; }";
-    html << "table { width: 100%; background: white; border: 0; table-layout: auto; }";
-    html << "table caption { background: transparent; color: #222222; font-size: 1rem; font-weight: bold; }";
-    html << "table thead { background: whitesmoke; }";
-    html << "table thead tr th, table thead tr td { padding: 0.5rem 0.625rem 0.625rem; font-size: 0.875rem; font-weight: bold; color: #222222; }";
-    html << "table tfoot { background: whitesmoke; }";
-    html << "table tfoot tr th, table tfoot tr td { padding: 0.5rem 0.625rem 0.625rem; font-size: 0.875rem; font-weight: bold; color: #222222; }";
-    html << "table tr th, table tr td { padding: 0.5625rem 0.625rem; font-size: 0.875rem; color: #222222; text-align: left; }";
-    html << "table tr.alt, table tr:nth-of-type(even) { background: #f9f9f9; }";
-    html << "table thead tr th, table tfoot tr th, table tfoot tr td, table tbody tr th, table tbody tr td, table tr td { display: table-cell; line-height: 1.125rem; }";
-    html << "a { text-decoration: none; color: #3498db; }";
-    html << "a:hover { text-decoration: underline; }";
-    html << "a:visited { color: #8e44ad; }";
-    html << ".img-wrap { vertical-align: middle; display: inline-block; margin-right: 8px; margin-bottom: 2px; width: 16px; }";
-    html << "td img { display: block; width: 100%; height: auto; }";
-    html << "@media (max-width: 600px) { table tr > *:nth-child(2), table tr > *:nth-child(3), table tr > *:nth-child(4) { display: none; }";
-    html << "h1 { font-size: 1.5em; } }";
-    html << "@media (max-width: 400px) { h1 { font-size: 1.125em; } }</style></head>";
-    html << "<body><h2>Directory Listing</h2><table id=\"indexlist\">";
-    html << "<tr class=\"indexhead\"><th class=\"indexcolicon\"><span></span></th><th class=\"indexcolname\"><a>Name</a></th></tr>";
-    html << "<tr class=\"indexbreakrow\"><th colspan=\"5\"><hr /></th></tr>";
-
-    DIR* dir;
-    struct dirent* entry;
-
-    // Open the directory
-    dir = opendir(directoryPath.c_str());
-
-    if (dir != NULL) {
-        // Read directory entries
-        while ((entry = readdir(dir)) != NULL) {
-            std::string name = entry->d_name;
-
-            // Skip current and parent directory entries
-            if (name != "." && name != "..") {
-                // Add an entry to the HTML table
-                html << "<tr class=\"even\"><td class=\"indexcolname\"><a href=\"" << name << "\">" << name << "</a></td></tr>";
-                html << "<tr class=\"indexbreakrow\"><th colspan=\"5\"><hr /></th></tr>";
-            }
-        }
-
-        // Close the directory
-        closedir(dir);
-    } else {
-        // Handle directory open error
-        std::cerr << "Error opening directory: " << strerror(errno) << std::endl;
-    }
-
-    html << "</table></body></html>";
-    return html.str();
-}
 void	Client::directoryListing(std::string path)
 {
 	std::string html = generateDirectoryListing(path);
@@ -554,37 +460,4 @@ void	Client::directoryListing(std::string path)
 
     // Write HTML content to socket
     write(_fd, html.c_str(), html.length());
-}
-
-std::string	Client::getMimeTypeFromExtension(const std::string& path) {
-	std::map<std::string, std::string> extensionToMimeType;
-		extensionToMimeType[".jpg"] = "image/jpeg";
-		extensionToMimeType[".jpeg"] = "image/jpeg";
-		extensionToMimeType[".png"] = "image/png";
-		extensionToMimeType[".gif"] = "image/gif";
-		extensionToMimeType[".bmp"] = "image/bmp";
-		extensionToMimeType[".ico"] = "image/x-icon";
-		extensionToMimeType[".mp4"] = "video/mp4";
-		extensionToMimeType[".ogg"] = "video/ogg";
-		extensionToMimeType[".avi"] = "video/x-msvideo";
-		extensionToMimeType[".mov"] = "video/quicktime";
-		extensionToMimeType[".3gp"] = "video/3gpp";
-		extensionToMimeType[".wmv"] = "video/x-ms-wmv";
-		extensionToMimeType[".ts"] = "video/mp2t";
-		extensionToMimeType[".pdf"] = "application/pdf";
-		extensionToMimeType[".html"] = "text/html";
-		extensionToMimeType[".css"] = "text/css";
-	// Find the last dot in the path
-	size_t dotPos = path.find_last_of('.');
-	if (dotPos != std::string::npos) {
-		std::string extension = path.substr(dotPos);
-		if (!extension.empty()) {
-			std::map<std::string, std::string>::iterator it = extensionToMimeType.find(extension);
-			// std::cout << "video extension: " << extension << "\n";
-			if (it != extensionToMimeType.end()) {
-				return it->second; // Return the corresponding MIME type
-			}
-		}
-	}
-	return "application/octet-stream";
 }
