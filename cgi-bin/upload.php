@@ -1,9 +1,18 @@
 #!/usr/bin/php-cgi
 <?php
+
     // Accessing CGI environment variables in PHP
     $requestMethod = $_SERVER['REQUEST_METHOD'];
     $contentType = $_SERVER['CONTENT_TYPE'];
     // $queryString = $_SERVER['QUERY_STRING'];
+
+
+    // build function that send error 
+    function sendError()
+    {
+            
+    }
+
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Read binary content from stdin

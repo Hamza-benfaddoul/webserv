@@ -138,9 +138,9 @@ bool Upload::start()
 		// remove the file when pass to cgi (files that have name: file{0, +inf}).
 		std::remove(this->filename.c_str());
 		std::cout << "send it " << std::endl;
+		// std::remove(cgi_output_filename.c_str());
 		sendResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>", "text/html");
 		return (true);
-		// std::remove(cgi_output_filename.c_str());
 	}
 	// the case where the cgi is of but the upload is on.
 	else if (ourLocations.find("upload") != ourLocations.end() && ourLocations["upload"] == "on")

@@ -407,27 +407,27 @@ int	Client::is_request_well_formed()
 		sendErrorResponse(414, "Request-URI Too Long", "<html><body><h1>414 Request-URI Too Long</h1></body></html>");
 		return (-1);
 	}
-	std::string requestedPath = this->request->getPath();
-	for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) {
-		Location test = this->_serverBlock->getLocations().at(i);
-		size_t directoryEndPos = requestedPath.find("/", 1);
-		std::string directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(0, directoryEndPos) : requestedPath;
-		if (regFile(test.getRoot() + directory))
-		{
-			std::cout << directory << "\n";
-			directory = "/";
-		}
-		if (directory == test.getLocationPath())
-		{
-			if ((request->getMethod() == "GET" && test.GET == false) ||
-                    (request->getMethod() == "POST" && test.POST == false) ||
-                        (request->getMethod() == "DELETE" && test.DELETE == false))
-                {
-                    sendErrorResponse(405, "405 Method Not Allowed", ERROR405);
-					return -1;
-                }
-		}
-	}
+	// std::string requestedPath = this->request->getPath();
+	// for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) {
+	// 	Location test = this->_serverBlock->getLocations().at(i);
+	// 	size_t directoryEndPos = requestedPath.find("/", 1);
+	// 	std::string directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(0, directoryEndPos) : requestedPath;
+	// 	if (regFile(test.getRoot() + directory))
+	// 	{
+	// 		std::cout << directory << "\n";
+	// 		directory = "/";
+	// 	}
+	// 	if (directory == test.getLocationPath())
+	// 	{
+	// 		if ((request->getMethod() == "GET" && test.GET == false) ||
+    //                 (request->getMethod() == "POST" && test.POST == false) ||
+    //                     (request->getMethod() == "DELETE" && test.DELETE == false))
+    //             {
+    //                 sendErrorResponse(405, "405 Method Not Allowed", ERROR405);
+	// 				return -1;
+    //             }
+	// 	}
+	// }
 	// the body length larger than the max body size in the config file
 	if (true)
 	{
@@ -516,10 +516,10 @@ bool	Client::postMethodHandler(void)
 		}
 	}
 	this->upload->endLine();
-	return this->upload->start();
+	// return this->upload->start();
 	//std::cout << "!!!! exit from reading" << std::endl;
-	//sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
-	//return  true; // close the connection
+	sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
+	return  true; // close the connection
 }
 
 std::string generateDirectoryListing(const std::string& directoryPath) {
