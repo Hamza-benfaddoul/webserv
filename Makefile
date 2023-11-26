@@ -19,7 +19,10 @@ SRCSCONFIG = configParser.cpp serverBlock.cpp Location.cpp
 
 SRCSMULTIPLEX = Server/Server.cpp Client/Client.cpp Server/Cluster.cpp Client/Request.cpp Client/Upload.cpp
 
-SRCS = $(addprefix src/, main.cpp) $(addprefix src/config/,$(SRCSCONFIG))  $(addprefix src/,$(SRCSMULTIPLEX)) helperFunction/ft_split.cpp
+SRCSUTILS = ft_split.cpp utils.cpp
+
+
+SRCS = $(addprefix src/, main.cpp) $(addprefix src/config/,$(SRCSCONFIG))  $(addprefix src/,$(SRCSMULTIPLEX)) $(addprefix helperFunction/, $(SRCSUTILS))
 
 OBJCS = $(SRCS:.cpp=.o)
 

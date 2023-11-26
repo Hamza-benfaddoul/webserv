@@ -21,6 +21,7 @@ private:
 	std::map<std::string, std::string>	locationAttributes;
 public:
 	bool		isEmpty;
+	std::string	directory;
 	bool		GET;
 	bool		POST;
 	bool		DELETE;

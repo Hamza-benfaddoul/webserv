@@ -51,3 +51,5 @@ bool                        endsWith(const std::string& str, const std::string& 
 bool                        endsWithString(const char* str, const char* suffix);
 int                         isInclude(const std::vector <char> & source, const char *needed);
 bool containsOnlyDigits(const std::string &str);
+std::string generateDirectoryListing(const std::string& directoryPath);
+std::string	getMimeTypeFromExtension(const std::string& path);

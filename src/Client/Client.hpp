@@ -90,8 +90,6 @@ class Client {
 		int		is_request_well_formed();
 		void	handleRequestFromRoot();
 		void	handleRequestFromLocation( std::string );
-		void 	get_match_location_for_request_uri(const std::string &uri);
-		std::string	getMimeTypeFromExtension(const std::string& path);
 		std::string	getErrorPage( int );
 
 		Location	getCurrentLocation();
