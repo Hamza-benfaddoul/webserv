@@ -455,7 +455,7 @@ bool	Client::postMethodHandler(void)
 
 	if (fileCreated == false)
 	{
-		this->upload = new Upload(this->request, this->cpt, location);
+		this->upload = new Upload(this->request, this->cpt, location, _fd);
 		this->upload->createFile();
 		totalBytesRead = body.length();
 		if (Headers.find("Content-Length") != Headers.end() && totalBytesRead >= Content_Length)
@@ -507,7 +507,7 @@ bool	Client::postMethodHandler(void)
 			}
 			return false;
 		}
-		this->upload->endLine();
+		// this->upload->endLine();
 	}
 	else // ============> binary type
 	{
@@ -516,9 +516,10 @@ bool	Client::postMethodHandler(void)
 			bytesRead = read(_fd, buffer, 1024);
 			this->totalBytesRead += bytesRead;
 			this->body.append(buffer, bytesRead);
+			// if (totalBytesRead >= this->Content_Length)
 			this->upload->writeToFileString(body);
-			this->body.clear();
 			this->upload->endLine();
+			this->body.clear();
 			if (totalBytesRead < this->Content_Length)
 				return false; // keep reading
 		}
