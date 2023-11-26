@@ -19,7 +19,7 @@
 
 int Client::cpt = 0;
 Client::Client(size_t fd, serverBlock *serverBlock) :
-	_fd(fd), _serverBlock(serverBlock)
+	_fd(fd), location(), _serverBlock(serverBlock)
 {
 	_fdFile = -1;
 	this->_readHeader = true;
@@ -53,6 +53,7 @@ bool	Client::receiveResponse(void)
 			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
 			std::string C_Length = Oheaders["Content-Length"];
 			Content_Length = strtod(C_Length.c_str(), NULL);
+			location = getCurrentLocation();
 			_readHeader = false;
 		}
 	}
@@ -60,13 +61,48 @@ bool	Client::receiveResponse(void)
 	{
 		if (is_request_well_formed() == -1)
 			return true;
-		// std::cout << "here\n";
+
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
 			return postMethodHandler();
 	}
 	return false;
+}
+
+Location	Client::getCurrentLocation()
+{
+	std::string requestedPath = this->request->getPath();
+	size_t directoryEndPos = requestedPath.find("/", 1);
+	std::string directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(0, directoryEndPos) : requestedPath;
+	for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) {
+		Location test = this->_serverBlock->getLocations().at(i);
+		if (regFile(test.getRoot() + directory))
+		{
+			directory = "/";
+		}
+		if (directory == test.getLocationPath())
+		{
+			return test;
+		}
+	}
+	while (directory.length() > 0)
+	{
+		directory = directory.substr(0, directory.length() - 1);
+		for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++)
+		{
+			Location test = this->_serverBlock->getLocations().at(i);
+			if (regFile(test.getRoot() + directory))
+			{
+				directory = "/";
+			}
+			if (directory == test.getLocationPath())
+			{
+				return test;
+			}
+		}
+	}
+	return Location();
 }
 
 bool	Client::checkRequestPath( std::string path )
@@ -322,6 +358,11 @@ void	Client::sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string 
 
 int	Client::is_request_well_formed()
 {
+
+	// ***** FOR WALID {*******
+	// hanta checker if (location.isEmpty = true)
+		// sendError404
+	// ***** }          *******
 	std::string path = this->request->getPath();
 	std::string charAllowed = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&'()*+,/:;=?@[]";
 	// int	badChar = 0;

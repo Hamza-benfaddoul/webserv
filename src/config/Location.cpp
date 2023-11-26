@@ -7,6 +7,7 @@ Location::Location()
 	GET = true;
 	POST = true;
 	DELETE = true;
+	isEmpty = true;
 }
 
 
@@ -14,7 +15,7 @@ void    Location::setAttribute( const std::string &key, std::string value )
 {
 	//  this->locationAttributes[key] = value;
 	 this->locationAttributes.insert(std::pair<std::string, std::string>(key, advanced_trim(value, "\"")));
-	}
+}
 
 std::string Location::getKeyFromAttributes(std::string key)
 {
@@ -32,11 +33,10 @@ void    Location::parseLocations( void )
 	std::map<std::string, std::string> location = getLocationAttributes();
 	for (std::map<std::string, std::string>::iterator iterator = location.begin(); iterator != location.end(); iterator++)
 	{
-		// std::cout << "*" << iterator->first<< "*" << std::endl;
 		if (iterator->first == "path")
 		{
-			// std::cout << "Location Path in COnf file\t"<< iterator->second << "\n";
 			this->locationPath = advanced_trim(iterator->second, "\"");
+
 		}
 		else if (iterator->first == "root")
 			parseRoot(iterator->second);
@@ -49,6 +49,7 @@ void    Location::parseLocations( void )
 			// parsePortNumber(iterator->second);
 		// std::cout << iterator->first << ": " << iterator->second << std::endl;
 	}
+	isEmpty = false;
 }
 
 void Location::parseIndex( std::string value)

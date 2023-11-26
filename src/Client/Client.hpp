@@ -15,6 +15,7 @@
 #include "../../includes/main.hpp"
 #include "Request.hpp"
 #include "Upload.hpp"
+#include "../../includes/Location.hpp"
 
 // those are not exist :   414 - 413 - 301 - 201 - 405
 
@@ -35,6 +36,7 @@ class Client {
 		size_t		_fd;
 		Request	*request;
 		Upload	*upload;
+		Location	location;
 		int		_fdFile;
 		// Response	*response;
 		static int cpt;
@@ -75,6 +77,7 @@ class Client {
 		std::string	getMimeTypeFromExtension(const std::string& path);
 		std::string	getErrorPage( int );
 
+		Location	getCurrentLocation();
 
 	public:
 		Client(size_t fd, serverBlock *serverBlock);
