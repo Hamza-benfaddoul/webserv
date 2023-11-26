@@ -37,7 +37,7 @@ public:
     void    sendResponse(int CODE, std::string TYPE, std::string content, std::string c_type) ;
     void    endLine();
     void	createFile();
-    void    start();
+    bool    start();
 };
 
 

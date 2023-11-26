@@ -45,7 +45,7 @@ void	Upload::sendResponse(int CODE, std::string TYPE, std::string content, std::
 
 
 
-void Upload::start()
+bool Upload::start()
 {
 	std::map<std::string, std::string> ourLocations = location.getLocationAttributes();
 	std::map<std::string, std::string> ourHeaders = this->request->getHeaders();
@@ -72,11 +72,11 @@ void Upload::start()
 			NULL
 		};
 		// Create an array of arguments for execve
-		std::string cgi_path = "cgi-bin/upload.php";
+		std::string cgi_path = "cgi-bin/upload.php"; // update this fromthe config file
 		char* argv[] = 
 		{
 			strdup(std::string("/usr/bin/php").c_str()),
-			strdup(cgi_path.c_str()), // here i need to take the path of cgi from the config file
+			strdup(cgi_path.c_str()),
 			NULL
 		};
 
@@ -85,7 +85,8 @@ void Upload::start()
 		ss << this->cpt;
 		std::string cptAsString = ss.str();
 		cgi_output_filename = "www/TempFiles/cgi_output" + cptAsString;
-		int	cgi_output_fd = open(cgi_output_filename.data(), O_RDWR);
+		int	cgi_output_fd = open(cgi_output_filename.c_str(), O_CREAT | O_RDWR);
+		std::cout << "cgi_output_fd: " << cgi_output_fd << std::endl;
 		if (cgi_output_fd < 0)
 			throw std::ios_base::failure("Failed to open file");
 		// Execute the PHP script << fork, dup and execve >>
@@ -105,20 +106,6 @@ void Upload::start()
 		}
 		close(fd_file);
 		close(cgi_output_fd);
-		if (waitpid(pid, NULL, 0) == pid) // 0 for no hange, Success case ==> build response and send it.
-		{
-			// ...
-		}
-		else // calculate the time to live of the child proccess if > 5 means timeout();
-		{
-			double currentTime = ((double)clock() / CLOCKS_PER_SEC);
-			if (currentTime - timeUsed > 5)
-			{
-				kill(pid, SIGKILL);
-				this->bodyContent.close();
-				// send respone time out !!!!!
-			}
-		}
 		// free all ressources of argv and env.
 		bool envBool, argvBool = true;
 		for (int i = 0; env[i] || argv[i]; i++)
@@ -134,8 +121,23 @@ void Upload::start()
 				argvBool = false;
 			}	
 		}
+		if (waitpid(pid, NULL, 0) == pid) // 0 for no hange, Success case ==> build response and send it.
+		{
+			// ...
+		}
+		else // calculate the time to live of the child proccess if > 5 means timeout();
+		{
+			double currentTime = ((double)clock() / CLOCKS_PER_SEC);
+			if (currentTime - timeUsed > 5)
+			{
+				kill(pid, SIGKILL);
+				this->bodyContent.close();
+				// send respone time out !!!!!
+			}
+		}
 		// remove the file when pass to cgi (files that have name: file{0, +inf}).
 		std::remove(this->filename.c_str());
+		// std::remove(cgi_output_filename.c_str());
 	}
 	// the case where the cgi is of but the upload is on.
 	else if (ourLocations.find("upload") != ourLocations.end() && ourLocations["upload"] == "on")
@@ -146,7 +148,10 @@ void Upload::start()
 		int	resRename = std::rename(this->filename.c_str(), newFileName.c_str());
 		if (resRename != 0)
 			throw std::runtime_error("Failed to upload file");
+		sendResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>", "text/html");
+		return (true);
 	}
+	return (false);
 }
 
 void    Upload::writeToFileString(const std::string &source, size_t size)

@@ -1,5 +1,5 @@
 server:
-  listen: 2233
+  listen: 6666
   server_name: localhost
   root: www
 
@@ -7,7 +7,7 @@ server:
   location:
     - path: "/"
     - root:   www
-    - cgi: off
+    - cgi: on
     - upload: on
     - autoindex: on
     - methods: [DELETE, POST]

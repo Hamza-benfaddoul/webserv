@@ -395,7 +395,7 @@ void Client::readFile(const std::string path) {
 int	Client::is_request_well_formed()
 {
 	std::string path = this->request->getPath();
-	std::string charAllowed = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&'()*+,/:;=?@[]";
+	std::string charAllowed = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;:=%";
 	int	badChar = 0;
 
 	for (int i = 0; i < (int)path.length(); i++)
@@ -403,6 +403,7 @@ int	Client::is_request_well_formed()
 		size_t pos = charAllowed.find(path[i]);
 		if (pos == std::string::npos)
 		{
+			std::cout << "the bad char is: " << path[i] << std::endl;
 			badChar = 1;
 			break;
 		}
@@ -525,8 +526,8 @@ bool	Client::postMethodHandler(void)
 		}
 	}
 	this->upload->endLine();
-	this->upload->start();
-	std::cout << "!!!! exit from reading" << std::endl;
-	sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
-	return  true; // close the connection
+	return this->upload->start();
+	//std::cout << "!!!! exit from reading" << std::endl;
+	//sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
+	//return  true; // close the connection
 }
