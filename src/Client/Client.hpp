@@ -6,7 +6,7 @@
 /*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:59:30 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/17 21:04:04 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/11/19 17:38:38 by rakhsas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include "../../includes/Location.hpp"
 #include "Request.hpp"
 #include "Upload.hpp"
+#include "../../includes/Location.hpp"
 
 
 
@@ -39,12 +40,15 @@ class Client {
 		size_t		_fd;
 		Request	*request;
 		Upload	*upload;
+		Location	location;
+		int		_fdFile;
 		// Response	*response;
 		std::string postRequest;
 		std::vector<char> _responseBufferVector;
 		static int 		cpt;
 		long			readd;
 		int				totalRead;
+		bool	isRead;
 		bool			errorCheck;
 		bool			fileCreated;
 		bool			canIStart;
@@ -60,7 +64,6 @@ class Client {
 		size_t chunkSizeInt;
 		int pos;
 		bool	isChunkComplete;
-		Location location;
 
 		bool	checkRequestPath(std::string);
 		bool	getMethodHandler(void);
@@ -73,15 +76,15 @@ class Client {
 		bool	checkType();
 		void	directoryListing(std::string);
 		void	parseChunk();
+		bool	readFile( const std::string, std::ifstream &);
+		bool	serveImage();
 
 		void	sendResponse(void);
 		void	sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string location);
 		void	sendErrorResponse( int, std::string, std::string );
 		void	sendResponse1(std::string , int , std::string );
 		void	closeConnection(void);
-		void	serveImage(std::string);
 		void	sendImageResponse(const std::string&, const std::string&);
-		void	readFile( const std::string path );
 		void	readChunkedBody();
 		void	readBody();
 		int		is_request_well_formed();
@@ -89,7 +92,9 @@ class Client {
 		void	handleRequestFromLocation( std::string );
 		void 	get_match_location_for_request_uri(const std::string &uri);
 		std::string	getMimeTypeFromExtension(const std::string& path);
+		std::string	getErrorPage( int );
 
+		Location	getCurrentLocation();
 
 	public:
 		Client(size_t fd, serverBlock *serverBlock);

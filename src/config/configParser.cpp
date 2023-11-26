@@ -81,7 +81,25 @@ bool configParser::loadFile()
 						key = trim(key);
 						value = trim(value);
 						checkKeyValue(key, value);
-						currentServer.setAttribute(key, value);
+						if (key == "error_pages")
+						{
+							std::stringstream ss(value);
+							std::string word;
+							int errorCode;
+							getline(ss, word, ' ');
+							(word.length() > 0 && containsOnlyDigits(word)) ? errorCode = atoi(word.c_str()) : errorCode = 0;
+							getline(ss, word);
+							if (word.length() > 0 && errorCode > 0)
+							{
+								std::ifstream file(word.c_str());
+								(file.is_open()) ? file.close() : throw std::runtime_error("ERROR: errorPages path is invalid!!!.");
+								currentServer.errorPages.push_back(std::make_pair<int, std::string>(errorCode, word));
+							}
+							else
+								throw std::runtime_error("ERROR: in errorPages!!!");
+						}
+						else
+							currentServer.setAttribute(key, value);
 					}
 				}
 			}

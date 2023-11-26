@@ -85,8 +85,7 @@ bool Upload::start()
 		ss << this->cpt;
 		std::string cptAsString = ss.str();
 		cgi_output_filename = "www/TempFiles/cgi_output" + cptAsString;
-		int	cgi_output_fd = open(cgi_output_filename.c_str(), O_CREAT | O_RDWR);
-		std::cout << "cgi_output_fd: " << cgi_output_fd << std::endl;
+		int	cgi_output_fd = open(cgi_output_filename.c_str(), O_RDWR | O_CREAT);
 		if (cgi_output_fd < 0)
 			throw std::ios_base::failure("Failed to open file");
 		// Execute the PHP script << fork, dup and execve >>
@@ -106,6 +105,21 @@ bool Upload::start()
 		}
 		close(fd_file);
 		close(cgi_output_fd);
+		if (waitpid(pid, NULL, 0) == pid) // 0 for no hange, Success case ==> build response and send it.
+		{
+			// ...
+		}
+		else // calculate the time to live of the child proccess if > 5 means timeout();
+		{
+			double currentTime = ((double)clock() / CLOCKS_PER_SEC);
+			if (currentTime - timeUsed > 5)
+			{
+				kill(pid, SIGKILL);
+				this->bodyContent.close();
+				// send respone time out !!!!!
+			}
+		}
+
 		// free all ressources of argv and env.
 		bool envBool, argvBool = true;
 		for (int i = 0; env[i] || argv[i]; i++)
@@ -121,22 +135,11 @@ bool Upload::start()
 				argvBool = false;
 			}	
 		}
-		if (waitpid(pid, NULL, 0) == pid) // 0 for no hange, Success case ==> build response and send it.
-		{
-			// ...
-		}
-		else // calculate the time to live of the child proccess if > 5 means timeout();
-		{
-			double currentTime = ((double)clock() / CLOCKS_PER_SEC);
-			if (currentTime - timeUsed > 5)
-			{
-				kill(pid, SIGKILL);
-				this->bodyContent.close();
-				// send respone time out !!!!!
-			}
-		}
 		// remove the file when pass to cgi (files that have name: file{0, +inf}).
 		std::remove(this->filename.c_str());
+		std::cout << "send it " << std::endl;
+		sendResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>", "text/html");
+		return (true);
 		// std::remove(cgi_output_filename.c_str());
 	}
 	// the case where the cgi is of but the upload is on.

@@ -50,3 +50,4 @@ bool                        regFile(std::string path);
 bool                        endsWith(const std::string& str, const std::string& suffix);
 bool                        endsWithString(const char* str, const char* suffix);
 int                         isInclude(const std::vector <char> & source, const char *needed);
+bool containsOnlyDigits(const std::string &str);

@@ -96,3 +96,12 @@ int isInclude(const std::vector <char> & source, const char *needed)
     }
     return -1;
 }
+
+bool containsOnlyDigits(const std::string &str) {
+	for (size_t i = 0; i < str.length(); ++i) {
+		if (!isdigit(str[i])) {
+			return false;
+		}
+	}
+	return true;
+}

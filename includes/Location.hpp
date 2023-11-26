@@ -19,8 +19,8 @@ private:
 	std::string	include;
 	bool		autoIndex;
 	std::map<std::string, std::string>	locationAttributes;
-
 public:
+	bool		isEmpty;
 	bool		GET;
 	bool		POST;
 	bool		DELETE;
