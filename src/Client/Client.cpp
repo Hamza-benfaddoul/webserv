@@ -349,7 +349,7 @@ int	Client::is_request_well_formed()
 		// sendError404
 	// ***** }          *******
 	std::string path = this->request->getPath();
-	std::string charAllowed = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&'()*+,/:;=?@[]";
+	std::string charAllowed = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=%";
 	int	badChar = 0;
 
 	for (int i = 0; i < (int)path.length(); i++)
@@ -462,7 +462,12 @@ bool	Client::postMethodHandler(void)
 		}
 		// this->upload->endLine();
 	}
-	else // ============> binary type
+	else if (Headers["Transfer-Encoding"] != "chunked")
+	{
+		sendErrorResponse(501, "Not Implemented", ERROR501);
+		return true;
+	}
+	else if (Headers.find("Content-Length") != Headers.end()) // ============> binary type
 	{
 		if (totalBytesRead < this->Content_Length)
 		{
@@ -477,11 +482,16 @@ bool	Client::postMethodHandler(void)
 				return false; // keep reading
 		}
 	}
+	else
+	{
+		sendErrorResponse(400, "Bad Request", ERROR400);
+		return true;
+	}
 	this->upload->endLine();
-	// return this->upload->start();
+	return this->upload->start();
 	//std::cout << "!!!! exit from reading" << std::endl;
-	sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
-	return  true; // close the connection
+	// sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
+	// return  true; // close the connection
 }
 
 void	Client::directoryListing(std::string path)
