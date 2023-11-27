@@ -106,6 +106,7 @@ bool Upload::start()
 				if (execve("/usr/bin/php", argv, env) == -1) {
 					std::cerr << "Error executing PHP script.\n";
 				}
+				exit(0);
 			}
 			close(fd_file);
 			forked = true;
@@ -128,9 +129,52 @@ bool Upload::start()
 		if (forked == true)
 		{
 			int retPid = waitpid(pid, NULL, WNOHANG);
-			std::cout << "pid: " << retPid << std::endl;
-			if (retPid == pid) //Success case ==> build response and send it.
+			if (retPid == pid) // the child is done ==> the response could be success could be failed
 			{
+				char	buffer[1024];
+				int	readed;
+				close(cgi_output_fd);
+				int new_fd = open(this->cgi_output_filename.c_str(), O_RDONLY);
+				while ((readed = read(new_fd, buffer, 1024)) > 0)
+				{
+					std::cout << buffer << std::endl;
+					cgi_output.append(std::string(buffer), readed);
+				}
+					// echo "500 Internal Server Error HTTP/1.1" . PHP_EOL;
+					// echo "Content-Type: " . "text/html" . PHP_EOL;
+					// $size_body = 56;
+					// echo "Content-Length: " . $size_body . PHP_EOL;
+					// echo PHP_EOL;
+					// print("<html><body>");
+					// echo '<h2>Internal Server Error</h2>';
+					// print("</body></html>");
+				std::cout << "--> " << cgi_output << std::endl;
+				size_t pos = cgi_output.find("\n\n");
+				std::string body_cgi = cgi_output.substr(pos + 2, cgi_output.length());
+				
+				std::vector<std::string> splited_cgi_output = ft_split(cgi_output.substr(0, pos), "\n");
+				for (int i = 0; i < (int)splited_cgi_output.size(); i++)
+				{
+					write(this->fd_socket, splited_cgi_output.at(i).c_str(), splited_cgi_output.at(i).length());
+					write(this->fd_socket, "\r\n", 2);
+				}
+				write(this->fd_socket, "\r\n", 2);
+				splited_cgi_output.clear();
+				splited_cgi_output = ft_split(body_cgi, "\n");
+				for (int i = 0; i < (int)splited_cgi_output.size(); i++)
+				{
+					write(this->fd_socket, splited_cgi_output.at(i).c_str(), splited_cgi_output.at(i).length());
+					write(this->fd_socket, "\r\n", 2);
+				}
+				// std::stringstream response;
+				// response << "HTTP/1.1 " << CODE << " " << TYPE << "\r\n";
+				// response << "Content-Type: " << c_type <<"; charset=UTF-8\r\n";
+				// response << "Content-Length: " << content.length() << "\r\n";
+				// response << "\r\n";
+				// std::string newContent = content.substr(0, content.length());
+				// response << newContent;
+
+				// write(this->fd_socket, response.str().c_str(), response.str().length());
 			}
 			else // calculate the time to live of the child proccess if > 5 means timeout();
 			{
@@ -150,11 +194,11 @@ bool Upload::start()
 		close(cgi_output_fd);
 		this->bodyContent.close();
 		std::remove(this->filename.c_str());
-		std::remove(cgi_output_filename.c_str());
+		// std::remove(cgi_output_filename.c_str());
+		return (true);
 
 		// std::cout << "send it " << std::endl;
-		sendResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>", "text/html");
-		return (true);
+		// sendResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>", "text/html");
 	}
 	// the case where the cgi is of but the upload is on.
 	else if (ourLocations.find("upload") != ourLocations.end() && ourLocations["upload"] == "on")

@@ -9,7 +9,7 @@
     // build function that send error 
     function sendError()
     {
-        echo "response << HTTP/1.1 500 Internal Server Error" . PHP_EOL;
+        echo "500 Internal Server Error HTTP/1.1" . PHP_EOL;
         echo "Content-Type: " . "text/html" . PHP_EOL;
         $size_body = 56;
         echo "Content-Length: " . $size_body . PHP_EOL;

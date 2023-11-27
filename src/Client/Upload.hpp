@@ -27,6 +27,7 @@ private:
     int	cgi_output_fd;
     pid_t pid;
     clock_t start_c;
+    std::string cgi_output;
     clock_t end;
 
     // Client client;
