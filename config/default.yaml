@@ -1,5 +1,5 @@
 server:
-  listen: 4003
+  listen: 4002
   server_name: localhost
   root: www
 
@@ -8,14 +8,15 @@ server:
     - path: "/"
     - root:   www
     - autoindex: on
-    - methods: [DELETE, POST]
+    - methods: [DELETE, POST, GET]
     - index:  [index.html, index.htm]
+    - cgi_path: [.py, /user/bin/python3]
 
   location:
     - path: "/bootstrap"
     - root:   www
     - autoindex: on
-    - methods: [DELETE, POST]
+    - methods: [DELETE, POST, GET]
 
 server:
   listen: 2222
