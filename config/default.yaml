@@ -1,5 +1,5 @@
 server:
-  listen: 4321
+  listen: 6161
   server_name: localhost
   root: www
 
@@ -20,7 +20,7 @@ server:
     - methods: [DELETE, POST]
 
 server:
-  listen: 1234
+  listen: 6981
   server_name: localhost
   root: www
   location:
@@ -42,6 +42,7 @@ server:
   #   - root: /Users/woumecht/Desktop/http2/cgi-bin
   #   - methods: [GET, POST]
   #   - upload: on
+  #   - index: cgi-bin/index.sh
   #   - cgi_path: [.py, /user/bin/python3]
   #   - cgi_path: [.php, ...]
   #   - cgi_path: [.sh, /bin/bash]

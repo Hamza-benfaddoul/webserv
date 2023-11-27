@@ -1,6 +1,5 @@
 #!/usr/bin/php-cgi
 <?php
-
     // Accessing CGI environment variables in PHP
     $requestMethod = $_SERVER['REQUEST_METHOD'];
     $contentType = $_SERVER['CONTENT_TYPE'];
@@ -37,13 +36,14 @@
             }
 
             // Generate a unique filename (you may adjust this based on your needs)
-            $fileName = $uploadDir . '_uploaded_file' . uniqid();
+            $extension = explode("/", $contentType);
+            $fileName = $uploadDir . '_uploaded_file' . uniqid() . "." . $extension[1];
 
             // Write the binary content to the file
             if (file_put_contents($fileName, $bodyContent) !== false) {
                 echo "HTTP/1.1 200 Success" . PHP_EOL;
                 echo "Content-Type: " . "text/html" . PHP_EOL;
-                $size_body = 63 + strlen($fileName);
+                $size_body = 62 + strlen($fileName);
                 echo "Content-Length: " . $size_body . PHP_EOL;
                 echo PHP_EOL;
                 print("<html><body>");

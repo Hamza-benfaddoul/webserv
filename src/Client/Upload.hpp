@@ -24,6 +24,11 @@ private:
     Location location;
     int     fd_socket;
     bool    forked;
+    int	cgi_output_fd;
+    pid_t pid;
+    clock_t start_c;
+    clock_t end;
+
     // Client client;
 
 public:

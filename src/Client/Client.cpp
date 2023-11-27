@@ -29,6 +29,7 @@ Client::Client(size_t fd, serverBlock *serverBlock) :
 	fileCreated = false;
 	totalBytesRead = 0;
 	isRead = false;
+	controller = false;
 }
 
 bool	Client::receiveResponse(void)
@@ -422,7 +423,7 @@ bool	Client::postMethodHandler(void)
 		this->cpt++;
 	}
 	// read until body is complte (chunk by chunk)
-	if (Headers.find("Transfer-Encoding") != Headers.end() && Headers["Transfer-Encoding"] == "chunked") // ============> chunk type
+	if (controller == false && Headers.find("Transfer-Encoding") != Headers.end() && Headers["Transfer-Encoding"] == "chunked") // ============> chunk type
 	{
 		if (isChunkComplete == true)
 		{
@@ -460,6 +461,7 @@ bool	Client::postMethodHandler(void)
 			}
 			return false;
 		}
+		controller = true;
 		// this->upload->endLine();
 	}
 	else if (Headers["Transfer-Encoding"] != "chunked")
@@ -467,7 +469,7 @@ bool	Client::postMethodHandler(void)
 		sendErrorResponse(501, "Not Implemented", ERROR501);
 		return true;
 	}
-	else if (Headers.find("Content-Length") != Headers.end()) // ============> binary type
+	else if (controller == false &&  Headers.find("Content-Length") != Headers.end()) // ============> binary type
 	{
 		if (totalBytesRead < this->Content_Length)
 		{
@@ -480,10 +482,12 @@ bool	Client::postMethodHandler(void)
 			this->body.clear();
 			if (totalBytesRead < this->Content_Length)
 				return false; // keep reading
+			controller = true;
 		}
 	}
-	else
+	else if (controller == false)
 	{
+		std::cout << "why" << std::endl;
 		sendErrorResponse(400, "Bad Request", ERROR400);
 		return true;
 	}

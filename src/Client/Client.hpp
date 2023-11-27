@@ -64,6 +64,7 @@ class Client {
 		size_t chunkSizeInt;
 		int pos;
 		bool	isChunkComplete;
+		bool	controller;
 
 		bool	checkRequestPath(std::string);
 		bool	getMethodHandler(void);

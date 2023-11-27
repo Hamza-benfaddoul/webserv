@@ -51,107 +51,108 @@ bool Upload::start()
 	std::map<std::string, std::string> ourLocations = location.getLocationAttributes();
 	std::map<std::string, std::string> ourHeaders = this->request->getHeaders();
 	std::map<std::string, std::string>::const_iterator it = ourHeaders.find("Content-Type");
-	double timeUsed = 0;
 	std::string content_type;
 	// bool	returnValue;
 
 	if (it != ourHeaders.end())
 		content_type = it->second;
 	// the cgi case.
+	
 	if (ourLocations.find("cgi") != ourLocations.end() && ourLocations["cgi"] == "on")
 	{
-		// Create an array of envirment that cgi need.
-		char *env[] = 
-		{
-			strdup(std::string("REDIRECT_STATUS=200").c_str()),
-			strdup(std::string("SCRIPT_FILENAME=" + this->request->getPath()).c_str()),
-			strdup(std::string("REQUEST_METHOD=" + this->request->getMethod()).c_str()),
-			strdup(std::string("QUERY_STRING=").c_str()),
-			strdup(std::string("HTTP_COOKIE=").c_str()),
-			strdup(std::string("HTTP_CONTENT_TYPE=" + content_type).c_str()),
-			strdup(std::string("CONTENT_TYPE=" + content_type).c_str()),
-			NULL
-		};
-		// Create an array of arguments for execve
-		std::string cgi_path = "cgi-bin/upload.php"; // update this fromthe config file
-		char* argv[] = 
-		{
-			strdup(std::string("/usr/bin/php").c_str()),
-			strdup(cgi_path.c_str()),
-			NULL
-		};
-
-		// create the file where the out of cgi get stored
-		std::stringstream ss;
-		ss << this->cpt;
-		std::string cptAsString = ss.str();
-		cgi_output_filename = "www/TempFiles/cgi_output" + cptAsString;
-		int	cgi_output_fd = open(cgi_output_filename.c_str(), O_RDWR | O_CREAT, 0644);
-		std::cout << "not here " << cgi_output_fd << std::endl;
-		if (cgi_output_fd < 0)
-			throw std::ios_base::failure("Failed to open file");
-		// Execute the PHP script << fork, dup and execve >>
-		pid_t pid;
 		if (forked == false)
 		{
+			// Create an array of envirment that cgi need.
+			char *env[] = 
+			{
+				strdup(std::string("REDIRECT_STATUS=200").c_str()),
+				strdup(std::string("SCRIPT_FILENAME=" + this->request->getPath()).c_str()),
+				strdup(std::string("REQUEST_METHOD=" + this->request->getMethod()).c_str()),
+				strdup(std::string("QUERY_STRING=").c_str()),
+				strdup(std::string("HTTP_COOKIE=").c_str()),
+				strdup(std::string("HTTP_CONTENT_TYPE=" + content_type).c_str()),
+				strdup(std::string("CONTENT_TYPE=" + content_type).c_str()),
+				NULL
+			};
+			// Create an array of arguments for execve
+			std::string cgi_path = "cgi-bin/upload.php"; // update this fromthe config file
+			char* argv[] = 
+			{
+				strdup(std::string("/usr/bin/php").c_str()),
+				strdup(cgi_path.c_str()),
+				NULL
+			};
+
+			// create the file where the out of cgi get stored
+			std::stringstream ss;
+			ss << this->cpt;
+			std::string cptAsString = ss.str();
+			cgi_output_filename = "www/TempFiles/cgi_output" + cptAsString;
+			cgi_output_fd = open(cgi_output_filename.c_str(), O_RDWR | O_CREAT, 0644);
+			std::cout << "not here " << cgi_output_fd << std::endl;
+			if (cgi_output_fd < 0)
+				throw std::ios_base::failure("Failed to open file");
+			// Execute the PHP script << fork, dup and execve >>
 			int	fd_file = open(this->filename.data(), O_RDONLY);
 			if (fd_file < 0)
 				throw std::ios_base::failure("Failed to open file");
 			pid = fork();
+			start_c = clock();
 			if (pid == 0) // the child proccess
 			{
 				dup2(cgi_output_fd, 1);
 				dup2(fd_file, 0);
 				close(fd_file);
-				timeUsed = ((double)clock() / CLOCKS_PER_SEC);
 				if (execve("/usr/bin/php", argv, env) == -1) {
 					std::cerr << "Error executing PHP script.\n";
 				}
 			}
 			close(fd_file);
-			//close(cgi_output_fd);
 			forked = true;
-		}
-		// else
-		// {
-			if (waitpid(pid, NULL, 0) == pid) // 0 for no hange, Success case ==> build response and send it.
+			// free all ressources of argv and env.
+			bool envBool, argvBool = true;
+			for (int i = 0; env[i] || argv[i]; i++)
 			{
-				
+				if (envBool && env[i])
+				{
+					free(env[i]);
+					envBool = false;
+				}
+				if (argvBool && argv[i])
+				{
+					free(argv[i]);
+					argvBool = false;
+				}	
+			}
+		}
+		if (forked == true)
+		{
+			int retPid = waitpid(pid, NULL, WNOHANG);
+			std::cout << "pid: " << retPid << std::endl;
+			if (retPid == pid) //Success case ==> build response and send it.
+			{
 			}
 			else // calculate the time to live of the child proccess if > 5 means timeout();
 			{
-				double currentTime = ((double)clock() / CLOCKS_PER_SEC);
-				if (currentTime - timeUsed > 6)
+				// double currentTime = ((double)clock() / CLOCKS_PER_SEC);
+				end = clock();
+				if (((double)(end - start_c)) / CLOCKS_PER_SEC > 20.0)
 				{
 					// send respone time out !!!!!
 					kill(pid, SIGKILL);
-					close(cgi_output_fd);
-					this->bodyContent.close();
 					sendResponse(408, "Request Timeout", "<html><body><h1>408 Request Timeout</h1></body></html>", "text/html");
 					return (true);
 				}
+				return false;
 			}
-		// }
-
-		// free all ressources of argv and env.
-		bool envBool, argvBool = true;
-		for (int i = 0; env[i] || argv[i]; i++)
-		{
-			if (envBool && env[i])
-			{
-				free(env[i]);
-				envBool = false;
-			}
-			if (argvBool && argv[i])
-			{
-				free(argv[i]);
-				argvBool = false;
-			}	
 		}
 		// remove the file when pass to cgi (files that have name: file{0, +inf}).
+		close(cgi_output_fd);
+		this->bodyContent.close();
 		std::remove(this->filename.c_str());
-		std::cout << "send it " << std::endl;
-		// std::remove(cgi_output_filename.c_str());
+		std::remove(cgi_output_filename.c_str());
+
+		// std::cout << "send it " << std::endl;
 		sendResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>", "text/html");
 		return (true);
 	}
