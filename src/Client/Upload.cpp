@@ -161,10 +161,7 @@ bool Upload::start()
 			}
 			else // calculate the time to live of the child proccess if > 20 means timeout();
 			{
-				// double currentTime = ((double)clock() / CLOCKS_PER_SEC);
 				end = clock();
-				// std::cout << "end: " << ((double)(end)) / CLOCKS_PER_SEC << std::endl;
-				// std::cout << ((double)(end - start_c)) / CLOCKS_PER_SEC << std::endl;
 				if (((double)(end - start_c)) / CLOCKS_PER_SEC > 60.0)
 				{
 					// send respone time out !!!!!

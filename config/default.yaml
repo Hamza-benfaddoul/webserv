@@ -9,6 +9,7 @@ server:
     - root:   www
     - cgi: on
     - upload: on
+    - php: [.php, /usr/bin/php-cgi]
     - autoindex: on
     - methods: [DELETE, POST]
     - index:  [index.html, index.htm]
@@ -43,9 +44,9 @@ server:
   #   - methods: [GET, POST]
   #   - upload: on
   #   - index: cgi-bin/index.sh
-  #   - cgi_path: [.py, /user/bin/python3]
-  #   - cgi_path: [.php, ...]
-  #   - cgi_path: [.sh, /bin/bash]
+  #   - py: [.py, /user/bin/python3]
+  #   - php: [.php, /usr/bin/php-cgi]
+  #   - sh: [.sh, /bin/bash]
 
 
   location:
