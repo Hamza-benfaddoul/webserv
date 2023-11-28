@@ -42,8 +42,8 @@ bool	Client::receiveResponse(void)
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
 		_responseBuffer.append(buffer, bytesRead);
-		int pos = _responseBuffer.find("\r\n\r\n");
-		if (pos != -1)
+		size_t pos = _responseBuffer.find("\r\n\r\n");
+		if (pos != std::string::npos)
 		{
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
@@ -57,18 +57,14 @@ bool	Client::receiveResponse(void)
 			}
 			location = getCurrentLocation();
 			_readHeader = false;
+			if (is_request_well_formed() == -1)
+				return true;
 		}
 		else
-		{
-			_responseBuffer += std::string(_responseBufferVector.begin(), _responseBufferVector.end());
-			_responseBufferVector.clear();
-		}
+			return false;
 	}
 	if (!_readHeader)
 	{
-		// get_match_location_for_request_uri(this->request->getPath()); // get the desired location from the uri ("check the boolean called isLocationExist, true->exit, flae->!exist")
-		if (is_request_well_formed() == -1)
-			return true;
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
@@ -464,8 +460,9 @@ bool	Client::postMethodHandler(void)
 		controller = true;
 		// this->upload->endLine();
 	}
-	else if (Headers["Transfer-Encoding"] != "chunked")
+	else if (Headers.find("Transfer-Encodgin") != Headers.end() && Headers["Transfer-Encoding"] != "chunked")
 	{
+		std::cout << "here the probleme" << std::endl;
 		sendErrorResponse(501, "Not Implemented", ERROR501);
 		return true;
 	}
@@ -487,7 +484,6 @@ bool	Client::postMethodHandler(void)
 	}
 	else if (controller == false)
 	{
-		std::cout << "why" << std::endl;
 		sendErrorResponse(400, "Bad Request", ERROR400);
 		return true;
 	}

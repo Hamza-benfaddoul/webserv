@@ -1,5 +1,5 @@
 server:
-  listen: 2500
+  listen: 2600
   server_name: localhost
   root: www
 

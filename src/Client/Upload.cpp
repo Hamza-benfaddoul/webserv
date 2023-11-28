@@ -85,6 +85,7 @@ bool Upload::start()
 
 			// create the file where the out of cgi get stored
 			std::stringstream ss;
+			forked = true;
 			ss << this->cpt;
 			std::string cptAsString = ss.str();
 			cgi_output_filename = "www/TempFiles/cgi_output" + cptAsString;
@@ -96,8 +97,9 @@ bool Upload::start()
 			int	fd_file = open(this->filename.data(), O_RDONLY);
 			if (fd_file < 0)
 				throw std::ios_base::failure("Failed to open file");
-			pid = fork();
 			start_c = clock();
+			std::cout << "start: " << ((double)(start_c)) / CLOCKS_PER_SEC << std::endl;
+			pid = fork();
 			if (pid == 0) // the child proccess
 			{
 				dup2(cgi_output_fd, 1);
@@ -109,7 +111,6 @@ bool Upload::start()
 				exit(0);
 			}
 			close(fd_file);
-			forked = true;
 			// free all ressources of argv and env.
 			bool envBool, argvBool = true;
 			for (int i = 0; env[i] || argv[i]; i++)
@@ -156,11 +157,14 @@ bool Upload::start()
 					write(this->fd_socket, splited_cgi_output.at(i).c_str(), splited_cgi_output.at(i).length());
 					write(this->fd_socket, "\r\n", 2);
 				}
+				close(new_fd);
 			}
 			else // calculate the time to live of the child proccess if > 20 means timeout();
 			{
 				// double currentTime = ((double)clock() / CLOCKS_PER_SEC);
 				end = clock();
+				// std::cout << "end: " << ((double)(end)) / CLOCKS_PER_SEC << std::endl;
+				// std::cout << ((double)(end - start_c)) / CLOCKS_PER_SEC << std::endl;
 				if (((double)(end - start_c)) / CLOCKS_PER_SEC > 20.0)
 				{
 					// send respone time out !!!!!
