@@ -11,14 +11,15 @@ server:
     - upload: on
     - php: [.php, /usr/bin/php-cgi]
     - autoindex: on
-    - methods: [DELETE, POST]
+    - methods: [DELETE, POST, GET]
     - index:  [index.html, index.htm]
+    - cgi_path: [.py, /user/bin/python3]
 
   location:
     - path: "/bootstrap"
     - root:   www
     - autoindex: on
-    - methods: [DELETE, POST]
+    - methods: [DELETE, POST, GET]
 
 server:
   listen: 6981

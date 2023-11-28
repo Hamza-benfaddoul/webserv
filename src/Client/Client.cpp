@@ -180,11 +180,75 @@ bool	Client::handleDirs() {
 	}
 	return true;
 }
+#include <unistd.h>
+#include <sys/wait.h>
+
+std::string Client::getCgiPath( std::string extension)
+{
+	for (size_t i = 0; i < location.cgi.size(); i++)
+	{
+		if (location.cgi.at(i).first == extension)
+			return location.cgi.at(i).second;
+	}
+	return "";
+}
 
 bool	Client::handleFiles( std::string path) {
-	if (location.getKeyFromAttributes("cgi_path").length() > 0)
-	{
-		std::cout << path << "\n";
+	size_t dotPos = path.find_last_of('.');
+	std::string extension;
+	if (dotPos != std::string::npos) {
+		extension = path.substr(dotPos);
+	}
+	std::string cgi_path = getCgiPath(extension);
+	if (cgi_path.length() > 0){
+		int pipefd[2];
+		if (pipe(pipefd) == -1) {
+			std::cerr << "Error creating pipe.\n";
+			return false;
+		}
+		int fd = fork();
+		if (fd == -1) {
+			std::cerr << "Fork failed.\n";
+			close(pipefd[0]);
+			close(pipefd[1]);
+			return false;
+		}
+		if (fd == 0) {
+			close(pipefd[0]);
+			dup2(pipefd[1], STDOUT_FILENO);
+			close(pipefd[1]);
+			char *argv[] = {
+				strdup(cgi_path.c_str()),
+				strdup(path.c_str()),
+				NULL
+			};
+			execve(argv[0], argv, NULL);
+		} else {
+			close(pipefd[1]);
+			char buffer[1024];
+			std::string content;
+			content.clear();
+			while (1){
+				int bytesRead = read(pipefd[0], buffer, sizeof(buffer));
+				if (bytesRead <= 0)
+					break;
+				content.append(buffer, bytesRead);
+			}
+			close(pipefd[0]);
+			int status;
+			waitpid(fd, &status, 0);
+			if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+				std::cout << "PHP execution was successful.\n";
+				std::stringstream headers;
+				headers << "HTTP/1.1 200 OK\r\n";
+				headers << content;
+
+				write(_fd, headers.str().c_str(), headers.str().length());
+			} else {
+				std::cerr << "PHP execution failed.\n";
+			}
+			return true;
+		}
 		return true;
 	} else {
 		if (_fdFile == -1)
@@ -498,16 +562,16 @@ void	Client::directoryListing(std::string path)
 {
 	std::string html = generateDirectoryListing(path);
 
-    // Prepare headers
-    std::stringstream headers;
-    headers << "HTTP/1.1 200 OK\r\n";
-    headers << "Content-Type: text/html\r\n";
-    headers << "Content-Length: " << html.length() << "\r\n";
-    headers << "Connection: close\r\n\r\n";
+	// Prepare headers
+	std::stringstream headers;
+	headers << "HTTP/1.1 200 OK\r\n";
+	headers << "Content-Type: text/html\r\n";
+	headers << "Content-Length: " << html.length() << "\r\n";
+	headers << "Connection: close\r\n\r\n";
 
-    // Write headers to socket
-    write(_fd, headers.str().c_str(), headers.str().length());
+	// Write headers to socket
+	write(_fd, headers.str().c_str(), headers.str().length());
 
-    // Write HTML content to socket
-    write(_fd, html.c_str(), html.length());
+	// Write HTML content to socket
+	write(_fd, html.c_str(), html.length());
 }

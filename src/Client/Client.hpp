@@ -92,7 +92,7 @@ class Client {
 		void	handleRequestFromRoot();
 		void	handleRequestFromLocation( std::string );
 		std::string	getErrorPage( int );
-
+		std::string getCgiPath( std::string );
 		Location	getCurrentLocation();
 
 	public:
