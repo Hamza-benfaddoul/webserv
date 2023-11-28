@@ -20,7 +20,7 @@
 #include <fstream>
 #include <set>
 #include <cstdlib>
-
+#include "fcntl.h"
 // c headers
 #include <sys/socket.h>
 #include <sys/types.h>

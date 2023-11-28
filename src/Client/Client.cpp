@@ -176,80 +176,72 @@ bool	Client::handleDirs() {
 }
 #include <unistd.h>
 #include <sys/wait.h>
-bool	Client::handleFiles( std::string path) {
-	if (location.getKeyFromAttributes("cgi_path").length() > 0){
-		std::cout << "php\n";
-		int pipefd[2];
 
+std::string Client::getCgiPath( std::string extension)
+{
+	for (size_t i = 0; i < location.cgi.size(); i++)
+	{
+		if (location.cgi.at(i).first == extension)
+			return location.cgi.at(i).second;
+	}
+	return "";
+}
+
+bool	Client::handleFiles( std::string path) {
+	size_t dotPos = path.find_last_of('.');
+	std::string extension;
+	if (dotPos != std::string::npos) {
+		extension = path.substr(dotPos);
+	}
+	std::string cgi_path = getCgiPath(extension);
+	if (cgi_path.length() > 0){
+		int pipefd[2];
 		if (pipe(pipefd) == -1) {
 			std::cerr << "Error creating pipe.\n";
 			return false;
 		}
-
 		int fd = fork();
-
 		if (fd == -1) {
 			std::cerr << "Fork failed.\n";
 			close(pipefd[0]);
 			close(pipefd[1]);
 			return false;
 		}
-
 		if (fd == 0) {
-			// Child process
-			close(pipefd[0]); // Close reading end of the pipe
-
-			// Redirect stdout to the writing end of the pipe
+			close(pipefd[0]);
 			dup2(pipefd[1], STDOUT_FILENO);
-			close(pipefd[1]); // Close duplicated writing end
-
+			close(pipefd[1]);
 			char *argv[] = {
-				strdup("/usr/bin/php"),
-				strdup(path.c_str()), // Pass the PHP file path as an argument
+				strdup(cgi_path.c_str()),
+				strdup(path.c_str()),
 				NULL
 			};
-
-			if (execve("/usr/bin/php", argv, NULL) == -1) {
-				std::cerr << "Error in executing PHP.\n";
-				exit(EXIT_FAILURE);
-			}
+			execve(argv[0], argv, NULL);
 		} else {
-			// Parent process
-			close(pipefd[1]); // Close writing end of the pipe
-
-			// Read from the pipe and handle the PHP output
+			close(pipefd[1]);
 			char buffer[1024];
-			ssize_t bytesRead;
 			std::string content;
-
-			while ((bytesRead = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
-				// Handle the PHP output as needed (e.g., send it to the client)
-				// For now, let's print it to the console
-				// write(STDOUT_FILENO, buffer, bytesRead);
+			content.clear();
+			while (1){
+				int bytesRead = read(pipefd[0], buffer, sizeof(buffer));
+				if (bytesRead <= 0)
+					break;
 				content.append(buffer, bytesRead);
 			}
-
-			close(pipefd[0]); // Close reading end of the pipe
-
-			// Wait for the child to finish
+			close(pipefd[0]);
 			int status;
 			waitpid(fd, &status, 0);
-
 			if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
 				std::cout << "PHP execution was successful.\n";
 				std::stringstream headers;
 				headers << "HTTP/1.1 200 OK\r\n";
-				headers << "Content-Type: text/html\r\n";
-				headers << "Connection: close\r\n";
-				headers << "Content-Length: " << content.length() << "\r\n\r\n";
 				headers << content;
 
 				write(_fd, headers.str().c_str(), headers.str().length());
 			} else {
 				std::cerr << "PHP execution failed.\n";
 			}
-
-			return true; // or false based on your logic
+			return true;
 		}
 		return true;
 	} else {

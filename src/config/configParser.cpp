@@ -139,7 +139,20 @@ void	configParser::parseLocation( std::ifstream& file, serverBlock &currentServe
 					std::string key = trim(line.substr(6, colonPos-6));
 					std::string value = trim(line.substr(colonPos + 1));
 					checkKeyValue(key, value);
-					currentLocation.setAttribute(key, value);
+					if (key == "cgi_path")
+					{
+						value = advanced_trim(value, "[] ");
+						std::stringstream ss;
+						ss << value;
+						std::string extension, path;
+						getline(ss, extension, ',');
+						getline(ss, path, ',');
+						if (!currentLocation.hasCGI)
+							currentLocation.hasCGI = true;
+						currentLocation.cgi.push_back(std::make_pair<std::string, std::string>(trim(extension), trim(path)));
+					}
+					else
+						currentLocation.setAttribute(key, value);
 					// std::cout << currentLocation.getLocationAttributes().find(key)->second << std::endl;
 				}
 			}

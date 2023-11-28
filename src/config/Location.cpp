@@ -8,6 +8,7 @@ Location::Location()
 	POST = true;
 	DELETE = true;
 	isEmpty = true;
+	hasCGI = false;
 }
 
 
@@ -36,7 +37,6 @@ void    Location::parseLocations( void )
 		if (iterator->first == "path")
 		{
 			this->locationPath = advanced_trim(iterator->second, "\"");
-
 		}
 		else if (iterator->first == "root")
 			parseRoot(iterator->second);
@@ -50,11 +50,25 @@ void    Location::parseLocations( void )
 		// std::cout << iterator->first << ": " << iterator->second << std::endl;
 	}
 	isEmpty = false;
+	if (hasCGI)
+		parseCGI();
 }
 
 void Location::parseIndex( std::string value)
 {
 	this->index = trim(value);
+}
+
+void	Location::parseCGI()
+{
+	for (size_t i = 0; i < cgi.size(); i++)
+	{
+		std::string path = cgi.at(i).second;
+		if (open(path.c_str(), O_RDONLY) == -1)
+		{
+			throw std::runtime_error("ERROR: Check CGI file is exist in your file system! `" + path + "`");
+		}
+	}
 }
 
 void Location::parseAutoIndex( const std::string &value)
