@@ -30,6 +30,7 @@ Client::Client(size_t fd, serverBlock *serverBlock) :
 	totalBytesRead = 0;
 	isRead = false;
 	controller = false;
+	hasCgi = false;
 }
 
 bool	Client::receiveResponse(void)
@@ -69,8 +70,7 @@ bool	Client::receiveResponse(void)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
 		{
-			bool check = postMethodHandler();
-			return check;
+			return postMethodHandler();
 		}
 	}
 	return false;
@@ -409,6 +409,12 @@ int	Client::is_request_well_formed()
 	// hanta checker if (location.isEmpty = true)
 		// sendError404
 	// ***** }          *******
+
+	if (location.isEmpty == true)
+	{
+		sendErrorResponse(404, "Not Found", ERROR404);
+		return (-1);
+	}
 	std::string path = this->request->getPath();
 	std::string charAllowed = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=%";
 	int	badChar = 0;
@@ -426,16 +432,16 @@ int	Client::is_request_well_formed()
 	std::map<std::string, std::string> ourHeaders = this->request->getHeaders();
 	std::map<std::string, std::string>::iterator it = ourHeaders.find("Transfer-Encoding");
 	//bad request
-	if (badChar == 1 || this->request->getBad() == 1 || (it == ourHeaders.end() && ourHeaders.find("Content-Length") == ourHeaders.end()))
+	if (badChar == 1 || this->request->getBad() == 1 || (request->getMethod() == "POST" && it == ourHeaders.end() && ourHeaders.find("Content-Length") == ourHeaders.end()))
 	{
-		// std::cout << badChar << " - " << this->request->getBad() << std::endl;
-		sendErrorResponse(400, "Bad Request", "<html><body><h1>400 Bad Request</h1></body></html>");
+		std::cout << badChar << " - " << this->request->getBad() << std::endl;
+		sendErrorResponse(400, "Bad Request", ERROR400);
 		return (-1);
 	}
 	// transfer encoding is equal to chunked
 	if (ourHeaders.find("Transfer-Encoding") != ourHeaders.end() && ourHeaders["Transfer-Encoding"] != "chunked")
 	{
-		sendErrorResponse(501, "Not Implemented", "<html><body><h1>501 Not Implemented</h1></body></html>");
+		sendErrorResponse(501, "Not Implemented", ERROR501);
 		return (-1);
 	}
 	// request uri containe more that 2048 char
@@ -469,7 +475,16 @@ bool	Client::postMethodHandler(void)
 
 	if (fileCreated == false)
 	{
-		this->upload = new Upload(this->request, this->cpt, location, _fd);
+		std::string extension;
+		std::string path = request->getPath();
+		size_t posDot = path.rfind(".");
+		if (posDot != std::string::npos)
+		{
+			extension = path.substr(posDot, path.length());
+			if (this->getCgiPath(extension).length() > 0)
+				hasCgi = true;
+		}
+		this->upload = new Upload(this->request, this->cpt, location, _fd, this->getCgiPath(extension));
 		this->upload->createFile();
 		totalBytesRead = body.length();
 		if (Headers.find("Content-Length") != Headers.end() && totalBytesRead >= Content_Length)
