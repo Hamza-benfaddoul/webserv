@@ -2,7 +2,7 @@
 #include "../../includes/main.hpp"
 Location::Location()
 {
-	root = "www";
+	// root = "www";
 	locationPath = "/";
 	GET = true;
 	POST = true;
@@ -64,7 +64,7 @@ void	Location::parseCGI()
 	for (size_t i = 0; i < cgi.size(); i++)
 	{
 		std::string path = cgi.at(i).second;
-		if (open(path.c_str(), O_RDONLY) == -1)
+		if (access(path.c_str(), F_OK) == -1)
 		{
 			throw std::runtime_error("ERROR: Check CGI file is exist in your file system! `" + path + "`");
 		}
@@ -91,11 +91,15 @@ void    Location::parseRoot( const std::string &root )
 		struct stat s;
 		if( stat( root.c_str(), &s ) != 0 )
 			exceptionsManager("cannot access " + root );
-		else if( s.st_mode & S_IFDIR ){}  // S_ISDIR() doesn't exist on my windows
+		else if( s.st_mode & S_IFDIR ){
+			this->root = root;
+			return ;
+		}  // S_ISDIR() doesn't exist on my windows
 			// exceptionsManager(root + " is a directory");
 		else
 			exceptionsManager(root +  " is not a directory");
 	}
+	this->root = "www";
 }
 
 void	Location::parseMethods( const std::string &methods )

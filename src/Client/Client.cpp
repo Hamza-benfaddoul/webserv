@@ -189,12 +189,29 @@ std::string Client::getCgiPath( std::string extension)
 
 bool	Client::handleFiles( std::string path) {
 	size_t dotPos = path.find_last_of('.');
+	size_t markPos = path.find_last_of('?');
 	std::string extension;
-	if (dotPos != std::string::npos) {
+	if (dotPos != std::string::npos && (markPos == std::string::npos || dotPos > markPos)) {
 		extension = path.substr(dotPos);
 	}
+	// std::cout << extension << "\n";
+	size_t position = this->request->getPath().find('?');
 	std::string cgi_path = getCgiPath(extension);
 	if (cgi_path.length() > 0){
+		// std::cout << "path: " << path << "\n";
+		// std::cout << "QUERY_STRING=" + request->getPath().substr(position+1) << "\n";
+		char *env[] =
+		{
+			strdup(std::string("REDIRECT_STATUS=" + 200).c_str()),
+			strdup(std::string("SCRIPT_FILENAME=" + path).c_str()),
+			strdup(std::string("REQUEST_METHOD=" + request->getMethod()).c_str()),
+			strdup(std::string("CONTENT_TYPE= text/html").c_str()),
+			strdup(std::string("REDIRECT_STATUS=200").c_str()),
+			(path == location.getRoot() + request->getPath()) ? strdup(std::string("QUERY_STRING=").c_str()): strdup(std::string("QUERY_STRING=" + request->getPath().substr(position+1)).c_str()),
+			// strdup(std::string("QUERY_STRING=").c_str()),
+			strdup(std::string("HTTP_COOKIE=").c_str()),
+			NULL
+		};
 		int pipefd[2];
 		if (pipe(pipefd) == -1) {
 			std::cerr << "Error creating pipe.\n";
@@ -213,10 +230,10 @@ bool	Client::handleFiles( std::string path) {
 			close(pipefd[1]);
 			char *argv[] = {
 				strdup(cgi_path.c_str()),
-				strdup(path.c_str()),
+				strdup(request->getPath().c_str()),
 				NULL
 			};
-			execve(argv[0], argv, NULL);
+			execve(argv[0], argv, env);
 		} else {
 			close(pipefd[1]);
 			char buffer[1024];
@@ -234,10 +251,21 @@ bool	Client::handleFiles( std::string path) {
 			if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
 				std::cout << "PHP execution was successful.\n";
 				std::stringstream headers;
-				headers << "HTTP/1.1 200 OK\r\n";
-				headers << content;
-
+				// headers << "HTTP/1.1 200 OK\r\n";
+				// std::string contentType = content.find("Content-Type: ");
+    			// headers << "Content-Type: " << contentType << "\r\n";
+				// headers << "Content-Length: " << strlen(content.c_str()) << "\r\n";
+				// std::cout << "*" << headers.str() << "*\n";
+				headers << "HTTP/1.1 " << (content.find("Location: ") > content.length() ? "200 OK" : "301 OK") \
+                << (content.find("Content-Type: ") > content.length() ? "\r\nContent-Type: text/html\r\n" : "\r\n")\
+                << "Content-Length: " << content.length() \
+                << "" << content;
 				write(_fd, headers.str().c_str(), headers.str().length());
+				write(_fd, content.c_str(), content.length());
+				content = content.substr(content.find("\r\n\r\n"));
+				std::cout << content << "\n";
+
+				return true;
 			} else {
 				std::cerr << "PHP execution failed.\n";
 			}
@@ -249,7 +277,6 @@ bool	Client::handleFiles( std::string path) {
 			_fdFile = open(path.c_str(), O_RDONLY);
 		if (_fdFile > -1) {
 			std::string mimeType = getMimeTypeFromExtension(path);
-			std::cout << mimeType << "\n";
 			if (isRead == false)
 			{
 				std::stringstream headers;
@@ -310,7 +337,9 @@ std::string	Client::getErrorPage( int errorCode ) {
 
 bool Client::getMethodHandler(void) {
 	std::string requestedPath = this->request->getPath();
-	if (access((_serverBlock->getRoot() + requestedPath).c_str(), R_OK) == -1)
+	size_t queryStringPos = requestedPath.find('?');
+	std::string filePath = (queryStringPos != std::string::npos) ? requestedPath.substr(0, queryStringPos) : requestedPath;
+	if (access((location.getRoot() + filePath).c_str(), R_OK) == -1)
 	{
 		sendErrorResponse(404, "Not Found", getErrorPage(404));
 	}
@@ -321,7 +350,7 @@ bool Client::getMethodHandler(void) {
 	}
 	else if (checkType() == false)
 	{
-		return handleFiles(_serverBlock->getRoot() + requestedPath);
+		return handleFiles(location.getRoot() + filePath);
 	}
 	return true;
 }
