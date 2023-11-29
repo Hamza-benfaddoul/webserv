@@ -170,9 +170,9 @@ bool Upload::start()
 				{
 					cgi_output.append(buffer, readed);
 				}
-				std::cout << "--" << cgi_output << "--" << std::endl;
+				// std::cout << "--" << cgi_output << "--" << std::endl;
 				size_t pos = cgi_output.find("\n\n");
-				std::cout << "the pos: " << pos << std::endl;
+				// std::cout << "the pos: " << pos << std::endl;
 				std::string body_cgi = cgi_output.substr(pos + 2, cgi_output.length());
 				
 				std::vector<std::string> splited_cgi_output = ft_split(cgi_output.substr(0, pos), "\n");
@@ -190,7 +190,7 @@ bool Upload::start()
 					write(this->fd_socket, "\r\n", 2);
 				}
 			}
-			else // calculate the time to live of the child proccess if > 20 means timeout();
+			else // calculate the time to live of the child proccess if > 60 means timeout();
 			{
 				end = clock();
 				if (((double)(end - start_c)) / CLOCKS_PER_SEC > 60.0)
@@ -211,7 +211,7 @@ bool Upload::start()
 		close(cgi_output_fd);
 		this->bodyContent.close();
 		std::remove(this->filename.c_str());
-		// std::remove(cgi_output_filename.c_str());
+		std::remove(cgi_output_filename.c_str());
 		return (true);
 	}
 	// the case where the cgi is of but the upload is on.

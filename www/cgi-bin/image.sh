@@ -6,7 +6,7 @@
 # response="${response}\r\n\r\n"
 
 echo "HTTP/1.1 200 OK"
-echo "Content-Type: image/ico"
+echo "Content-Type: image/x-icon"
 echo "\n"
 # echo "$response"
 

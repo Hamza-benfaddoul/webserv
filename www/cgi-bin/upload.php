@@ -18,7 +18,10 @@
         print("</body></html>");
     }
 
+    line
+    headers\r\n\r\n
 
+    
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Read binary content from stdin
         $bodyContent = stream_get_contents(STDIN);
