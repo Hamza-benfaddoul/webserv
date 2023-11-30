@@ -36,10 +36,9 @@ webserv
 *.txt
 *.mp4
 request.txt
-<<<<<<< HEAD
 *.mp4
-=======
 www/index.html
-*.mp4
 TODO
->>>>>>> 93e984b2fd94e93111ecfce0cdf431a58586babf
+www/uploads/*
+www/bodyFiles/*
+

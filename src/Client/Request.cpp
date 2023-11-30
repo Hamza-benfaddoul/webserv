@@ -18,6 +18,8 @@
 
 */
 
+
+
 Request::Request(std::string req) : request(req), bad(0)
 {
 }
@@ -41,6 +43,7 @@ void    Request::parseRequest()
     int i = 1;
 
     part1 = this->request.substr(0, pos);
+    // part1 = this->request;
     part2 = this->request.substr(pos + 4, this->request.length());
     elements = ft_split(part1, "\r\n");
     firstLine = ft_split(elements.at(0), " ");
@@ -65,15 +68,8 @@ void    Request::parseRequest()
             break;
         i++;
     }
-    i = 0;
     elements.clear();
     this->bodyString = part2;
-    // elements = ft_split(part2, "\r\n");
-    // while (i < (int)elements.size())
-    // {
-    //     this->body.push_back(elements.at(i));
-    //     i++;
-    // }
 }
 
 void    Request::printRequest() const
@@ -90,16 +86,12 @@ void    Request::printRequest() const
     }
     req << std::endl << std::endl;
     // req << "-------------------------------------------------------" << std::endl << std::endl;
-    req << this->bodyString;
-    // std::vector<std::string>::const_iterator itv;
-    // for (itv = this->body.begin(); itv != this->body.end(); ++itv)
-    // {
-    //     if (*itv == "\r\n")
-    //         req << "wrong();" << std::endl;
-    //     else
-    //         req << "->" << *itv << "<-" << std::endl;
-    // }
-    // std::cout << "the of the body(): " << this->body.size() << std::endl;
+
+    for (int i = 0; i < (int)bodyVector.size(); i++)
+    {
+        req << bodyVector.at(i);
+    }
+
     req.close();
 }
 

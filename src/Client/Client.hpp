@@ -13,9 +13,13 @@
 #pragma once
 
 #include "../../includes/main.hpp"
+#include "../../includes/Location.hpp"
 #include "Request.hpp"
 #include "Upload.hpp"
 #include "../../includes/Location.hpp"
+
+
+
 
 // those are not exist :   414 - 413 - 301 - 201 - 405
 
@@ -39,16 +43,29 @@ class Client {
 		Location	location;
 		int		_fdFile;
 		// Response	*response;
-		static int cpt;
+		std::string postRequest;
+		std::vector<char> _responseBufferVector;
+		static int 		cpt;
+		long			readd;
+		int				totalRead;
 		bool	isRead;
-		int		totalRead;
 		bool			errorCheck;
 		bool			fileCreated;
-		bool			canIRead;
+		bool			canIStart;
 		int				totalBytesRead;
 		int				Content_Length;
-		bool		_readHeader;
-		serverBlock	*_serverBlock;
+		bool			_readHeader;
+		serverBlock		*_serverBlock;
+		bool 			isLocationExist;
+		std::string 	body;
+		std::map<std::string, std::string>	ourLocations;
+		int	rest;
+		std::string chunkSizeString;
+		size_t chunkSizeInt;
+		int pos;
+		bool	isChunkComplete;
+		bool	controller;
+
 		bool	checkRequestPath(std::string);
 		bool	getMethodHandler(void);
 		bool	postMethodHandler(void);
@@ -59,10 +76,11 @@ class Client {
 		bool	handleFiles( std::string );
 		bool	handleDirs();
 		bool	checkType();
+		void	directoryListing(std::string);
+		void	parseChunk();
 		bool	readFile( const std::string, std::ifstream &);
 		bool	serveImage();
 
-		void	directoryListing(std::string);
 		void	sendResponse(void);
 		void	sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string location);
 		void	sendErrorResponse( int, std::string, std::string );
@@ -74,13 +92,13 @@ class Client {
 		int		is_request_well_formed();
 		void	handleRequestFromRoot();
 		void	handleRequestFromLocation( std::string );
-
 		std::string	getErrorPage( int );
 		std::string getCgiPath( std::string );
 		Location	getCurrentLocation();
 
 	public:
 		Client(size_t fd, serverBlock *serverBlock);
+		std::map<std::string, std::string> getOurLocations() const;
 		~Client();
 
 		bool	run(void);

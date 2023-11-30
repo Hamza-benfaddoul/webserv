@@ -27,9 +27,9 @@ Client::Client(size_t fd, serverBlock *serverBlock) :
 	this->upload = NULL;
 	errorCheck = false;
 	fileCreated = false;
-	canIRead = true;
 	totalBytesRead = 0;
 	isRead = false;
+	controller = false;
 }
 
 bool	Client::receiveResponse(void)
@@ -39,33 +39,43 @@ bool	Client::receiveResponse(void)
 		char	buffer[1024] = {0};
 		int		bytesRead;
 		bytesRead = read(_fd, buffer, 1024);
-		// this->totalBytesRead += bytesRead;
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
-		this->_responseBuffer += std::string(buffer, bytesRead);
-		if (std::string(buffer, bytesRead).find("\r\n\r\n") != std::string::npos)
+		_responseBuffer.append(buffer, bytesRead);
+		int pos = _responseBuffer.find("\r\n\r\n");
+		if (pos != -1)
 		{
-			//std::cout << _responseBuffer << std::endl;
-			// std::cout << "request: " << _responseBuffer << std::endl;
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
 			this->request->printRequest();
+			this->body = this->request->getBodyString();
 			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
-			std::string C_Length = Oheaders["Content-Length"];
-			Content_Length = strtod(C_Length.c_str(), NULL);
+			if (Oheaders.find("Content-Length") != Oheaders.end())
+			{
+				std::string C_Length = Oheaders["Content-Length"];
+				Content_Length = strtod(C_Length.c_str(), NULL);
+			}
 			location = getCurrentLocation();
 			_readHeader = false;
+		}
+		else
+		{
+			_responseBuffer += std::string(_responseBufferVector.begin(), _responseBufferVector.end());
+			_responseBufferVector.clear();
 		}
 	}
 	if (!_readHeader)
 	{
+		// get_match_location_for_request_uri(this->request->getPath()); // get the desired location from the uri ("check the boolean called isLocationExist, true->exit, flae->!exist")
 		if (is_request_well_formed() == -1)
 			return true;
-
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
-			return postMethodHandler();
+		{
+			bool check = postMethodHandler();
+			return check;
+		}
 	}
 	return false;
 }
@@ -187,6 +197,19 @@ std::string Client::getCgiPath( std::string extension)
 	return "";
 }
 
+std::string extractBodyFromContent(const std::string& content, std::string &header) {
+    // Find the end of headers (CRLFCRLF)
+    size_t found = content.find("\r\n\r\n");
+    // If headers were found, return the substring after the headers
+    if (found != std::string::npos) {
+		header = content.substr(0, found + 4);
+		// std::cout  << header ;
+        return content.substr(found + 4);
+    }
+    // Headers not found, return an empty string or handle accordingly
+    return "";
+}
+
 bool	Client::handleFiles( std::string path) {
 	size_t dotPos = path.find_last_of('.');
 	size_t markPos = path.find_last_of('?');
@@ -202,16 +225,22 @@ bool	Client::handleFiles( std::string path) {
 		// std::cout << "QUERY_STRING=" + request->getPath().substr(position+1) << "\n";
 		char *env[] =
 		{
-			strdup(std::string("REDIRECT_STATUS=" + 200).c_str()),
-			strdup(std::string("SCRIPT_FILENAME=" + path).c_str()),
-			strdup(std::string("REQUEST_METHOD=" + request->getMethod()).c_str()),
-			strdup(std::string("CONTENT_TYPE= text/html").c_str()),
 			strdup(std::string("REDIRECT_STATUS=200").c_str()),
+			strdup(std::string("SCRIPT_FILENAME=" + path).c_str()),
+			strdup(std::string("CACHE_CONTROL=no-cache").c_str()),
 			(path == location.getRoot() + request->getPath()) ? strdup(std::string("QUERY_STRING=").c_str()): strdup(std::string("QUERY_STRING=" + request->getPath().substr(position+1)).c_str()),
-			// strdup(std::string("QUERY_STRING=").c_str()),
+			strdup(std::string("REQUEST_METHOD=" + request->getMethod()).c_str()),
+			strdup(std::string("SERVER_NAME=localhost").c_str()),
+			strdup(std::string("SERVER_PORT=" + _serverBlock->getPort()).c_str()),
+			strdup(std::string("SERVER_PROTOCOL=HTTP/1.1").c_str()),
+			strdup(std::string("SERVER_SOFTWARE=Weebserv/1.0").c_str()),
+			strdup(std::string("CONTENT_TYPE=" + request->getMimeType()).c_str()),
+			strdup(std::string("REDIRECT_STATUS=200").c_str()),
 			strdup(std::string("HTTP_COOKIE=").c_str()),
 			NULL
 		};
+		std::cout << env[1] << "\n";
+		std::cout << env[2] << "\n";
 		int pipefd[2];
 		if (pipe(pipefd) == -1) {
 			std::cerr << "Error creating pipe.\n";
@@ -224,22 +253,24 @@ bool	Client::handleFiles( std::string path) {
 			close(pipefd[1]);
 			return false;
 		}
+			// std::cout << request->getPath() << ": path\n";
 		if (fd == 0) {
 			close(pipefd[0]);
 			dup2(pipefd[1], STDOUT_FILENO);
 			close(pipefd[1]);
 			char *argv[] = {
 				strdup(cgi_path.c_str()),
-				strdup(request->getPath().c_str()),
+				strdup((location.getRoot() + request->getPath()).c_str()),
 				NULL
 			};
 			execve(argv[0], argv, env);
+			perror("**********************execve");
 		} else {
 			close(pipefd[1]);
 			char buffer[1024];
 			std::string content;
 			content.clear();
-			while (1){
+			while (1) {
 				int bytesRead = read(pipefd[0], buffer, sizeof(buffer));
 				if (bytesRead <= 0)
 					break;
@@ -250,21 +281,22 @@ bool	Client::handleFiles( std::string path) {
 			waitpid(fd, &status, 0);
 			if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
 				std::cout << "PHP execution was successful.\n";
+				std::string contentType;
+				content = extractBodyFromContent(content, contentType);
+				std::cout << "(^_^)" << contentType << "(^_^)\n";
+				content = advanced_trim(content, " \n\r");
 				std::stringstream headers;
-				// headers << "HTTP/1.1 200 OK\r\n";
-				// std::string contentType = content.find("Content-Type: ");
-    			// headers << "Content-Type: " << contentType << "\r\n";
-				// headers << "Content-Length: " << strlen(content.c_str()) << "\r\n";
-				// std::cout << "*" << headers.str() << "*\n";
-				headers << "HTTP/1.1 " << (content.find("Location: ") > content.length() ? "200 OK" : "301 OK") \
-                << (content.find("Content-Type: ") > content.length() ? "\r\nContent-Type: text/html\r\n" : "\r\n")\
-                << "Content-Length: " << content.length() \
-                << "" << content;
+				headers << "HTTP/1.1 200 OK\r\n";
+				headers << "Content-Length: " << content.length() << "\r\n";
+				headers << contentType;
+				// headers << "Content-Type: text/css; charset=utf-8" << "\r\n\r\n";
+				// headers << content;
 				write(_fd, headers.str().c_str(), headers.str().length());
 				write(_fd, content.c_str(), content.length());
-				content = content.substr(content.find("\r\n\r\n"));
-				std::cout << content << "\n";
-
+				fsync(_fd);
+				int fd = open("fi.txt", O_RDWR);
+				write(fd, headers.str().c_str(), headers.str().length());
+				write(fd, content.c_str(), content.length());
 				return true;
 			} else {
 				std::cerr << "PHP execution failed.\n";
@@ -273,6 +305,7 @@ bool	Client::handleFiles( std::string path) {
 		}
 		return true;
 	} else {
+		std::cout << "here\n";
 		if (_fdFile == -1)
 			_fdFile = open(path.c_str(), O_RDONLY);
 		if (_fdFile > -1) {
@@ -433,7 +466,7 @@ int	Client::is_request_well_formed()
 		// sendError404
 	// ***** }          *******
 	std::string path = this->request->getPath();
-	std::string charAllowed = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&'()*+,/:;=?@[]";
+	std::string charAllowed = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=%";
 	// int	badChar = 0;
 
 	// for (int i = 0; i < (int)path.length(); i++)
@@ -448,7 +481,7 @@ int	Client::is_request_well_formed()
 
 	std::map<std::string, std::string> ourHeaders = this->request->getHeaders();
 	// std::map<std::string, std::string>::iterator it = ourHeaders.find("Transfer-Encoding");
-	// bad request
+	//bad request
 	// if (badChar == 1 || this->request->getBad() == 1 || (it == ourHeaders.end() && ourHeaders.find("Content-Length") == ourHeaders.end()))
 	// {
 	// 	// std::cout << badChar << " - " << this->request->getBad() << std::endl;
@@ -485,56 +518,100 @@ int	Client::is_request_well_formed()
 // true -> close, flase continue;
 bool	Client::postMethodHandler(void)
 {
+	// std::cout << data["upload"] << std::endl;
 	std::map<std::string, std::string> Headers = this->request->getHeaders();
 	char	buffer[1024] = {0};
 	int		bytesRead;
-	std::string body;
-
-	// if (this->errorCheck == false && is_request_well_formed() == -1)
-	// {
-	// 	std::cout << "the request is bad .......... i think" << std::endl;
-	// 	this->errorCheck = true;
-	// 	return true;
-	// }
 
 	if (fileCreated == false)
 	{
-		std::string firstBody = this->request->getBodyString();
-		this->upload = new Upload(this->request, this->cpt);
+		this->upload = new Upload(this->request, this->cpt, location, _fd);
 		this->upload->createFile();
-		body = ltrim(firstBody, "\r\n");
 		totalBytesRead = body.length();
+		if (Headers.find("Content-Length") != Headers.end() && totalBytesRead >= Content_Length)
+		{
+			this->upload->writeToFileString(body.data(), body.length());
+			this->upload->endLine();
+			sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
+			return true;
+		}
 		fileCreated = true;
 		this->cpt++;
 	}
 	// read until body is complte (chunk by chunk)
-	if (Headers.find("Transfer-Encoding") != Headers.end() && Headers["Transfer-Encoding"] == "chunked") // ============> chunk type
+	if (controller == false && Headers.find("Transfer-Encoding") != Headers.end() && Headers["Transfer-Encoding"] == "chunked") // ============> chunk type
 	{
-		std::cout << "its a chunk request" << std::endl;
-		// body += std::string(buffer, bytesRead);
-		return false;
+		if (isChunkComplete == true)
+		{
+			ltrim(this->body, "\r\n");
+			pos = body.find("\r\n");
+			chunkSizeString.append(body.substr(0, pos));
+			std::istringstream iss(chunkSizeString);
+			iss >> std::hex >> chunkSizeInt;
+			if (chunkSizeInt != 0)
+			{
+				chunkSizeString.clear();
+				body.erase(0, pos + 2);
+				isChunkComplete = false;
+			}
+		}
+		if (body.find("0\r\n\r\n") != std::string::npos)
+		{
+			body.erase(body.length() - 5, body.length());
+			this->upload->writeToFileString(body);
+		}
+		else
+		{
+			if (chunkSizeInt > body.length())
+			{
+				bytesRead = read(_fd, buffer, 1024);
+				body.append(buffer, bytesRead);
+			}
+			else
+			{
+				this->upload->writeToFileString(body, chunkSizeInt);
+				body.erase(0, chunkSizeInt);
+				isChunkComplete = true;
+				bytesRead = read(_fd, buffer, 1024);
+				body.append(buffer, bytesRead);
+			}
+			return false;
+		}
+		controller = true;
+		// this->upload->endLine();
 	}
-	else // ============> binary type
+	else if (Headers["Transfer-Encoding"] != "chunked")
 	{
-		// std::cout << "==> " << totalBytesRead << " " << this->Content_Length << std::endl;
+		sendErrorResponse(501, "Not Implemented", ERROR501);
+		return true;
+	}
+	else if (controller == false &&  Headers.find("Content-Length") != Headers.end()) // ============> binary type
+	{
 		if (totalBytesRead < this->Content_Length)
 		{
 			bytesRead = read(_fd, buffer, 1024);
 			this->totalBytesRead += bytesRead;
-			body += std::string(buffer, bytesRead);
-			// std::cout << this->totalBytesRead << std::endl;
-			this->upload->writeToFile(body);
+			this->body.append(buffer, bytesRead);
+			// if (totalBytesRead >= this->Content_Length)
+			this->upload->writeToFileString(body);
+			this->upload->endLine();
+			this->body.clear();
 			if (totalBytesRead < this->Content_Length)
 				return false; // keep reading
+			controller = true;
 		}
-		// else
-		// {
-		// 	sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
-		// 	return true; // close the connection
-		// }
 	}
-	sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
-	return  true; // close the connection
+	else if (controller == false)
+	{
+		std::cout << "why" << std::endl;
+		sendErrorResponse(400, "Bad Request", ERROR400);
+		return true;
+	}
+	this->upload->endLine();
+	return this->upload->start();
+	//std::cout << "!!!! exit from reading" << std::endl;
+	// sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
+	// return  true; // close the connection
 }
 
 void	Client::directoryListing(std::string path)

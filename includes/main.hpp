@@ -33,8 +33,12 @@
 #include "configParser.hpp"
 
 // server
+// #include "../src/Client/Upload.hpp"
 #include "../src/Server/Server.hpp"
 #include "../src/Server/Cluster.hpp"
+// #include "../src/Server/Cluster.hpp"
+
+
 
 // helper function
 
@@ -43,6 +47,9 @@ std::string&				rtrim(std::string& s, std::string t);
 std::string&				ltrim(std::string& s, std::string t);
 std::string&                advanced_trim(std::string& s, std::string trimSep);
 bool                        regFile(std::string path);
+bool                        endsWith(const std::string& str, const std::string& suffix);
+bool                        endsWithString(const char* str, const char* suffix);
+int                         isInclude(const std::vector <char> & source, const char *needed);
 bool containsOnlyDigits(const std::string &str);
 std::string generateDirectoryListing(const std::string& directoryPath);
 std::string	getMimeTypeFromExtension(const std::string& path);
