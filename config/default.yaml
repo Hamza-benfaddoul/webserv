@@ -1,5 +1,5 @@
 server:
-  listen: 2612
+  listen: 2637
   server_name: localhost
   root: www
 
@@ -7,7 +7,7 @@ server:
   location:
     - path: "/"
     - root:   www
-    - upload: off
+    - upload: on
     - autoindex: on
     - methods: [DELETE, POST, GET]
     - index:  [index.html, index.htm]
