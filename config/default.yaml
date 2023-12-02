@@ -1,9 +1,9 @@
 server:
-  listen: 2639
+  listen: 2642
   server_name: localhost
   root: www
 
- 
+
   location:
     - path: "/"
     - root:   www

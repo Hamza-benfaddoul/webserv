@@ -70,6 +70,7 @@ bool	Client::receiveResponse(void)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
 		{
+			std::cout << "was here" << std::endl;
 			return postMethodHandler();
 		}
 	}
@@ -193,14 +194,53 @@ std::string Client::getCgiPath( std::string extension)
 	return "";
 }
 
+std::string extractBodyFromContent(const std::string& content, std::string &header) {
+    // Find the end of headers (CRLFCRLF)
+    size_t found = content.find("\r\n\r\n");
+    // If headers were found, return the substring after the headers
+    if (found != std::string::npos) {
+		header = content.substr(0, found + 4);
+		// std::cout  << header ;
+        return content.substr(found + 4);
+    }
+    // Headers not found, return an empty string or handle accordingly
+    return "";
+}
+
 bool	Client::handleFiles( std::string path) {
 	size_t dotPos = path.find_last_of('.');
+	size_t markPos = path.find_last_of('?');
 	std::string extension;
-	if (dotPos != std::string::npos) {
+	if (dotPos != std::string::npos && (markPos == std::string::npos || dotPos > markPos)) {
 		extension = path.substr(dotPos);
 	}
+	// std::cout << extension << "\n";
+	size_t position = this->request->getPath().find('?');
 	std::string cgi_path = getCgiPath(extension);
 	if (cgi_path.length() > 0){
+		// std::cout << "path: " << path << "\n";
+		// std::cout << "QUERY_STRING=" + request->getPath().substr(position+1) << "\n";
+		// std::cout << request->getCookie() << "\n";
+		std::stringstream ss;
+		ss <<  _serverBlock->getPort();
+		char *env[] =
+		{
+			strdup(std::string("REDIRECT_STATUS=200").c_str()),
+			strdup(std::string("SCRIPT_FILENAME=" + path).c_str()),
+			strdup(std::string("CACHE_CONTROL=no-cache").c_str()),
+			(path == location.getRoot() + request->getPath()) ? strdup(std::string("QUERY_STRING=").c_str()): strdup(std::string("QUERY_STRING=" + request->getPath().substr(position+1)).c_str()),
+			strdup(std::string("REQUEST_METHOD=" + request->getMethod()).c_str()),
+			strdup(std::string("SERVER_NAME=localhost").c_str()),
+			strdup(std::string("SERVER_PORT=" + ss.str()).c_str()),
+			strdup(std::string("SERVER_PROTOCOL=HTTP/1.1").c_str()),
+			strdup(std::string("SERVER_SOFTWARE=Weebserv/1.0").c_str()),
+			strdup(std::string("CONTENT_TYPE=" + request->getMimeType()).c_str()),
+			strdup(std::string("REDIRECT_STATUS=200").c_str()),
+			strdup(std::string("HTTP_COOKIE=" + request->getCookie()).c_str()),
+			NULL
+		};
+		// std::cout << env[1] << "\n";
+		// std::cout << env[2] << "\n";
 		int pipefd[2];
 		if (pipe(pipefd) == -1) {
 			std::cerr << "Error creating pipe.\n";
@@ -213,22 +253,24 @@ bool	Client::handleFiles( std::string path) {
 			close(pipefd[1]);
 			return false;
 		}
+			// std::cout << request->getPath() << ": path\n";
 		if (fd == 0) {
 			close(pipefd[0]);
 			dup2(pipefd[1], STDOUT_FILENO);
 			close(pipefd[1]);
 			char *argv[] = {
 				strdup(cgi_path.c_str()),
-				strdup(path.c_str()),
+				strdup((location.getRoot() + request->getPath()).c_str()),
 				NULL
 			};
-			execve(argv[0], argv, NULL);
+			execve(argv[0], argv, env);
+			perror("**********************execve");
 		} else {
 			close(pipefd[1]);
 			char buffer[1024];
 			std::string content;
 			content.clear();
-			while (1){
+			while (1) {
 				int bytesRead = read(pipefd[0], buffer, sizeof(buffer));
 				if (bytesRead <= 0)
 					break;
@@ -239,11 +281,23 @@ bool	Client::handleFiles( std::string path) {
 			waitpid(fd, &status, 0);
 			if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
 				std::cout << "PHP execution was successful.\n";
+				std::string contentType;
+				content = extractBodyFromContent(content, contentType);
+				std::cout << "(^_^)" << contentType << "(^_^)\n";
+				content = advanced_trim(content, " \n\r");
 				std::stringstream headers;
 				headers << "HTTP/1.1 200 OK\r\n";
-				headers << content;
-
+				headers << "Content-Length: " << content.length() << "\r\n";
+				headers << contentType;
+				// headers << "Content-Type: text/css; charset=utf-8" << "\r\n\r\n";
+				// headers << content;
 				write(_fd, headers.str().c_str(), headers.str().length());
+				write(_fd, content.c_str(), content.length());
+				fsync(_fd);
+				int fd = open("fi.txt", O_RDWR);
+				write(fd, headers.str().c_str(), headers.str().length());
+				write(fd, content.c_str(), content.length());
+				return true;
 			} else {
 				std::cerr << "PHP execution failed.\n";
 			}
@@ -251,11 +305,11 @@ bool	Client::handleFiles( std::string path) {
 		}
 		return true;
 	} else {
+		std::cout << "here\n";
 		if (_fdFile == -1)
 			_fdFile = open(path.c_str(), O_RDONLY);
 		if (_fdFile > -1) {
 			std::string mimeType = getMimeTypeFromExtension(path);
-			std::cout << mimeType << "\n";
 			if (isRead == false)
 			{
 				std::stringstream headers;
@@ -316,7 +370,9 @@ std::string	Client::getErrorPage( int errorCode ) {
 
 bool Client::getMethodHandler(void) {
 	std::string requestedPath = this->request->getPath();
-	if (access((_serverBlock->getRoot() + requestedPath).c_str(), R_OK) == -1)
+	size_t queryStringPos = requestedPath.find('?');
+	std::string filePath = (queryStringPos != std::string::npos) ? requestedPath.substr(0, queryStringPos) : requestedPath;
+	if (access((location.getRoot() + filePath).c_str(), R_OK) == -1)
 	{
 		sendErrorResponse(404, "Not Found", getErrorPage(404));
 	}
@@ -327,7 +383,7 @@ bool Client::getMethodHandler(void) {
 	}
 	else if (checkType() == false)
 	{
-		return handleFiles(_serverBlock->getRoot() + requestedPath);
+		return handleFiles(location.getRoot() + filePath);
 	}
 	return true;
 }
@@ -503,7 +559,7 @@ bool	Client::postMethodHandler(void)
 		if (isChunkComplete == true)
 		{
 			ltrim(this->body, "\r\n");
-			pos = body.find("\r\n"); 
+			pos = body.find("\r\n");
 			chunkSizeString.append(body.substr(0, pos));
 			std::istringstream iss(chunkSizeString);
 			iss >> std::hex >> chunkSizeInt;
