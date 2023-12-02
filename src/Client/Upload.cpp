@@ -81,7 +81,6 @@ bool Upload::start()
 			{
 				strdup(std::string("REDIRECT_STATUS=200").c_str()),
 				strdup(std::string("SCRIPT_FILENAME=" + cgi_path_script).c_str()),
-				// strdup(std::string("SCRIPT_FILENAME= file.php").c_str()),
 				strdup(std::string("REQUEST_METHOD=" + this->request->getMethod()).c_str()),
 				strdup(std::string("QUERY_STRING=").c_str()),
 				strdup(std::string("HTTP_COOKIE=").c_str()),
@@ -227,7 +226,7 @@ bool Upload::start()
 		close(cgi_output_fd);
 		this->bodyContent.close();
 		std::remove(this->filename.c_str());
-		std::remove(cgi_output_filename.c_str());
+		// std::remove(cgi_output_filename.c_str());
 		return (true);
 	}
 	// the case where the cgi is of but the upload is on.
