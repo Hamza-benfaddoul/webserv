@@ -223,6 +223,7 @@ bool	Client::handleFiles( std::string path) {
 	if (cgi_path.length() > 0){
 		// std::cout << "path: " << path << "\n";
 		// std::cout << "QUERY_STRING=" + request->getPath().substr(position+1) << "\n";
+		// std::cout << request->getCookie() << "\n";
 		char *env[] =
 		{
 			strdup(std::string("REDIRECT_STATUS=200").c_str()),
@@ -236,11 +237,11 @@ bool	Client::handleFiles( std::string path) {
 			strdup(std::string("SERVER_SOFTWARE=Weebserv/1.0").c_str()),
 			strdup(std::string("CONTENT_TYPE=" + request->getMimeType()).c_str()),
 			strdup(std::string("REDIRECT_STATUS=200").c_str()),
-			strdup(std::string("HTTP_COOKIE=").c_str()),
+			strdup(std::string("HTTP_COOKIE=" + request->getCookie()).c_str()),
 			NULL
 		};
-		std::cout << env[1] << "\n";
-		std::cout << env[2] << "\n";
+		// std::cout << env[1] << "\n";
+		// std::cout << env[2] << "\n";
 		int pipefd[2];
 		if (pipe(pipefd) == -1) {
 			std::cerr << "Error creating pipe.\n";

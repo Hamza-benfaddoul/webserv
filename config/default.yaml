@@ -1,5 +1,5 @@
 server:
-  listen: 6161
+  listen: 4001
   server_name: localhost
   root: www
 
@@ -12,7 +12,7 @@ server:
     - autoindex: on
     - methods: [DELETE, POST, GET]
     - index:  [index.html, index.htm]
-    - cgi_path: [.py, /user/bin/python3]
+    - cgi_path: [.php, /usr/bin/php-cgi]
 
   location:
     - path: "/bootstrap"
