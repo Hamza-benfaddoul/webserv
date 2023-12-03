@@ -3,6 +3,7 @@
 
 Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path) : request(req), cpt(in_cpt), location(in_location), fd_socket(in_fd), cgi_path(in_cgi_path)
 {
+	// std::cout << "*****************************************construcot" << std::endl;
 	forked = false;
 }
 
@@ -68,14 +69,16 @@ bool Upload::start()
 	if (it != ourHeaders.end())
 		content_type = it->second;
 	// the cgi case.
+	// std::cout << "the path to cgi script: |||" << std::endl;
 	if (cgi_path.length() > 0)
 	{
-		// std::cout << "the path to cgi script: " << cgi_path_script<< "||||" << std::endl;
 		if (forked == false)
 		{
+			forked = true;
 			std::cout << "the location path: " << location.getLocationPath() << std::endl;
 			std::string uri = request->getPath();
 			std::string cgi_path_script = location.getRoot() + uri;
+			// std::cout << "cgi path scritp: " << cgi_path_script << std::endl;
 			// Create an array of envirment that cgi need.
 			char *env[] = 
 			{
@@ -117,7 +120,6 @@ bool Upload::start()
 			};
 			// create the file where the out of cgi get stored
 			std::stringstream ss;
-			forked = true;
 			ss << this->cpt;
 			std::string cptAsString = ss.str();
 			cgi_output_filename = "www/TempFiles/cgi_output" + cptAsString;
@@ -154,6 +156,7 @@ bool Upload::start()
 		if (forked == true) // here the cgi is allready runing so we must wait for hem until finished or (time out in case of error), also we must WNOHANG its a webserv you know :)
 		{
 			int retPid = waitpid(pid, NULL, WNOHANG);
+			// std::cout << "redPid: " << retPid << " and pid: " << pid << std::endl;
 			if (retPid == pid) // the child is done ==> the response could be success could be failed (depend on cgi output)
 			{
 				char	buffer[1024];
@@ -203,6 +206,7 @@ bool Upload::start()
 					}
 				}
 				write(this->fd_socket, "\r\n", 2);
+				//std::cout << "body cgi -----------------------------> " << body_cgi << "*-*-*-*-*-*-*-*" << std::endl;
 				write(this->fd_socket ,body_cgi.c_str(), body_cgi.length());
 			}
 			else // calculate the time to live of the child proccess if > 60 means timeout();
@@ -274,3 +278,4 @@ void Upload::endLine()
 {
 	this->bodyContent.flush();
 }
+

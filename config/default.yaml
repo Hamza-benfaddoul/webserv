@@ -1,5 +1,5 @@
 server:
-  listen: 2642
+  listen: 2650
   server_name: localhost
   root: www
 

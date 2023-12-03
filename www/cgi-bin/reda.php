@@ -1,7 +1,14 @@
+
 <?php
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $_POST["name"];
+    // $stdin = fopen('php://stdin', 'r');
+    $fileContent = file_get_contents('php://stdin');
+    // Parse the content into an associative array
+    parse_str($fileContent, $data);
+
+    $name = $data['name'];
+    // $name = "walid";
     header('status: 200 OK');
     // $size_body = 62 + strlen($fileName);
     $size_body = 34 + strlen($name);
@@ -13,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,5 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input type="text" id="name" name="name">
         <input type="submit" value="Submit">
     </form>
+
+
 </body>
 </html>
+
