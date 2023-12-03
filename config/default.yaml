@@ -1,5 +1,5 @@
 server:
-  listen: 4001
+  listen: 4002
   server_name: localhost
   root: www
 
@@ -13,6 +13,7 @@ server:
     - methods: [DELETE, POST, GET]
     - index:  [index.html, index.htm]
     - cgi_path: [.php, /usr/bin/php-cgi]
+    - proxy_read_time_out: 4s
 
   location:
     - path: "/bootstrap"

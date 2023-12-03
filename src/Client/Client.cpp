@@ -243,6 +243,7 @@ bool	Client::handleFiles( std::string path) {
 		// std::cout << env[1] << "\n";
 		// std::cout << env[2] << "\n";
 		int pipefd[2];
+		size_t start = get_time('s');
 		if (pipe(pipefd) == -1) {
 			std::cerr << "Error creating pipe.\n";
 			return false;
@@ -265,7 +266,6 @@ bool	Client::handleFiles( std::string path) {
 				NULL
 			};
 			execve(argv[0], argv, env);
-			perror("**********************execve");
 		} else {
 			close(pipefd[1]);
 			char buffer[1024];
@@ -279,29 +279,27 @@ bool	Client::handleFiles( std::string path) {
 			}
 			close(pipefd[0]);
 			int status;
-			waitpid(fd, &status, 0);
-			if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+			waitpid(fd, &status, WNOHANG);
+			while ( == 0)
+			{
+				if (get_time('s') > start + location.proxy_read_time_out)
+					kill(_fd, SIGSEGV);
+				usleep(10000);
+			}
 				std::cout << "PHP execution was successful.\n";
 				std::string contentType;
 				content = extractBodyFromContent(content, contentType);
-				std::cout << "(^_^)" << contentType << "(^_^)\n";
 				content = advanced_trim(content, " \n\r");
 				std::stringstream headers;
 				headers << "HTTP/1.1 200 OK\r\n";
 				headers << "Content-Length: " << content.length() << "\r\n";
 				headers << contentType;
-				// headers << "Content-Type: text/css; charset=utf-8" << "\r\n\r\n";
-				// headers << content;
 				write(_fd, headers.str().c_str(), headers.str().length());
 				write(_fd, content.c_str(), content.length());
 				fsync(_fd);
-				int fd = open("fi.txt", O_RDWR);
-				write(fd, headers.str().c_str(), headers.str().length());
-				write(fd, content.c_str(), content.length());
-				return true;
-			} else {
-				std::cerr << "PHP execution failed.\n";
-			}
+			// else {
+			// 	std::cerr << "PHP execution failed.\n";
+			// }
 			return true;
 		}
 		return true;
