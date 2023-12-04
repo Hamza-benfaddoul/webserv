@@ -11,10 +11,8 @@
 /* ************************************************************************** */
 
 #include "Client.hpp"
-#include <string>
-#include <vector>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <variant>
 #include "dirent.h"
 
 int Client::cpt = 0;
@@ -42,8 +40,8 @@ bool	Client::receiveResponse(void)
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
 		_responseBuffer.append(buffer, bytesRead);
-		int pos = _responseBuffer.find("\r\n\r\n");
-		if (pos != -1)
+		
+		if (_responseBuffer.find("\r\n\r\n") != std::string::npos)
 		{
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
@@ -58,26 +56,27 @@ bool	Client::receiveResponse(void)
 			location = getCurrentLocation();
 			_readHeader = false;
 		}
-		else
-		{
-			_responseBuffer += std::string(_responseBufferVector.begin(), _responseBufferVector.end());
-			_responseBufferVector.clear();
-		}
+		// if (is_request_well_formed() == -1)
+		// 	return true;
 	}
 	if (!_readHeader)
 	{
+		std::cout << request->getMethod() << std::endl;
 		// get_match_location_for_request_uri(this->request->getPath()); // get the desired location from the uri ("check the boolean called isLocationExist, true->exit, flae->!exist")
-		if (is_request_well_formed() == -1)
-			return true;
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
-		{
-			bool check = postMethodHandler();
-			return check;
-		}
+			return postMethodHandler();
+		else if (this->request->getMethod().compare("DELETE") == 0)
+			return deleteMethodHandler();
 	}
 	return false;
+}
+
+bool	Client::deleteMethodHandler(void){
+	std::cout << "daz\n";
+	std::cout << _responseBuffer << std::endl;
+	return true;
 }
 
 Location	Client::getCurrentLocation()

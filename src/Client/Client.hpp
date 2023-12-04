@@ -67,8 +67,11 @@ class Client {
 		bool	controller;
 
 		bool	checkRequestPath(std::string);
+
 		bool	getMethodHandler(void);
 		bool	postMethodHandler(void);
+		bool	deleteMethodHandler(void);
+
 		bool	receiveResponse(void);
 		bool	checkIfDirectoryIsLocation( std::string );
 		bool	checkDir( std::string );
