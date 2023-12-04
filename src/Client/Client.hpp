@@ -52,6 +52,7 @@ class Client {
 		bool			errorCheck;
 		bool			fileCreated;
 		bool			canIStart;
+		bool			hasCgi;
 		int				totalBytesRead;
 		int				Content_Length;
 		bool			_readHeader;
@@ -69,6 +70,7 @@ class Client {
 		bool	checkRequestPath(std::string);
 		bool	getMethodHandler(void);
 		bool	postMethodHandler(void);
+		bool	deleteMethodHandler(void);
 		bool	receiveResponse(void);
 		bool	checkIfDirectoryIsLocation( std::string );
 		bool	checkDir( std::string );
@@ -92,7 +94,7 @@ class Client {
 		void	handleRequestFromRoot();
 		void	handleRequestFromLocation( std::string );
 		std::string	getErrorPage( int );
-
+		std::string getCgiPath( std::string );
 		Location	getCurrentLocation();
 
 	public:

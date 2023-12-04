@@ -114,6 +114,8 @@ std::string	getMimeTypeFromExtension(const std::string& path)
 		extensionToMimeType[".pdf"] = "application/pdf";
 		extensionToMimeType[".html"] = "text/html";
 		extensionToMimeType[".css"] = "text/css";
+		extensionToMimeType[".php"] = "text/html";
+		extensionToMimeType[".js"] = "application/javascript";
 	// Find the last dot in the path
 	size_t dotPos = path.find_last_of('.');
 	if (dotPos != std::string::npos) {

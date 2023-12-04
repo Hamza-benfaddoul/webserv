@@ -6,6 +6,7 @@
 #include "sys/stat.h"
 #include <sstream>
 #include <string>
+#include <vector>
 
 class Location {
 private:
@@ -26,6 +27,8 @@ public:
 	bool		POST;
 	bool		DELETE;
 	std::string	index;
+	bool		hasCGI;
+	std::vector<std::pair<std::string, std::string> > cgi;
 	Location();
 	void			setAttribute( const std::string &key, std::string value ) ;
 	std::map<std::string, std::string>	getLocationAttributes() const { return locationAttributes; }
@@ -34,6 +37,7 @@ public:
 	void			parseRoot( const std::string & );
 	void			parseAutoIndex( const std::string & );
 	void			parseIndex( std::string );
+	void			parseCGI(  );
 	std::string		getKeyFromAttributes( std::string );
 	void	toString( void ) const;
 

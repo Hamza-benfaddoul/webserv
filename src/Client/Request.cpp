@@ -106,3 +106,9 @@ const std::string &Request::getMimeType()
     getline(iss, mimeType, ',');
     return mimeType;
 }
+
+std::string Request::getCookie() {
+    std::string iss = headers.find("Cookie")->second;
+    // std::cout << "cookie: " << iss << "\n";
+    return iss;
+}

@@ -1,23 +1,36 @@
 server:
-  listen: 6161
+  listen: 2659
   server_name: localhost
   root: www
 
- 
+
   location:
     - path: "/"
     - root:   www
-    - cgi: on
     - upload: on
     - autoindex: on
-    - methods: [DELETE, POST]
+    - methods: [DELETE, POST, GET]
     - index:  [index.html, index.htm]
+    - cgi_path: [.py, /usr/bin/python3]
+    - cgi_path: [.php, /usr/bin/php-cgi]
+
 
   location:
     - path: "/bootstrap"
     - root:   www
     - autoindex: on
-    - methods: [DELETE, POST]
+    - methods: [DELETE, POST, GET]
+
+  location:
+    - path: "/cgi-bin"
+    - root: www
+    - methods: [GET, POST]
+    - upload: off
+    - index: cgi-bin/index.sh
+    - cgi_path: [.py, /usr/bin/python3]
+    - cgi_path: [.sh, /bin/sh]
+    - cgi_path: [.php, /usr/bin/php-cgi]
+
 
 server:
   listen: 6981
@@ -37,23 +50,13 @@ server:
     - methods: [GET, POST]
     - index:  [index.html, index.htm]
 
-  # location:
-  #   - path: "/cgi"
-  #   - root: /Users/woumecht/Desktop/http2/cgi-bin
-  #   - methods: [GET, POST]
-  #   - upload: on
-  #   - index: cgi-bin/index.sh
-  #   - cgi_path: [.py, /user/bin/python3]
-  #   - cgi_path: [.php, ...]
-  #   - cgi_path: [.sh, /bin/bash]
-
-
   location:
-    - path: "/"
-    - root:   www
-    - autoindex: on
+    - path: "/cgi-bin"
+    - root: www
     - methods: [GET, POST]
-    - index:  [index.html, index.htm]
-    - redirect: ["index.html"]
-    - upload_path: uploads
+    - upload: on
+    - index: cgi-bin/index.sh
+    - cgi_path: [.py, /usr/lib/python3]
+    - cgi_path: [.sh, /bin/bash]
+
 
