@@ -12,7 +12,6 @@
 
 #include "Client.hpp"
 #include <fcntl.h>
-#include <variant>
 #include "dirent.h"
 
 int Client::cpt = 0;
@@ -74,6 +73,20 @@ bool	Client::receiveResponse(void)
 }
 
 bool	Client::deleteMethodHandler(void){
+	std::string requestedPath = this->request->getPath();
+	size_t queryStringPos = requestedPath.find('?');
+	std::string filePath = (queryStringPos != std::string::npos) ? requestedPath.substr(0, queryStringPos) : requestedPath;
+	if (access((location.getRoot() + filePath).c_str(), R_OK) == -1)
+	{
+		sendErrorResponse(404, "Not Found", getErrorPage(404));
+	}
+	  if (std::remove((location.getRoot() + filePath).c_str()) != 0) {
+       	write(_fd,"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nDelete Failed", 58);
+        std::perror("Error deleting file");
+        return true;
+    } else {
+       write(_fd,"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nResource deleted successfully", 74);
+    }
 	std::cout << _responseBuffer << std::endl;
 	return true;
 }
