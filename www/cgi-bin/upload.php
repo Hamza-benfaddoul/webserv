@@ -2,7 +2,7 @@
 
 <?php
     // Accessing CGI environment variables in PHP
-    while (1);
+    set_time_limit(60);
     $requestMethod = $_SERVER['REQUEST_METHOD'];
     $contentType = $_SERVER['CONTENT_TYPE'];
     // $queryString = $_SERVER['QUERY_STRING'];
@@ -18,12 +18,7 @@
     // set_time_limit(300);
     if ($_SERVER['REQUEST_METHOD'] === 'POST') 
     {
-        // Read binary content from stdin
         $stdin = fopen('php://stdin', 'r');
-        // Read the entire content from stdin
-        // $bodyContent = stream_get_contents($stdin);
-
-
         $uploadDir = "../uploads/";
         if (!file_exists($uploadDir))
             mkdir($uploadDir, 0777, true);
@@ -38,7 +33,7 @@
                 fwrite($outputFile, $chunk);
             }
             fclose($outputFile);
-            // fclose($stdin);
+            fclose($stdin);
             header('status: 200 OK');
             $size_body = 62 + strlen($fileName);
             header("Content-Length: " . $size_body);

@@ -123,7 +123,7 @@ bool Upload::start()
 			ss << this->cpt;
 			std::string cptAsString = ss.str();
 			cgi_output_filename = "www/TempFiles/cgi_output" + cptAsString;
-		
+			std::cout << "cgi_path: " << cgi_path << " cgi path script: " << cgi_path_script << std::endl;
 			start_c = clock();
 			pid = fork();
 			if (pid == 0) // the child proccess
@@ -230,7 +230,7 @@ bool Upload::start()
 		close(cgi_output_fd);
 		this->bodyContent.close();
 		std::remove(this->filename.c_str());
-		// std::remove(cgi_output_filename.c_str());
+		std::remove(cgi_output_filename.c_str());
 		return (true);
 	}
 	// the case where the cgi is of but the upload is on.

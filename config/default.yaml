@@ -1,5 +1,5 @@
 server:
-  listen: 2650
+  listen: 2659
   server_name: localhost
   root: www
 
@@ -11,7 +11,7 @@ server:
     - autoindex: on
     - methods: [DELETE, POST, GET]
     - index:  [index.html, index.htm]
-    - cgi_path: [.py, /usr/lib/python3]
+    - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.php, /usr/bin/php-cgi]
 
 
@@ -27,7 +27,7 @@ server:
     - methods: [GET, POST]
     - upload: off
     - index: cgi-bin/index.sh
-    - cgi_path: [.py, /usr/lib/python3]
+    - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.sh, /bin/sh]
     - cgi_path: [.php, /usr/bin/php-cgi]
 
