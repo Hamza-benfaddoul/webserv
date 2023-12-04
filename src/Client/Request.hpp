@@ -23,6 +23,7 @@ private:
 
 public:
     std::string method;
+    std::string cookie;
     Request(std::string req);
     // Request(std::string req, std::vector<char> bv);
     void parseRequest();
@@ -33,6 +34,7 @@ public:
     const std::map<std::string, std::string > &getHeaders() const;
     const std::vector<std::string> & getBody() const;
     const std::string& getBodyString() const;
+    std::string getCookie();
     int getCounter();
     bool getBad() const;
     ~Request();

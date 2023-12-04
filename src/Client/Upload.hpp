@@ -6,6 +6,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include <sys/wait.h>
 
 #include "../../includes/Location.hpp"
@@ -27,13 +29,17 @@ private:
     int	cgi_output_fd;
     pid_t pid;
     clock_t start_c;
+    std::string cgi_output;
     clock_t end;
+    bool hasCgi;
+    std::string cgi_path;
 
     // Client client;
 
 public:
     // Upload(Request *req, int in_cpt, Client in_client);
-    Upload(Request *req, int in_cpt, Location in_location, int in_fd);
+    // Upload(Request *req, int in_cpt, Location in_location, int in_fd, bool in_hasCgi);
+    Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path);
     // Upload(Request *req, int in_cpt);
     ~Upload();
     void	writeToFile(const std::vector<char> & source);
@@ -44,6 +50,7 @@ public:
     void    endLine();
     void	createFile();
     bool    start();
+    std::string	checkType(std::string path);
 };
 
 
