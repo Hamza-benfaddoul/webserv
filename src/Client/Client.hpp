@@ -42,6 +42,10 @@ class Client {
 		Upload	*upload;
 		Location	location;
 		int		_fdFile;
+		int		pipefd[2];
+		std::stringstream tmpFile;
+		long content_length;
+		std::ifstream file_ouptut;
 		// Response	*response;
 		std::string postRequest;
 		std::vector<char> _responseBufferVector;
@@ -81,6 +85,7 @@ class Client {
 		bool	readFile( const std::string, std::ifstream &);
 		bool	serveImage();
 
+		bool	readFromCgi();
 		void	sendResponse(void);
 		void	sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string location);
 		void	sendErrorResponse( int, std::string, std::string );

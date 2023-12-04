@@ -221,9 +221,6 @@ bool	Client::handleFiles( std::string path) {
 	size_t position = this->request->getPath().find('?');
 	std::string cgi_path = getCgiPath(extension);
 	if (cgi_path.length() > 0){
-		// std::cout << "path: " << path << "\n";
-		// std::cout << "QUERY_STRING=" + request->getPath().substr(position+1) << "\n";
-		// std::cout << request->getCookie() << "\n";
 		char *env[] =
 		{
 			strdup(std::string("REDIRECT_STATUS=200").c_str()),
@@ -240,52 +237,38 @@ bool	Client::handleFiles( std::string path) {
 			strdup(std::string("HTTP_COOKIE=" + request->getCookie()).c_str()),
 			NULL
 		};
-		// std::cout << env[1] << "\n";
-		// std::cout << env[2] << "\n";
-		int pipefd[2];
 		size_t start = get_time('s');
-		if (pipe(pipefd) == -1) {
-			std::cerr << "Error creating pipe.\n";
-			return false;
-		}
+		tmpFile << "www/TempFiles/" << start << "_cgi";
+		pipefd[1] = open(tmpFile.str().c_str(), O_RDWR, O_CREAT, 644);
 		int fd = fork();
 		if (fd == -1) {
-			std::cerr << "Fork failed.\n";
+			unlink(tmpFile.str().c_str());
 			close(pipefd[0]);
 			close(pipefd[1]);
-			return false;
+			return true;
 		}
-			// std::cout << request->getPath() << ": path\n";
+		char *argv[] = {
+			strdup(cgi_path.c_str()),
+			strdup((location.getRoot() + request->getPath()).c_str()),
+			NULL
+		};
 		if (fd == 0) {
 			close(pipefd[0]);
+			dup2(pipefd[0], STDIN_FILENO);
 			dup2(pipefd[1], STDOUT_FILENO);
-			close(pipefd[1]);
-			char *argv[] = {
-				strdup(cgi_path.c_str()),
-				strdup((location.getRoot() + request->getPath()).c_str()),
-				NULL
-			};
-			execve(argv[0], argv, env);
-		} else {
-			close(pipefd[1]);
-			char buffer[1024];
-			std::string content;
-			content.clear();
-			while (1) {
-				int bytesRead = read(pipefd[0], buffer, sizeof(buffer));
-				if (bytesRead <= 0)
-					break;
-				content.append(buffer, bytesRead);
-			}
 			close(pipefd[0]);
+			close(pipefd[1]);
+			execve(argv[0], argv, env);
+			exit(1);
+		} else {
 			int status;
-			waitpid(fd, &status, WNOHANG);
-			while ( == 0)
+			while (waitpid(fd, &status, WNOHANG) == 0)
 			{
 				if (get_time('s') > start + location.proxy_read_time_out)
-					kill(_fd, SIGSEGV);
+					kill(fd, SIGSEGV);
 				usleep(10000);
 			}
+			readFromCgi();
 				std::cout << "PHP execution was successful.\n";
 				std::string contentType;
 				content = extractBodyFromContent(content, contentType);
@@ -304,7 +287,6 @@ bool	Client::handleFiles( std::string path) {
 		}
 		return true;
 	} else {
-		std::cout << "here\n";
 		if (_fdFile == -1)
 			_fdFile = open(path.c_str(), O_RDONLY);
 		if (_fdFile > -1) {
@@ -328,6 +310,34 @@ bool	Client::handleFiles( std::string path) {
 		// return readFile(path);
 		return true;
 	}
+}
+
+bool	Client::readFromCgi()
+{
+	file_ouptut.open(tmpFile.str().c_str());
+	char buffer[1024];
+	int found = 0;
+	std::string content;
+	content.clear();
+	while (1) {
+		file.read(buffer, sizeof(buffer));
+		if (file.gcount() <= 0)
+			break;
+		content += buffer;
+		found = content.find("\r\n\r\n");
+		if (found != std::string::npos)
+		{
+			found += 4;
+			content.substr(0, found);
+			break;
+		}
+	}
+	file_ouptut.close();
+	file_ouptut.open(tmpFile.str().c_str());
+	file_ouptut.seekg(0, std::ios::end);
+	content_length = file_ouptut.tellg();
+    content_length -= found;
+    file_ouptut.seekg(found, std::ios::beg);
 }
 
 bool Client::serveImage() {
