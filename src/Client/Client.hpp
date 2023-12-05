@@ -36,27 +36,28 @@ class serverBlock;
 class Client {
 	private:
 		Client();
-		std::string _responseBuffer;
+		std::string	_responseBuffer;
 		size_t		_fd;
-		Request	*request;
-		Upload	*upload;
+		Request		*request;
+		Upload		*upload;
 		Location	location;
 		int		_fdFile;
 		int		pipefd[2];
-		std::stringstream tmpFile;
+		std::string tmpFile;
 		long content_length;
 		std::ifstream file_ouptut;
 		std::string content;
 		// Response	*response;
 		std::string postRequest;
-		std::vector<char> _responseBufferVector;
+
 		static int 		cpt;
 		long			readd;
 		int				totalRead;
-		bool	isRead;
+		bool			isRead;
 		bool			errorCheck;
 		bool			fileCreated;
 		bool			canIStart;
+		bool			hasCgi;
 		int				totalBytesRead;
 		int				Content_Length;
 		bool			_readHeader;
@@ -66,15 +67,17 @@ class Client {
 		std::map<std::string, std::string>	ourLocations;
 		int	rest;
 		std::string chunkSizeString;
-		size_t chunkSizeInt;
-		int pos;
+		size_t	chunkSizeInt;
+		int		pos;
 		bool	isChunkComplete;
 		bool	controller;
 
 		bool	checkRequestPath(std::string);
+
 		bool	getMethodHandler(void);
 		bool	postMethodHandler(void);
 		bool	deleteMethodHandler(void);
+
 		bool	receiveResponse(void);
 		bool	checkIfDirectoryIsLocation( std::string );
 		bool	checkDir( std::string );
@@ -85,6 +88,7 @@ class Client {
 		void	parseChunk();
 		bool	readFile( const std::string, std::ifstream &);
 		bool	serveImage();
+		std::string	createNewFile(std::string prefix, size_t start, std::string suffix);
 
 		void	readFromCgi();
 		void	sendResponse(void);
@@ -98,8 +102,10 @@ class Client {
 		int		is_request_well_formed();
 		void	handleRequestFromRoot();
 		void	handleRequestFromLocation( std::string );
+
 		std::string	getErrorPage( int );
 		std::string getCgiPath( std::string );
+
 		Location	getCurrentLocation();
 
 	public:

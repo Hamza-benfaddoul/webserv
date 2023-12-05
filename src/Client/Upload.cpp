@@ -1,8 +1,9 @@
 #include "Upload.hpp"
 #include "../../includes/main.hpp"
 
-Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd) : request(req), cpt(in_cpt), location(in_location), fd_socket(in_fd)
+Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path) : request(req), cpt(in_cpt), location(in_location), fd_socket(in_fd), cgi_path(in_cgi_path)
 {
+	// std::cout << "*****************************************construcot" << std::endl;
 	forked = false;
 }
 
@@ -23,8 +24,9 @@ void	Upload::createFile()
 	// this->bodyContent.open(filename.c_str(), std::ios::in | std::ios::out | std::ios::trunc);
 	if (!this->bodyContent.is_open())
 	{
-		std::cout << "<< !!!! >> the file was not created successfuly" << std::endl;
-		return;
+		throw std::ios_base::failure("Failed to open file");
+		// std::cout << "<< !!!! >> the file was not created successfuly" << std::endl;
+		// return;
 	}
 }
 
@@ -44,7 +46,17 @@ void	Upload::sendResponse(int CODE, std::string TYPE, std::string content, std::
 	write(this->fd_socket, response.str().c_str(), response.str().length());
 }
 
+std::string	Upload::checkType(std::string path)
+{
+	DIR *pDir;
 
+	pDir = opendir ((path).c_str());
+	if (pDir == NULL) {
+		return std::string("file");
+	}
+	closedir (pDir);
+	return std::string("folder");
+}
 
 bool Upload::start()
 {
@@ -52,21 +64,26 @@ bool Upload::start()
 	std::map<std::string, std::string> ourHeaders = this->request->getHeaders();
 	std::map<std::string, std::string>::const_iterator it = ourHeaders.find("Content-Type");
 	std::string content_type;
-	// bool	returnValue;
+	std::string cgi_program_name;
 
 	if (it != ourHeaders.end())
 		content_type = it->second;
 	// the cgi case.
-	
-	if (ourLocations.find("cgi") != ourLocations.end() && ourLocations["cgi"] == "on")
+	// std::cout << "the path to cgi script: |||" << std::endl;
+	if (cgi_path.length() > 0)
 	{
 		if (forked == false)
 		{
+			forked = true;
+			std::cout << "the location path: " << location.getLocationPath() << std::endl;
+			std::string uri = request->getPath();
+			std::string cgi_path_script = location.getRoot() + uri;
+			// std::cout << "cgi path scritp: " << cgi_path_script << std::endl;
 			// Create an array of envirment that cgi need.
 			char *env[] = 
 			{
 				strdup(std::string("REDIRECT_STATUS=200").c_str()),
-				strdup(std::string("SCRIPT_FILENAME=" + this->request->getPath()).c_str()),
+				strdup(std::string("SCRIPT_FILENAME=" + cgi_path_script).c_str()),
 				strdup(std::string("REQUEST_METHOD=" + this->request->getMethod()).c_str()),
 				strdup(std::string("QUERY_STRING=").c_str()),
 				strdup(std::string("HTTP_COOKIE=").c_str()),
@@ -74,41 +91,52 @@ bool Upload::start()
 				strdup(std::string("CONTENT_TYPE=" + content_type).c_str()),
 				NULL
 			};
+			// discover the path of cgi script.
+		
+			// check if the script (cgi) is regular (exist and the path is valid)
+			struct stat fileStat;
+    		bool is_file = (stat(cgi_path_script.c_str(), &fileStat) == 0) && S_ISREG(fileStat.st_mode);
+			if (is_file == false)
+			{
+				for (int i = 0; env[i]; i++)
+				{
+					if (env[i])
+					{
+						free(env[i]);
+					}
+				}
+
+				this->bodyContent.close();
+				std::remove(this->filename.c_str());
+				sendResponse(404, "Not Found", "<html><body> <h1> 404 Not Found</h1> </body></html>", "text/html");
+				return true;
+			}
 			// Create an array of arguments for execve
-			std::string cgi_path = "cgi-bin/upload.php"; // update this fromthe config file
 			char* argv[] = 
 			{
-				strdup(std::string("/usr/bin/php").c_str()),
 				strdup(cgi_path.c_str()),
+				strdup(cgi_path_script.c_str()),
 				NULL
 			};
-
 			// create the file where the out of cgi get stored
 			std::stringstream ss;
 			ss << this->cpt;
 			std::string cptAsString = ss.str();
 			cgi_output_filename = "www/TempFiles/cgi_output" + cptAsString;
-			cgi_output_fd = open(cgi_output_filename.c_str(), O_RDWR | O_CREAT, 0644);
-			std::cout << "not here " << cgi_output_fd << std::endl;
-			if (cgi_output_fd < 0)
-				throw std::ios_base::failure("Failed to open file");
-			// Execute the PHP script << fork, dup and execve >>
-			int	fd_file = open(this->filename.data(), O_RDONLY);
-			if (fd_file < 0)
-				throw std::ios_base::failure("Failed to open file");
-			pid = fork();
+			std::cout << "cgi_path: " << cgi_path << " cgi path script: " << cgi_path_script << std::endl;
 			start_c = clock();
+			pid = fork();
 			if (pid == 0) // the child proccess
 			{
-				dup2(cgi_output_fd, 1);
-				dup2(fd_file, 0);
-				close(fd_file);
-				if (execve("/usr/bin/php", argv, env) == -1) {
-					std::cerr << "Error executing PHP script.\n";
+				if (freopen(cgi_output_filename.c_str(), "w", stdout) == NULL)
+					throw std::ios_base::failure("Failed to open file");
+				if (freopen(this->filename.c_str(), "r", stdin) == NULL)
+					throw std::ios_base::failure("Failed to open file");
+				if (execve(cgi_path.c_str(), argv, env) == -1) {
+					std::cerr << "Error executing script.\n";
 				}
+				exit(0);
 			}
-			close(fd_file);
-			forked = true;
 			// free all ressources of argv and env.
 			bool envBool, argvBool = true;
 			for (int i = 0; env[i] || argv[i]; i++)
@@ -125,21 +153,73 @@ bool Upload::start()
 				}	
 			}
 		}
-		if (forked == true)
+		if (forked == true) // here the cgi is allready runing so we must wait for hem until finished or (time out in case of error), also we must WNOHANG its a webserv you know :)
 		{
 			int retPid = waitpid(pid, NULL, WNOHANG);
-			std::cout << "pid: " << retPid << std::endl;
-			if (retPid == pid) //Success case ==> build response and send it.
+			// std::cout << "redPid: " << retPid << " and pid: " << pid << std::endl;
+			if (retPid == pid) // the child is done ==> the response could be success could be failed (depend on cgi output)
 			{
+				char	buffer[1024];
+				std::fstream cgi_output_content;
+				cgi_output_content.open(cgi_output_filename.c_str(), std::ios::in);
+				if(!cgi_output_content.is_open())
+					throw std::ios_base::failure("Failed to open file");
+				// start reading from the file -------------------
+				while (1)
+				{
+					cgi_output_content.read(buffer, 1024);
+					cgi_output.append(buffer, cgi_output_content.gcount());
+					if (cgi_output_content.eof())
+					 	break;
+				}
+				if (cgi_output_content.fail() && !cgi_output_content.eof()) {
+					std::cerr << "Error reading from file." << std::endl;
+				}
+				// end reading from the file ---------------------
+				std::cout << "--" << cgi_output << "--" << std::endl;
+				size_t pos = cgi_output.find("\n\n");
+				if (pos == std::string::npos)
+				{
+					pos = cgi_output.find("\r\n\r\n");
+				}
+				std::cout << "the pos: " << pos << std::endl;
+				std::string body_cgi = cgi_output.substr(pos + 2, cgi_output.length());
+				std::vector<std::string> splited_cgi_output = ft_split(cgi_output.substr(0, pos), "\r\n");
+				for (int i = 0; i < (int)splited_cgi_output.size(); i++)
+				{
+					rtrim(splited_cgi_output.at(i), "\r\n");
+					ltrim(splited_cgi_output.at(i), "\r\n");
+					if (i == 0)
+					{
+						std::string http = std::string("HTTP/1.1 ");
+						std::string lineRes = splited_cgi_output.at(0);
+						lineRes = lineRes.substr(8, lineRes.length());
+						http.append(lineRes);
+						lineRes = http;
+						splited_cgi_output.at(0) = lineRes;
+					}
+					std::cout << "--> " << splited_cgi_output.at(i) << "--" << std::endl;
+					if (splited_cgi_output.at(i).length() > 2)
+					{
+						write(this->fd_socket, splited_cgi_output.at(i).c_str(), splited_cgi_output.at(i).length());
+						write(this->fd_socket, "\r\n", 2);
+					}
+				}
+				write(this->fd_socket, "\r\n", 2);
+				//std::cout << "body cgi -----------------------------> " << body_cgi << "*-*-*-*-*-*-*-*" << std::endl;
+				write(this->fd_socket ,body_cgi.c_str(), body_cgi.length());
 			}
-			else // calculate the time to live of the child proccess if > 5 means timeout();
+			else // calculate the time to live of the child proccess if > 60 means timeout();
 			{
-				// double currentTime = ((double)clock() / CLOCKS_PER_SEC);
 				end = clock();
-				if (((double)(end - start_c)) / CLOCKS_PER_SEC > 20.0)
+				if (((double)(end - start_c)) / CLOCKS_PER_SEC > 60.0)
 				{
 					// send respone time out !!!!!
 					kill(pid, SIGKILL);
+					close(cgi_output_fd);
+					this->bodyContent.close();
+					std::remove(this->filename.c_str());
+					std::remove(cgi_output_filename.c_str());
 					sendResponse(408, "Request Timeout", "<html><body><h1>408 Request Timeout</h1></body></html>", "text/html");
 					return (true);
 				}
@@ -151,9 +231,6 @@ bool Upload::start()
 		this->bodyContent.close();
 		std::remove(this->filename.c_str());
 		std::remove(cgi_output_filename.c_str());
-
-		// std::cout << "send it " << std::endl;
-		sendResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>", "text/html");
 		return (true);
 	}
 	// the case where the cgi is of but the upload is on.
@@ -166,6 +243,12 @@ bool Upload::start()
 		if (resRename != 0)
 			throw std::runtime_error("Failed to upload file");
 		sendResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>", "text/html");
+		return (true);
+	}
+	else
+	{
+		// 403 Forbidden
+		sendResponse(403, "Forbidden", ERROR403, "text/html");
 		return (true);
 	}
 	return (false);

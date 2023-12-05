@@ -9,7 +9,8 @@ Location::Location()
 	DELETE = true;
 	isEmpty = true;
 	hasCGI = false;
-	proxy_read_time_out = 30;
+	proxy_read_time_out = 60;
+	hasIndex = false;
 }
 
 
@@ -84,7 +85,12 @@ void	Location::parseProxyReadTimeOut( std::string timeOut )
 
 void Location::parseIndex( std::string value)
 {
-	this->index = trim(value);
+	if (value.length() > 0)
+	{
+		this->index = trim(value);
+		hasIndex = true;
+	}
+
 }
 
 void	Location::parseCGI()

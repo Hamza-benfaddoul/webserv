@@ -142,3 +142,4 @@ size_t	get_time(char tmp)
 		return (tv.tv_sec);
 	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
 }
+

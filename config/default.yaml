@@ -7,19 +7,32 @@ server:
   location:
     - path: "/"
     - root:   www
-    - cgi: on
     - upload: on
     - autoindex: on
     - methods: [DELETE, POST, GET]
     - index:  [index.html, index.htm]
+    - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.php, /usr/bin/php-cgi]
+    - cgi_path: [.sh, /usr/bin/sh]
     - proxy_read_time_out: 4s
+
 
   location:
     - path: "/bootstrap"
     - root:   www
     - autoindex: on
     - methods: [DELETE, POST, GET]
+
+  location:
+    - path: "/cgi-bin"
+    - root: www
+    - methods: [GET, POST]
+    - upload: off
+    - index: cgi-bin/index.sh
+    - cgi_path: [.py, /usr/bin/python3]
+    - cgi_path: [.sh, /bin/sh]
+    - cgi_path: [.php, /usr/bin/php-cgi]
+
 
 server:
   listen: 6981
@@ -40,11 +53,12 @@ server:
     - index:  [index.html, index.htm]
 
   location:
-    - path: "/"
-    - root:   www
-    - autoindex: on
+    - path: "/cgi-bin"
+    - root: www
     - methods: [GET, POST]
-    - index:  [index.html, index.htm]
-    - redirect: ["index.html"]
-    - upload_path: uploads
+    - upload: on
+    - index: cgi-bin/index.sh
+    - cgi_path: [.py, /usr/lib/python3]
+    - cgi_path: [.sh, /bin/bash]
+
 

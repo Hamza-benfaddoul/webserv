@@ -27,6 +27,7 @@ public:
 	bool		POST;
 	bool		DELETE;
 	std::string	index;
+	bool		hasIndex;
 	bool		hasCGI;
 	int	proxy_read_time_out;
 	std::vector<std::pair<std::string, std::string> > cgi;
