@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/20 22:29:48 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/12/05 15:32:13 by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,22 +72,97 @@ bool	Client::receiveResponse(void)
 	return false;
 }
 
-bool	Client::deleteMethodHandler(void){
+bool Client::deleteMethodHandler(void)
+{
 	std::string requestedPath = this->request->getPath();
 	size_t queryStringPos = requestedPath.find('?');
 	std::string filePath = (queryStringPos != std::string::npos) ? requestedPath.substr(0, queryStringPos) : requestedPath;
 	if (access((location.getRoot() + filePath).c_str(), R_OK) == -1)
 	{
 		sendErrorResponse(404, "Not Found", getErrorPage(404));
+		return (true);
 	}
-	  if (std::remove((location.getRoot() + filePath).c_str()) != 0) {
-       	write(_fd,"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nDelete Failed", 58);
-        std::perror("Error deleting file");
-        return true;
-    } else {
-       write(_fd,"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nResource deleted successfully", 74);
-    }
-	std::cout << _responseBuffer << std::endl;
+	else
+	{
+		struct stat fileInfo;
+		if (stat((location.getRoot() + filePath).c_str(), &fileInfo) != 0)
+		{
+			std::perror("Error in stat");
+			return true;
+		}
+		if (S_ISREG(fileInfo.st_mode))
+		{
+			if (std::remove((location.getRoot() + filePath).c_str()) != 0)
+			{
+				write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nDelete Failed", 58);
+				std::perror("Error deleting file");
+				return true;
+			}
+			else
+			{
+				write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nResource deleted successfully", 74);
+			}
+		}
+		else
+		{
+			// Handle directory deletion
+			if (S_ISDIR(fileInfo.st_mode))
+			{
+				DIR *dir = opendir((location.getRoot() + filePath).c_str());
+				if (dir == NULL)
+				{
+					std::perror("Error opening directory");
+					return true;
+				}
+
+				struct dirent *entry;
+				while ((entry = readdir(dir)) != NULL)
+				{
+					if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+					{
+						// Skip the current directory (.) and parent directory (..)
+						continue;
+					}
+
+					// Construct the full path of the file or subdirectory
+					std::string entryPath = location.getRoot() + filePath + "/" + entry->d_name;
+
+					// Delete the file or recursively delete the subdirectory
+					if (S_ISREG(fileInfo.st_mode))
+					{
+						if (std::remove(entryPath.c_str()) != 0)
+						{
+							std::perror(("Error deleting file: " + entryPath).c_str());
+							closedir(dir);
+							return true;
+						}
+					}
+					else if (S_ISDIR(fileInfo.st_mode))
+					{
+						if (rmdir(entryPath.c_str()) != 0)
+						{
+							std::perror(("Error deleting directory: " + entryPath).c_str());
+							closedir(dir);
+							return true;
+						}
+					}
+				}
+
+				closedir(dir);
+
+				// Now delete the empty directory itself
+				if (rmdir((location.getRoot() + filePath).c_str()) != 0)
+				{
+					std::perror(("Error deleting directory: " + location.getRoot() + filePath).c_str());
+					return true;
+				}
+				else
+				{
+					write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nDirectory deleted successfully", 76);
+				}
+			}
+		}
+	}
 	return true;
 }
 
