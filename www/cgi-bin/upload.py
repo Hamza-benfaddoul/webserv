@@ -1,57 +1,30 @@
-#!/usr/bin/env python3
-
-import os
-import sys
+#!/usr/bin/env python
 import cgi
-import cgitb
+import os
 
-# Enable detailed error messages
-cgitb.enable()
+# Create an instance of the FieldStorage class to parse the form data
+form = cgi.FieldStorage()
 
-def send_error():
-    print("Status: 500 Internal Server Error\r\n")
-    print("Content-Type: text/html\r\n")
-    print("Content-Length: 56\r\n")
-    print("<html><body>\r\n")
-    print('<h2>Internal Server Error</h2>\r\n')
-    print("</body></html>\r\n")
-    sys.exit()
+print("Status: 200 OK\r\n")
+print("Content-Length: 100\r\n")
+print("Content-Type: text/html\r\n")
 
-def main():
-    # Accessing CGI environment variables in Python
-    request_method = os.environ.get('REQUEST_METHOD', '')
-    content_type = os.environ.get('CONTENT_TYPE', '')
-
-    if request_method == 'POST':
-        try:
-            form = cgi.FieldStorage()
-            upload_dir = "www/uploads/"
-
-            if not os.path.exists(upload_dir):
-                os.makedirs(upload_dir, 0o777, True)
-
-            # Generate unique name
-            content_type_parts = content_type.split("/")
-            file_extension = content_type_parts[1] if len(content_type_parts) == 2 else "txt"
-            file_name = upload_dir + '_uploaded_file' + str(os.getpid()) + "." + file_extension
-
-            # Read binary data from stdin
-            binary_data = sys.stdin.buffer.read()
-            # Write binary data to a file
-            with open(file_name, 'wb') as output_file:
-                output_file.write(binary_data)
-
-            # Print the response
-            print("Status: 200 OK\r\n")
-            size_body = 62 + len(file_name)
-            print("Content-Length: " + str(size_body) + "\r\n")
-            print("Content-Type: text/html\r\n")
-            print("<html><body>\r\n")
-            print('<h2>File Upload Successful in: </h2>' + file_name + "\r\n")
-            print("</body></html>\r\n")
-
-        except Exception as e:
-            send_error()
-
-if __name__ == "__main__":
-    main()
+# Check if the file was uploaded
+if 'file' in form:
+    # Get the file data from the form
+    file_item = form['file']
+    
+    # Check if the file was uploaded successfully
+    if file_item.filename:
+        # Set the destination path to save the file
+        file_path = "www/uploads/" + os.path.basename(file_item.filename)
+        
+        # Open the destination file and write the uploaded file data
+        with open(file_path, 'wb') as fp:
+            fp.write(file_item.file.read())
+        
+        print('File uploaded successfully.')
+    else:
+        print('Error: File upload failed.')
+else:
+    print('Error: No file uploaded.')
