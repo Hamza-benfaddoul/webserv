@@ -44,8 +44,12 @@ class Client {
 		Request		*request;
 		Upload		*upload;
 		Location	location;
-		int			_fdFile;
-
+		int		_fdFile;
+		int		pipefd[2];
+		std::string tmpFile;
+		long content_length;
+		std::ifstream file_ouptut;
+		std::string content;
 		// Response	*response;
 		std::string postRequest;
 
@@ -87,7 +91,9 @@ class Client {
 		void	parseChunk();
 		bool	readFile( const std::string, std::ifstream &);
 		bool	serveImage();
+		std::string	createNewFile(std::string prefix, size_t start, std::string suffix);
 
+		void	readFromCgi();
 		void	sendResponse(void);
 		void	sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string location);
 		// void	sendErrorResponse( int, std::string, std::string );

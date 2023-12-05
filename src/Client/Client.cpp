@@ -28,6 +28,7 @@ Client::Client(size_t fd, serverBlock *serverBlock) :
 	totalBytesRead = 0;
 	isRead = false;
 	controller = false;
+	content_length = 0;
 	hasCgi = false;
 }
 
@@ -208,6 +209,22 @@ std::string extractBodyFromContent(const std::string& content, std::string &head
     return "";
 }
 
+std::string	Client::createNewFile(std::string prefix, size_t start, std::string suffix)
+{
+	std::stringstream ss, filename;
+	ss << start;
+	filename << prefix << start << suffix;
+	std::cout << filename.str().c_str() << std::endl;
+	std::fstream fd;
+	fd.open(filename.str().c_str(), std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
+	if (!fd.is_open())
+	{
+		throw std::ios_base::failure("Failed to open filecx");
+	}
+	close(!fd);
+	return filename.str();
+}
+
 bool	Client::handleFiles( std::string path) {
 	size_t dotPos = path.find_last_of('.');
 	size_t markPos = path.find_last_of('?');
@@ -219,9 +236,6 @@ bool	Client::handleFiles( std::string path) {
 	size_t position = this->request->getPath().find('?');
 	std::string cgi_path = getCgiPath(extension);
 	if (cgi_path.length() > 0){
-		// std::cout << "path: " << path << "\n";
-		// std::cout << "QUERY_STRING=" + request->getPath().substr(position+1) << "\n";
-		// std::cout << request->getCookie() << "\n";
 		std::stringstream ss;
 		ss <<  _serverBlock->getPort();
 		char *env[] =
@@ -232,7 +246,7 @@ bool	Client::handleFiles( std::string path) {
 			(path == location.getRoot() + request->getPath()) ? strdup(std::string("QUERY_STRING=").c_str()): strdup(std::string("QUERY_STRING=" + request->getPath().substr(position+1)).c_str()),
 			strdup(std::string("REQUEST_METHOD=" + request->getMethod()).c_str()),
 			strdup(std::string("SERVER_NAME=localhost").c_str()),
-			// strdup(std::string("SERVER_PORT=" + ss.str()).c_str()),
+			strdup(std::string("SERVER_PORT=" + ss.str()).c_str()),
 			strdup(std::string("SERVER_PROTOCOL=HTTP/1.1").c_str()),
 			// strdup(std::string("SERVER_SOFTWARE=Weebserv/1.0").c_str()),
 			strdup(std::string("CONTENT_TYPE=" + request->getMimeType()).c_str()),
@@ -240,73 +254,49 @@ bool	Client::handleFiles( std::string path) {
 			strdup(std::string("HTTP_COOKIE=" + request->getCookie()).c_str()),
 			NULL
 		};
-		// std::cout << env[1] << "\n";
-		// std::cout << env[2] << "\n";
-		int pipefd[2];
-		if (pipe(pipefd) == -1) {
-			std::cerr << "Error creating pipe.\n";
-			return false;
-		}
+		size_t start = get_time('s');
+		tmpFile = createNewFile("www/TempFiles/", start, "_cgi");
+		std::cout << tmpFile << "\n";
 		int fd = fork();
 		if (fd == -1) {
-			std::cerr << "Fork failed.\n";
-			close(pipefd[0]);
-			close(pipefd[1]);
-			return false;
+			unlink(tmpFile.c_str());
+			return true;
 		}
-			// std::cout << request->getPath() << ": path\n";
+		char *argv[] = {
+			strdup(cgi_path.c_str()),
+			strdup((location.getRoot() + request->getPath()).c_str()),
+			NULL
+		};
 		if (fd == 0) {
-			close(pipefd[0]);
-			dup2(pipefd[1], STDOUT_FILENO);
-			close(pipefd[1]);
-			char *argv[] = {
-				strdup(cgi_path.c_str()),
-				strdup((location.getRoot() + request->getPath()).c_str()),
-				NULL
-			};
+			if (freopen(tmpFile.c_str(), "w", stdout) == NULL)
+				throw std::ios_base::failure("Failed to open Fileddd");
 			execve(argv[0], argv, env);
-			perror("**********************execve");
+			exit(0);
 		} else {
-			close(pipefd[1]);
-			char buffer[1024];
-			std::string content;
-			content.clear();
-			while (1) {
-				int bytesRead = read(pipefd[0], buffer, sizeof(buffer));
-				if (bytesRead <= 0)
-					break;
-				content.append(buffer, bytesRead);
-			}
-			close(pipefd[0]);
 			int status;
-			waitpid(fd, &status, 0);
-			if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
-				std::cout << "PHP execution was successful.\n";
-				std::string contentType;
-				content = extractBodyFromContent(content, contentType);
-				std::cout << "(^_^)" << contentType << "(^_^)\n";
-				content = advanced_trim(content, " \n\r");
-				std::stringstream headers;
-				headers << "HTTP/1.1 200 OK\r\n";
-				headers << "Content-Length: " << content.length() << "\r\n";
-				headers << contentType;
-				// headers << "Content-Type: text/css; charset=utf-8" << "\r\n\r\n";
-				// headers << content;
-				write(_fd, headers.str().c_str(), headers.str().length());
-				write(_fd, content.c_str(), content.length());
-				fsync(_fd);
-				int fd = open("fi.txt", O_RDWR);
-				write(fd, headers.str().c_str(), headers.str().length());
-				write(fd, content.c_str(), content.length());
-				return true;
-			} else {
-				std::cerr << "PHP execution failed.\n";
+			while (waitpid(fd, &status, WNOHANG) == 0)
+			{
+				if (get_time('s') > start + location.proxy_read_time_out)
+					kill(fd, SIGSEGV);
+				usleep(10000);
 			}
+			readFromCgi();
+			std::cout << "PHP execution was successful.\n";
+			content = advanced_trim(content, " \n\r");
+			std::stringstream headers;
+			headers << "HTTP/1.1 200 OK\r\n";
+			headers << "Content-Length: " << content_length << "\r\n";
+			// headers << content;
+			write(_fd, headers.str().c_str(), headers.str().length());
+			write(_fd, content.c_str(), content.length());
+			fsync(_fd);
+			// else {
+			// 	std::cerr << "PHP execution failed.\n";
+			// }
 			return true;
 		}
 		return true;
 	} else {
-		std::cout << "here\n";
 		if (_fdFile == -1)
 			_fdFile = open(path.c_str(), O_RDONLY);
 		if (_fdFile > -1) {
@@ -330,6 +320,35 @@ bool	Client::handleFiles( std::string path) {
 		// return readFile(path);
 		return true;
 	}
+}
+
+void	Client::readFromCgi()
+{
+	std::fstream cgi_output_content;
+	cgi_output_content.open(tmpFile.c_str(), std::ios::in);
+	if(!cgi_output_content.is_open())
+		throw std::ios_base::failure("Failed to open file");
+	char buffer[1024];
+	size_t found = 0;
+	while (1) {
+		cgi_output_content.read(buffer, 1024);
+		if (cgi_output_content.gcount() <= 0)
+			break;
+		content.append(buffer, cgi_output_content.gcount());
+		found = content.find("\r\n\r\n");
+		if (found != std::string::npos)
+		{
+			found += 4;
+			content.substr(0, found);
+			break;
+		}
+	}
+	file_ouptut.close();
+	file_ouptut.open(tmpFile.c_str());
+	file_ouptut.seekg(0, std::ios::end);
+	content_length = file_ouptut.tellg();
+    content_length -= found;
+    file_ouptut.seekg(found, std::ios::beg);
 }
 
 bool Client::serveImage() {

@@ -10,8 +10,10 @@ configParser::configParser()
 
 }
 
-configParser::configParser(const std::string &)
+configParser::configParser(const std::string &path)
 {
+	setConfigFilePath(path);
+	parse();
 }
 configParser::~configParser()
 {

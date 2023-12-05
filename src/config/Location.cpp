@@ -9,6 +9,8 @@ Location::Location()
 	DELETE = true;
 	isEmpty = true;
 	hasCGI = false;
+	proxy_read_time_out = 60;
+	hasIndex = false;
 }
 
 
@@ -46,6 +48,8 @@ void    Location::parseLocations( void )
 			parseAutoIndex(iterator->second);
 		else if (iterator->first == "index")
 			parseIndex(iterator->second);
+		else if (iterator->first == "proxy_read_time_out")
+			parseProxyReadTimeOut(iterator->second);
 			// parsePortNumber(iterator->second);
 		// std::cout << iterator->first << ": " << iterator->second << std::endl;
 	}
@@ -54,9 +58,39 @@ void    Location::parseLocations( void )
 		parseCGI();
 }
 
+void	Location::parseProxyReadTimeOut( std::string timeOut )
+{
+	std::istringstream iss(timeOut);
+    int value;
+    std::string unit;
+    
+    if (!(iss >> value >> unit) || unit.length() > 1) {
+        throw std::invalid_argument("Invalid time format");
+    }
+
+    switch (unit.at(0)) {
+        case 's':
+            proxy_read_time_out = value;
+			return ;
+        case 'm':
+            proxy_read_time_out = value * 60;
+			return ;
+        case 'h':
+            proxy_read_time_out = value * 3600;
+			return ;
+        default:
+            throw std::invalid_argument("Invalid time unit");
+    }
+}
+
 void Location::parseIndex( std::string value)
 {
-	this->index = trim(value);
+	if (value.length() > 0)
+	{
+		this->index = trim(value);
+		hasIndex = true;
+	}
+
 }
 
 void	Location::parseCGI()

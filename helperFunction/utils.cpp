@@ -131,6 +131,17 @@ std::string	getMimeTypeFromExtension(const std::string& path)
 	return "application/octet-stream";
 }
 
+size_t	get_time(char tmp)
+{
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+	if (tmp == 'm')
+		return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+	else if (tmp == 's')
+		return (tv.tv_sec);
+	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+}
 
 void	sendErrorResponse( int CODE, std::string ERRORTYPE, std::string errorTypeFilePath, int _fd) {
 	std::ifstream file(errorTypeFilePath.c_str());
