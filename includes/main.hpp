@@ -43,6 +43,7 @@
 // helper function
 
 std::vector<std::string>	ft_split(std::string str, std::string needed);
+void	sendErrorResponse( int CODE, std::string ERRORTYPE, std::string errorTypeFilePath, int _fd);
 std::string&				rtrim(std::string& s, std::string t);
 std::string&				ltrim(std::string& s, std::string t);
 std::string&                advanced_trim(std::string& s, std::string trimSep);

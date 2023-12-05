@@ -175,7 +175,7 @@ bool	Client::handleDirs() {
 				}
 			}
 		} else if(location.getAutoIndex() == false) {
-			sendErrorResponse(403, "Forbidden", ERROR403);
+			sendErrorResponse(403, "Forbidden", ERROR403, _fd);
 		} else if (location.getAutoIndex() == true)
 		{
 			directoryListing(location.getRoot() + "/" + location.directory );
@@ -394,7 +394,7 @@ bool Client::getMethodHandler(void) {
 	std::string filePath = (queryStringPos != std::string::npos) ? requestedPath.substr(0, queryStringPos) : requestedPath;
 	if (access((location.getRoot() + filePath).c_str(), R_OK) == -1)
 	{
-		sendErrorResponse(404, "Not Found", getErrorPage(404));
+		sendErrorResponse(404, "Not Found", ERROR404, _fd);
 	}
 	else if (checkType() == true)
 	{
@@ -420,29 +420,29 @@ Client::~Client()
 	close(_fd);
 }
 
-void	Client::sendErrorResponse( int CODE, std::string ERRORTYPE, std::string errorTypeFilePath) {
-	std::ifstream file(errorTypeFilePath.c_str());
-	std::string content;
-	if (file.is_open())
-	{
-		{
-			std::string line;
-			while (getline(file, line))
-			{
-				content += line;
-			}
-		}
-	}
-	file.close();
-	std::stringstream response;
-	response << "HTTP/1.1 " << CODE << " " << ERRORTYPE << "\r\n";
-	response << "Content-Type: text/html; charset=UTF-8\r\n";
-	response << "Content-Length: " << content.length() << "\r\n";
-	response << "\r\n";
-	response << content;
+// void	Client::sendErrorResponse( int CODE, std::string ERRORTYPE, std::string errorTypeFilePath, int _fd) {
+// 	std::ifstream file(errorTypeFilePath.c_str());
+// 	std::string content;
+// 	if (file.is_open())
+// 	{
+// 		{
+// 			std::string line;
+// 			while (getline(file, line))
+// 			{
+// 				content += line;
+// 			}
+// 		}
+// 	}
+// 	file.close();
+// 	std::stringstream response;
+// 	response << "HTTP/1.1 " << CODE << " " << ERRORTYPE << "\r\n";
+// 	response << "Content-Type: text/html; charset=UTF-8\r\n";
+// 	response << "Content-Length: " << content.length() << "\r\n";
+// 	response << "\r\n";
+// 	response << content;
 
-	write(_fd, response.str().c_str(), response.str().length());
-}
+// 	write(_fd, response.str().c_str(), response.str().length());
+// }
 
 void	Client::sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string location) {
 	std::stringstream response;
@@ -466,7 +466,7 @@ int	Client::is_request_well_formed()
 
 	if (location.isEmpty == true)
 	{
-		sendErrorResponse(404, "Not Found", ERROR404);
+		sendErrorResponse(404, "Not Found", ERROR404, _fd);
 		return (-1);
 	}
 	std::string path = this->request->getPath();
@@ -489,33 +489,28 @@ int	Client::is_request_well_formed()
 	if (badChar == 1 || this->request->getBad() == 1 || (request->getMethod() == "POST" && it == ourHeaders.end() && ourHeaders.find("Content-Length") == ourHeaders.end()))
 	{
 		std::cout << badChar << " - " << this->request->getBad() << std::endl;
-		sendErrorResponse(400, "Bad Request", ERROR400);
+		sendErrorResponse(400, "Bad Request", ERROR400, _fd);
 		return (-1);
 	}
 	// transfer encoding is equal to chunked
 	if (ourHeaders.find("Transfer-Encoding") != ourHeaders.end() && ourHeaders["Transfer-Encoding"] != "chunked")
 	{
-		sendErrorResponse(501, "Not Implemented", ERROR501);
+		sendErrorResponse(501, "Not Implemented", ERROR501, _fd);
 		return (-1);
 	}
 	// request uri containe more that 2048 char
 	if (path.length() > 2048)
 	{
-		sendErrorResponse(414, "Request-URI Too Long", "<html><body><h1>414 Request-URI Too Long</h1></body></html>");
+		sendErrorResponse(414, "Request-URI Too Long", ERROR414, _fd);
 		return (-1);
 	}
 	if ((request->getMethod() == "GET" && location.GET == false) ||
 		(request->getMethod() == "POST" && location.POST == false) ||
 			(request->getMethod() == "DELETE" && location.DELETE == false))
 		{
-			sendErrorResponse(405, "405 Method Not Allowed", ERROR405);
+			sendErrorResponse(405, "405 Method Not Allowed", ERROR405, _fd);
 			return -1;
 		}
-	// the body length larger than the max body size in the config file
-	if (true)
-	{
-		// ...
-	}
 	return (true);
 }
 
@@ -598,7 +593,7 @@ bool	Client::postMethodHandler(void)
 	else if (Headers.find("Transfer-Encodgin") != Headers.end() && Headers["Transfer-Encoding"] != "chunked")
 	{
 		std::cout << "here the probleme" << std::endl;
-		sendErrorResponse(501, "Not Implemented", ERROR501);
+		sendErrorResponse(501, "Not Implemented", ERROR501, _fd);
 		return true;
 	}
 	else if (controller == false &&  Headers.find("Content-Length") != Headers.end()) // ============> binary type
@@ -619,7 +614,7 @@ bool	Client::postMethodHandler(void)
 	}
 	else if (controller == false)
 	{
-		sendErrorResponse(400, "Bad Request", ERROR400);
+		sendErrorResponse(400, "Bad Request", ERROR400, _fd);
 		return true;
 	}
 	this->upload->endLine();
