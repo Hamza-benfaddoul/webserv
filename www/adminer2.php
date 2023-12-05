@@ -1,6 +1,6 @@
 <?php
 
-while(1);
+sleep (2);
 echo "wach al 7biba\n";
 
 ?>

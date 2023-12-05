@@ -30,6 +30,7 @@ Client::Client(size_t fd, serverBlock *serverBlock) :
 	totalBytesRead = 0;
 	isRead = false;
 	controller = false;
+	content_length = 0;
 }
 
 bool	Client::receiveResponse(void)
@@ -237,6 +238,10 @@ bool	Client::handleFiles( std::string path) {
 			strdup(std::string("HTTP_COOKIE=" + request->getCookie()).c_str()),
 			NULL
 		};
+		// if (pipe(pipefd) == -1) {
+		// 	std::cerr << "Error creating pipe.\n";
+		// 	return false;
+		// }
 		size_t start = get_time('s');
 		tmpFile << "www/TempFiles/" << start << "_cgi";
 		pipefd[1] = open(tmpFile.str().c_str(), O_RDWR, O_CREAT, 644);
@@ -259,7 +264,7 @@ bool	Client::handleFiles( std::string path) {
 			close(pipefd[0]);
 			close(pipefd[1]);
 			execve(argv[0], argv, env);
-			exit(1);
+			// exit(1);
 		} else {
 			int status;
 			while (waitpid(fd, &status, WNOHANG) == 0)
@@ -269,14 +274,13 @@ bool	Client::handleFiles( std::string path) {
 				usleep(10000);
 			}
 			readFromCgi();
-				std::cout << "PHP execution was successful.\n";
-				std::string contentType;
-				content = extractBodyFromContent(content, contentType);
+			std::cout << "PHP execution was successful.\n";
 				content = advanced_trim(content, " \n\r");
+				std::cout << content_length << "\n";
 				std::stringstream headers;
 				headers << "HTTP/1.1 200 OK\r\n";
-				headers << "Content-Length: " << content.length() << "\r\n";
-				headers << contentType;
+				headers << "Content-Length: " << content_length << "\r\n";
+				// headers << content;
 				write(_fd, headers.str().c_str(), headers.str().length());
 				write(_fd, content.c_str(), content.length());
 				fsync(_fd);
@@ -312,16 +316,16 @@ bool	Client::handleFiles( std::string path) {
 	}
 }
 
-bool	Client::readFromCgi()
+void	Client::readFromCgi()
 {
+	file_ouptut.close();
 	file_ouptut.open(tmpFile.str().c_str());
 	char buffer[1024];
-	int found = 0;
-	std::string content;
+	size_t found = 0;
 	content.clear();
 	while (1) {
-		file.read(buffer, sizeof(buffer));
-		if (file.gcount() <= 0)
+		file_ouptut.read(buffer, sizeof(buffer));
+		if (file_ouptut.gcount() <= 0)
 			break;
 		content += buffer;
 		found = content.find("\r\n\r\n");

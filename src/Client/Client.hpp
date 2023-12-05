@@ -46,6 +46,7 @@ class Client {
 		std::stringstream tmpFile;
 		long content_length;
 		std::ifstream file_ouptut;
+		std::string content;
 		// Response	*response;
 		std::string postRequest;
 		std::vector<char> _responseBufferVector;
@@ -85,7 +86,7 @@ class Client {
 		bool	readFile( const std::string, std::ifstream &);
 		bool	serveImage();
 
-		bool	readFromCgi();
+		void	readFromCgi();
 		void	sendResponse(void);
 		void	sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string location);
 		void	sendErrorResponse( int, std::string, std::string );
