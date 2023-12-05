@@ -58,6 +58,21 @@ std::string	Upload::checkType(std::string path)
 	return std::string("folder");
 }
 
+size_t Upload::getFileSize(std::string filename) {
+    FILE* file = fopen(filename.c_str(), "rb");
+    if (file == NULL) {
+        // handle file open error
+        return -1;
+    }
+
+    fseek(file, 0, SEEK_END);
+    size_t size = ftell(file);
+
+    fclose(file);
+
+    return size;
+}
+
 bool Upload::start()
 {
 	std::map<std::string, std::string> ourLocations = location.getLocationAttributes();
@@ -80,6 +95,10 @@ bool Upload::start()
 			std::string cgi_path_script = location.getRoot() + uri;
 			// std::cout << "cgi path scritp: " << cgi_path_script << std::endl;
 			// Create an array of envirment that cgi need.
+			std::cout << "the content type is: " << content_type << std::endl;
+			size_t sizeOfFile = getFileSize(this->filename);
+			std::stringstream streamFileSize;
+			streamFileSize << sizeOfFile;
 			char *env[] = 
 			{
 				strdup(std::string("REDIRECT_STATUS=200").c_str()),
@@ -89,6 +108,7 @@ bool Upload::start()
 				strdup(std::string("HTTP_COOKIE=").c_str()),
 				strdup(std::string("HTTP_CONTENT_TYPE=" + content_type).c_str()),
 				strdup(std::string("CONTENT_TYPE=" + content_type).c_str()),
+				strdup(std::string("CONTENT_LENGTH=" + streamFileSize.str()).c_str()),
 				NULL
 			};
 			// discover the path of cgi script.
@@ -108,7 +128,8 @@ bool Upload::start()
 
 				this->bodyContent.close();
 				std::remove(this->filename.c_str());
-				sendResponse(404, "Not Found", "<html><body> <h1> 404 Not Found</h1> </body></html>", "text/html");
+				// sendResponse(404, "Not Found", "<html><body> <h1> 404 Not Found</h1> </body></html>", "text/html");
+				sendErrorResponse(404, "Request-URI Too Long", ERROR404, this->fd_socket);
 				return true;
 			}
 			// Create an array of arguments for execve
@@ -123,7 +144,7 @@ bool Upload::start()
 			ss << this->cpt;
 			std::string cptAsString = ss.str();
 			cgi_output_filename = "www/TempFiles/cgi_output" + cptAsString;
-			std::cout << "cgi_path: " << cgi_path << " cgi path script: " << cgi_path_script << std::endl;
+			//std::cout << "cgi_path: " << cgi_path << " cgi path script: " << cgi_path_script << std::endl;
 			start_c = clock();
 			pid = fork();
 			if (pid == 0) // the child proccess
@@ -184,7 +205,13 @@ bool Upload::start()
 				}
 				std::cout << "the pos: " << pos << std::endl;
 				std::string body_cgi = cgi_output.substr(pos + 2, cgi_output.length());
-				std::vector<std::string> splited_cgi_output = ft_split(cgi_output.substr(0, pos), "\r\n");
+				std::string headers = cgi_output.substr(0, pos);
+				std::vector<std::string> splited_cgi_output;
+				if (headers.find("\r\n") != std::string::npos)
+					splited_cgi_output = ft_split(headers, "\r\n");
+				else if (headers.find("\n") != std::string::npos)
+					splited_cgi_output = ft_split(headers, "\n");
+
 				for (int i = 0; i < (int)splited_cgi_output.size(); i++)
 				{
 					rtrim(splited_cgi_output.at(i), "\r\n");
@@ -206,7 +233,7 @@ bool Upload::start()
 					}
 				}
 				write(this->fd_socket, "\r\n", 2);
-				//std::cout << "body cgi -----------------------------> " << body_cgi << "*-*-*-*-*-*-*-*" << std::endl;
+				// std::cout << "body cgi -----------------------------> " << body_cgi << "*-*-*-*-*-*-*-*" << std::endl;
 				write(this->fd_socket ,body_cgi.c_str(), body_cgi.length());
 			}
 			else // calculate the time to live of the child proccess if > 60 means timeout();
@@ -220,7 +247,9 @@ bool Upload::start()
 					this->bodyContent.close();
 					std::remove(this->filename.c_str());
 					std::remove(cgi_output_filename.c_str());
-					sendResponse(408, "Request Timeout", "<html><body><h1>408 Request Timeout</h1></body></html>", "text/html");
+					// sendResponse(408, "Request Timeout", "<html><body><h1>408 Request Timeout</h1></body></html>", "text/html");
+					sendErrorResponse(408, "Request Timeout", ERROR408, this->fd_socket);
+
 					return (true);
 				}
 				return false;
@@ -242,13 +271,15 @@ bool Upload::start()
 		int	resRename = std::rename(this->filename.c_str(), newFileName.c_str());
 		if (resRename != 0)
 			throw std::runtime_error("Failed to upload file");
-		sendResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>", "text/html");
+		// sendResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>", "text/html");
+		sendErrorResponse(200, "OK", ERROR200, this->fd_socket);
 		return (true);
 	}
 	else
 	{
 		// 403 Forbidden
-		sendResponse(403, "Forbidden", ERROR403, "text/html");
+		// sendResponse(403, "Forbidden", ERROR403, "text/html");
+		sendErrorResponse(403, "Forbidden", ERROR403, this->fd_socket);
 		return (true);
 	}
 	return (false);
