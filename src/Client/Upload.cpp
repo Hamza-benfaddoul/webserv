@@ -58,20 +58,7 @@ std::string	Upload::checkType(std::string path)
 	return std::string("folder");
 }
 
-size_t Upload::getFileSize(std::string filename) {
-    FILE* file = fopen(filename.c_str(), "rb");
-    if (file == NULL) {
-        // handle file open error
-        return -1;
-    }
 
-    fseek(file, 0, SEEK_END);
-    size_t size = ftell(file);
-
-    fclose(file);
-
-    return size;
-}
 
 bool Upload::start()
 {
@@ -85,20 +72,23 @@ bool Upload::start()
 		content_type = it->second;
 	// the cgi case.
 	// std::cout << "the path to cgi script: |||" << std::endl;
+	// std::string readTimeOut = ourLocations["proxy_read_time_out"];
+	
 	if (cgi_path.length() > 0)
 	{
 		if (forked == false)
 		{
+			// std::cout << "readTimeOut: " << readTimeOut << std::endl;
+			size_t sizeOfFile = FileSize(this->filename);
+			std::stringstream streamFileSize;
+			streamFileSize << sizeOfFile;
 			forked = true;
-			std::cout << "the location path: " << location.getLocationPath() << std::endl;
+			// std::cout << "the location path: " << location.getLocationPath() << std::endl;
 			std::string uri = request->getPath();
 			std::string cgi_path_script = location.getRoot() + uri;
 			// std::cout << "cgi path scritp: " << cgi_path_script << std::endl;
 			// Create an array of envirment that cgi need.
-			std::cout << "the content type is: " << content_type << std::endl;
-			size_t sizeOfFile = getFileSize(this->filename);
-			std::stringstream streamFileSize;
-			streamFileSize << sizeOfFile;
+			// std::cout << "the content type is: " << content_type << std::endl;
 			char *env[] = 
 			{
 				strdup(std::string("REDIRECT_STATUS=200").c_str()),
@@ -125,7 +115,6 @@ bool Upload::start()
 						free(env[i]);
 					}
 				}
-
 				this->bodyContent.close();
 				std::remove(this->filename.c_str());
 				// sendResponse(404, "Not Found", "<html><body> <h1> 404 Not Found</h1> </body></html>", "text/html");
@@ -199,12 +188,15 @@ bool Upload::start()
 				// end reading from the file ---------------------
 				std::cout << "--" << cgi_output << "--" << std::endl;
 				size_t pos = cgi_output.find("\n\n");
+				std::string body_cgi;
 				if (pos == std::string::npos)
 				{
 					pos = cgi_output.find("\r\n\r\n");
+					body_cgi = cgi_output.substr(pos + 4, cgi_output.length());
 				}
+				else
+					body_cgi = cgi_output.substr(pos + 2, cgi_output.length());
 				std::cout << "the pos: " << pos << std::endl;
-				std::string body_cgi = cgi_output.substr(pos + 2, cgi_output.length());
 				std::string headers = cgi_output.substr(0, pos);
 				std::vector<std::string> splited_cgi_output;
 				if (headers.find("\r\n") != std::string::npos)
@@ -225,7 +217,7 @@ bool Upload::start()
 						lineRes = http;
 						splited_cgi_output.at(0) = lineRes;
 					}
-					std::cout << "--> " << splited_cgi_output.at(i) << "--" << std::endl;
+					// std::cout << "--> " << splited_cgi_output.at(i) << "--" << std::endl;
 					if (splited_cgi_output.at(i).length() > 2)
 					{
 						write(this->fd_socket, splited_cgi_output.at(i).c_str(), splited_cgi_output.at(i).length());
@@ -239,7 +231,7 @@ bool Upload::start()
 			else // calculate the time to live of the child proccess if > 60 means timeout();
 			{
 				end = clock();
-				if (((double)(end - start_c)) / CLOCKS_PER_SEC > 60.0)
+				if (((double)(end - start_c)) / CLOCKS_PER_SEC > (double)location.proxy_read_time_out)
 				{
 					// send respone time out !!!!!
 					kill(pid, SIGKILL);
@@ -278,7 +270,6 @@ bool Upload::start()
 	else
 	{
 		// 403 Forbidden
-		// sendResponse(403, "Forbidden", ERROR403, "text/html");
 		sendErrorResponse(403, "Forbidden", ERROR403, this->fd_socket);
 		return (true);
 	}

@@ -250,13 +250,14 @@ bool	Client::handleFiles( std::string path) {
 			strdup(std::string("SERVER_PROTOCOL=HTTP/1.1").c_str()),
 			// strdup(std::string("SERVER_SOFTWARE=Weebserv/1.0").c_str()),
 			strdup(std::string("CONTENT_TYPE=" + request->getMimeType()).c_str()),
+			// strdup(std::string("CONTENT_LENGTH=" + request->getMimeType()).c_str()),
 			strdup(std::string("REDIRECT_STATUS=200").c_str()),
 			strdup(std::string("HTTP_COOKIE=" + request->getCookie()).c_str()),
 			NULL
 		};
 		size_t start = get_time('s');
 		tmpFile = createNewFile("www/TempFiles/", start, "_cgi");
-		std::cout << tmpFile << "\n";
+		// std::cout << tmpFile << "\n";
 		int fd = fork();
 		if (fd == -1) {
 			unlink(tmpFile.c_str());
@@ -281,18 +282,48 @@ bool	Client::handleFiles( std::string path) {
 				usleep(10000);
 			}
 			readFromCgi();
-			std::cout << "PHP execution was successful.\n";
-			content = advanced_trim(content, " \n\r");
-			std::stringstream headers;
-			headers << "HTTP/1.1 200 OK\r\n";
-			headers << "Content-Length: " << content_length << "\r\n";
-			// headers << content;
-			write(_fd, headers.str().c_str(), headers.str().length());
-			write(_fd, content.c_str(), content.length());
-			fsync(_fd);
-			// else {
-			// 	std::cerr << "PHP execution failed.\n";
-			// }
+
+
+			size_t pos = content.find("\n\n");
+			std::string body_cgi;
+			if (pos == std::string::npos)
+			{
+				pos = content.find("\r\n\r\n");
+				body_cgi = content.substr(pos + 4, content.length());
+			}
+			else
+				body_cgi = content.substr(pos + 2, content.length());
+			std::string headers = content.substr(0, pos);
+			std::vector<std::string> splited_cgi_output;
+			if (headers.find("\r\n") != std::string::npos)
+				splited_cgi_output = ft_split(headers, "\r\n");
+			else if (headers.find("\n") != std::string::npos)
+				splited_cgi_output = ft_split(headers, "\n");
+
+			for (int i = 0; i < (int)splited_cgi_output.size(); i++)
+			{
+				rtrim(splited_cgi_output.at(i), "\r\n");
+				ltrim(splited_cgi_output.at(i), "\r\n");
+				if (i == 0)
+				{
+					std::string http = std::string("HTTP/1.1 ");
+					std::string lineRes = splited_cgi_output.at(0);
+					lineRes = lineRes.substr(8, lineRes.length());
+					http.append(lineRes);
+					lineRes = http;
+					splited_cgi_output.at(0) = lineRes;
+				}
+				if (splited_cgi_output.at(i).length() > 2)
+				{
+					write(_fd, splited_cgi_output.at(i).c_str(), splited_cgi_output.at(i).length());
+					write(_fd, "\r\n", 2);
+				}
+			}
+			write(_fd, "\r\n", 2);
+			// std::cout << "body cgi -----------------------------> " << body_cgi << "*-*-*-*-*-*-*-*" << std::endl;
+			ltrim(body_cgi, "\r\n");
+			write(_fd ,body_cgi.c_str(), body_cgi.length());
+			std::remove(tmpFile.c_str());
 			return true;
 		}
 		return true;

@@ -166,3 +166,19 @@ void	sendErrorResponse( int CODE, std::string ERRORTYPE, std::string errorTypeFi
 
 	write(_fd, response.str().c_str(), response.str().length());
 }
+
+
+size_t FileSize(std::string filename) {
+    FILE* file = fopen(filename.c_str(), "rb");
+    if (file == NULL) {
+        // handle file open error
+        return -1;
+    }
+
+    fseek(file, 0, SEEK_END);
+    size_t size = ftell(file);
+
+    fclose(file);
+
+    return size;
+}

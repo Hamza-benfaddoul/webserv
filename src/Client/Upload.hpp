@@ -50,7 +50,6 @@ public:
     void    endLine();
     void	createFile();
     bool    start();
-    size_t getFileSize(std::string filename);
     std::string	checkType(std::string path);
 };
 
