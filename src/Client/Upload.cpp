@@ -1,7 +1,8 @@
 #include "Upload.hpp"
 #include "../../includes/main.hpp"
 
-Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path) : request(req), cpt(in_cpt), location(in_location), fd_socket(in_fd), cgi_path(in_cgi_path)
+Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path, long in_max_body_size) : 
+	request(req), cpt(in_cpt), location(in_location), fd_socket(in_fd), cgi_path(in_cgi_path), max_body_size(in_max_body_size)
 {
 	// std::cout << "*****************************************construcot" << std::endl;
 	forked = false;
@@ -80,6 +81,11 @@ bool Upload::start()
 		{
 			// std::cout << "readTimeOut: " << readTimeOut << std::endl;
 			size_t sizeOfFile = FileSize(this->filename);
+			if ((long)sizeOfFile > max_body_size)
+			{
+				sendErrorResponse(413, "Request Entity Too Large", ERROR413, this->fd_socket);
+				return true;
+			}
 			std::stringstream streamFileSize;
 			streamFileSize << sizeOfFile;
 			forked = true;

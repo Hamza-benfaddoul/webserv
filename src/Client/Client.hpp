@@ -30,6 +30,7 @@
 #define ERROR405 "www/error/405.html"
 #define ERROR408 "www/error/408.html"
 #define ERROR400 "www/error/400.html"
+#define ERROR413 "www/error/413.html"
 #define ERROR414 "www/error/414.html"
 #define ERROR501 "www/error/501.html"
 #define ERROR200 "www/error/200.html"

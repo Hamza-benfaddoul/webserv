@@ -564,7 +564,7 @@ bool	Client::postMethodHandler(void)
 			if (this->getCgiPath(extension).length() > 0)
 				hasCgi = true;
 		}
-		this->upload = new Upload(this->request, this->cpt, location, _fd, this->getCgiPath(extension));
+		this->upload = new Upload(this->request, this->cpt, location, _fd, this->getCgiPath(extension), _serverBlock->client_max_body_size);
 		this->upload->createFile();
 		totalBytesRead = body.length();
 		if (Headers.find("Content-Length") != Headers.end() && totalBytesRead >= Content_Length)

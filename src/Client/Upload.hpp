@@ -33,13 +33,14 @@ private:
     clock_t end;
     bool hasCgi;
     std::string cgi_path;
+    long max_body_size;
 
     // Client client;
 
 public:
     // Upload(Request *req, int in_cpt, Client in_client);
     // Upload(Request *req, int in_cpt, Location in_location, int in_fd, bool in_hasCgi);
-    Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path);
+    Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path, long in_max_body_size);
     // Upload(Request *req, int in_cpt);
     ~Upload();
     void	writeToFile(const std::vector<char> & source);
