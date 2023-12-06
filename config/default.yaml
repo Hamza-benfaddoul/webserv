@@ -2,7 +2,8 @@ server:
   listen: 2663
   server_name: localhost
   root: www
-  client_max_body_size: 20m
+  client_max_body_size: 20k
+
   location:
     - path: "/"
     - root:   www
@@ -13,8 +14,8 @@ server:
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.php, /usr/bin/php-cgi]
     - cgi_path: [.sh, /usr/bin/sh]
-    - proxy_read_time_out: 4s
-
+    - cgi_path: [.go, /usr/local/go/bin/go]
+    - proxy_read_time_out: 60s
 
   location:
     - path: "/bootstrap"
@@ -31,6 +32,7 @@ server:
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.sh, /bin/sh]
     - cgi_path: [.php, /usr/bin/php-cgi]
+
 
 server:
   listen: 6981

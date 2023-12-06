@@ -56,3 +56,4 @@ bool containsOnlyDigits(const std::string &str);
 std::string generateDirectoryListing(const std::string& directoryPath);
 std::string	getMimeTypeFromExtension(const std::string& path);
 long	convertToBytes( std::string value );
+size_t FileSize(std::string filename);

@@ -168,46 +168,25 @@ void	sendErrorResponse( int CODE, std::string ERRORTYPE, std::string errorTypeFi
 }
 
 bool isValidClientMaxBodySize(const char *value) {
-
-    // Parse the numeric part of the value
     char *endptr;
     long size = strtol(value, &endptr, 10);
-
-    // Check if the numeric part is valid
     if (endptr == value) {
-        return false; // No digits were found
+        return false;
     }
-
-    // Check for optional unit specifier (k, m, g)
+	(void) size;
     while (std::isspace(*endptr)) {
         ++endptr;
     }
-
     if (*endptr != '\0') {
         char unit = std::tolower(*endptr);
         if (unit == 'k' || unit == 'm' || unit == 'g') {
-            // Valid unit specifier
-            switch (unit) {
-                case 'k':
-                    size *= 1024; // Convert to kilobytes
-                    break;
-                case 'm':
-                    size *= 1024 * 1024; // Convert to megabytes
-                    break;
-                case 'g':
-                    size *= 1024 * 1024 * 1024; // Convert to gigabytes
-                    break;
-            }
         } else {
-            return false; // Invalid unit specifier
+            return false;
         }
     }
-
-    // Check for any trailing characters
     while (std::isspace(*++endptr)) {
     }
-
-    return *endptr == '\0'; // True if there are no trailing characters
+    return *endptr == '\0';
 }
 
 long convertToBytes(const char *value) {
@@ -223,22 +202,45 @@ long convertToBytes(const char *value) {
     if (*endptr != '\0') {
         char unit = std::tolower(*endptr);
         if (unit == 'k') {
-            size *= 1024; // Convert to kilobytes
+            size *= 1024;
         } else if (unit == 'm') {
-            size *= 1024 * 1024; // Convert to megabytes
+            size *= 1024 * 1024;
         } else if (unit == 'g') {
-            size *= 1024 * 1024 * 1024; // Convert to gigabytes
+            size *= 1024 * 1024 * 1024;
         } else {
-            return -1; // Invalid unit specifier
+            return -1;
         }
     }
-    return size; // True if there are no trailing characters
+    return size;
 }
 
 long	convertToBytes( std::string value )
 {
-	long size = isValidClientMaxBodySize(value.c_str());
-	if (size == -1)
-		throw std::invalid_argument("ERROR: invalid argument in client_max_body_size: `" +value+ "`");
-	return size;
+	bool status = isValidClientMaxBodySize(value.c_str());
+    std::cout << status << "\n";
+	long size = 0;
+	if (status == true)
+	{
+        size = convertToBytes(value.c_str());
+	    if (size == -1)
+    	    throw std::invalid_argument("ERROR: invalid argument in client_max_body_size: `" +value+ "`");
+    }
+    else
+        throw std::invalid_argument("ERROR: invalid argument in client_max_body_size: `" +value+ "`");
+    return size;
+}
+
+size_t FileSize(std::string filename) {
+    FILE* file = fopen(filename.c_str(), "rb");
+    if (file == NULL) {
+        // handle file open error
+        return -1;
+    }
+
+    fseek(file, 0, SEEK_END);
+    size_t size = ftell(file);
+
+    fclose(file);
+
+    return size;
 }
