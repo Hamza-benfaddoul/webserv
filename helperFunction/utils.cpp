@@ -182,3 +182,79 @@ size_t FileSize(std::string filename) {
 
     return size;
 }
+
+bool isValidClientMaxBodySize(const char *value) {
+
+    // Parse the numeric part of the value
+    char *endptr;
+    long size = strtol(value, &endptr, 10);
+
+    // Check if the numeric part is valid
+    if (endptr == value) {
+        return false; // No digits were found
+    }
+
+    // Check for optional unit specifier (k, m, g)
+    while (std::isspace(*endptr)) {
+        ++endptr;
+    }
+
+    if (*endptr != '\0') {
+        char unit = std::tolower(*endptr);
+        if (unit == 'k' || unit == 'm' || unit == 'g') {
+            // Valid unit specifier
+            switch (unit) {
+                case 'k':
+                    size *= 1024; // Convert to kilobytes
+                    break;
+                case 'm':
+                    size *= 1024 * 1024; // Convert to megabytes
+                    break;
+                case 'g':
+                    size *= 1024 * 1024 * 1024; // Convert to gigabytes
+                    break;
+            }
+        } else {
+            return false; // Invalid unit specifier
+        }
+    }
+
+    // Check for any trailing characters
+    while (std::isspace(*++endptr)) {
+    }
+
+    return *endptr == '\0'; // True if there are no trailing characters
+}
+
+long convertToBytes(const char *value) {
+    char *endptr;
+    long long size = strtol(value, &endptr, 10);
+
+    if (endptr == value) {
+        return -1;
+    }
+    while (std::isspace(*endptr)) {
+        ++endptr;
+    }
+    if (*endptr != '\0') {
+        char unit = std::tolower(*endptr);
+        if (unit == 'k') {
+            size *= 1024; // Convert to kilobytes
+        } else if (unit == 'm') {
+            size *= 1024 * 1024; // Convert to megabytes
+        } else if (unit == 'g') {
+            size *= 1024 * 1024 * 1024; // Convert to gigabytes
+        } else {
+            return -1; // Invalid unit specifier
+        }
+    }
+    return size; // True if there are no trailing characters
+}
+
+long	convertToBytes( std::string value )
+{
+	long size = isValidClientMaxBodySize(value.c_str());
+	if (size == -1)
+		throw std::invalid_argument("ERROR: invalid argument in client_max_body_size: `" +value+ "`");
+	return size;
+}

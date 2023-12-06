@@ -16,6 +16,7 @@
 serverBlock::serverBlock(): locations() {
 	port = -1;
 	autoIndex = 0;
+	client_max_body_size = 1048576;
 }
 // void serverBlock::setLocation(std::map<std::string, std::string> vec) { this->locations.push_back(vec); }
 void serverBlock::setAttribute(std::string key, std::string value) { this->attributes[key] = value; }
@@ -54,6 +55,8 @@ void    serverBlock::parseBlock(  )
 			parseHost(attr_it->second);
 		else if (attr_it->first.compare("autoindex") == 0)
 			parseAutoIndex(attr_it->second);
+		else if (attr_it->first.compare("client_max_body_size") == 0)
+			parseClientMaxBodySize(attr_it->second);
 	}
 	if (getPort() == -1)
 		port = 0;
@@ -64,6 +67,29 @@ void    serverBlock::parseBlock(  )
 	// Location
 	// std::cout << "END OF SERVER INFOS\n\n\n";
 
+}
+
+void	serverBlock::parseClientMaxBodySize( std::string value )
+{
+	char acceptedchars[15] = "0123456789kmg";
+	size_t y = 0;
+	bool	t = false;
+	while (y < value.length())
+	{
+		for (size_t i = 0; i < 15; i++)
+		{
+			if (value[y] == acceptedchars[i])
+			{
+				t = true;
+				break;
+			}
+		}
+		if (t == false)
+			throw std::invalid_argument("ERROR: invalid argument in client_max_body_size: `" +value+ "`");
+		t = false;
+		y++;
+	}
+	client_max_body_size = convertToBytes(value);
 }
 
 void serverBlock::parseRoot(std::string value) {

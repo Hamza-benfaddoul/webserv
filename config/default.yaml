@@ -2,9 +2,8 @@ server:
   listen: 2663
   server_name: localhost
   root: www
-  client_max_body_size: 1000000000
-  # 1G
-
+  client_max_body_size: 20m
+  
   location:
     - path: "/"
     - root:   www
@@ -34,7 +33,6 @@ server:
     - cgi_path: [.sh, /bin/sh]
     - cgi_path: [.php, /usr/bin/php-cgi]
 
-
 server:
   listen: 6981
   server_name: localhost
@@ -61,5 +59,3 @@ server:
     - index: cgi-bin/index.sh
     - cgi_path: [.py, /usr/lib/python3]
     - cgi_path: [.sh, /bin/bash]
-
-
