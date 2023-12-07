@@ -27,7 +27,9 @@ public:
 	bool		POST;
 	bool		DELETE;
 	std::string	index;
+	bool		hasIndex;
 	bool		hasCGI;
+	int	proxy_read_time_out;
 	std::vector<std::pair<std::string, std::string> > cgi;
 	Location();
 	void			setAttribute( const std::string &key, std::string value ) ;
@@ -38,6 +40,7 @@ public:
 	void			parseAutoIndex( const std::string & );
 	void			parseIndex( std::string );
 	void			parseCGI(  );
+	void			parseProxyReadTimeOut( std::string );
 	std::string		getKeyFromAttributes( std::string );
 	void	toString( void ) const;
 

@@ -1,5 +1,5 @@
 server:
-  listen: 2659
+  listen: 2663
   server_name: localhost
   root: www
 
@@ -13,6 +13,8 @@ server:
     - index:  [index.html, index.htm]
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.php, /usr/bin/php-cgi]
+    - cgi_path: [.sh, /usr/bin/sh]
+    - proxy_read_time_out: 4s
 
 
   location:

@@ -28,8 +28,11 @@
 #define ERROR301 "www/error/301.html"
 #define ERROR302 "www/error/302.html"
 #define ERROR405 "www/error/405.html"
+#define ERROR408 "www/error/408.html"
 #define ERROR400 "www/error/400.html"
+#define ERROR414 "www/error/414.html"
 #define ERROR501 "www/error/501.html"
+#define ERROR200 "www/error/200.html"
 
 class serverBlock;
 
@@ -41,8 +44,12 @@ class Client {
 		Request		*request;
 		Upload		*upload;
 		Location	location;
-		int			_fdFile;
-
+		int		_fdFile;
+		int		pipefd[2];
+		std::string tmpFile;
+		long content_length;
+		std::ifstream file_ouptut;
+		std::string content;
 		// Response	*response;
 		std::string postRequest;
 
@@ -84,10 +91,12 @@ class Client {
 		void	parseChunk();
 		bool	readFile( const std::string, std::ifstream &);
 		bool	serveImage();
+		std::string	createNewFile(std::string prefix, size_t start, std::string suffix);
 
+		void	readFromCgi();
 		void	sendResponse(void);
 		void	sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string location);
-		void	sendErrorResponse( int, std::string, std::string );
+		// void	sendErrorResponse( int, std::string, std::string );
 		void	sendResponse1(std::string , int , std::string );
 		void	closeConnection(void);
 		void	sendImageResponse(const std::string&, const std::string&);

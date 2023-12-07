@@ -43,6 +43,7 @@
 // helper function
 
 std::vector<std::string>	ft_split(std::string str, std::string needed);
+void	sendErrorResponse( int CODE, std::string ERRORTYPE, std::string errorTypeFilePath, int _fd);
 std::string&				rtrim(std::string& s, std::string t);
 std::string&				ltrim(std::string& s, std::string t);
 std::string&                advanced_trim(std::string& s, std::string trimSep);
@@ -50,6 +51,7 @@ bool                        regFile(std::string path);
 bool                        endsWith(const std::string& str, const std::string& suffix);
 bool                        endsWithString(const char* str, const char* suffix);
 int                         isInclude(const std::vector <char> & source, const char *needed);
+size_t                      get_time(char tmp);
 bool containsOnlyDigits(const std::string &str);
 std::string generateDirectoryListing(const std::string& directoryPath);
 std::string	getMimeTypeFromExtension(const std::string& path);

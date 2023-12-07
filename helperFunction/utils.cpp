@@ -130,3 +130,39 @@ std::string	getMimeTypeFromExtension(const std::string& path)
 	}
 	return "application/octet-stream";
 }
+
+size_t	get_time(char tmp)
+{
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+	if (tmp == 'm')
+		return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+	else if (tmp == 's')
+		return (tv.tv_sec);
+	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+}
+
+void	sendErrorResponse( int CODE, std::string ERRORTYPE, std::string errorTypeFilePath, int _fd) {
+	std::ifstream file(errorTypeFilePath.c_str());
+	std::string content;
+	if (file.is_open())
+	{
+		{
+			std::string line;
+			while (getline(file, line))
+			{
+				content += line;
+			}
+		}
+	}
+	file.close();
+	std::stringstream response;
+	response << "HTTP/1.1 " << CODE << " " << ERRORTYPE << "\r\n";
+	response << "Content-Type: text/html; charset=UTF-8\r\n";
+	response << "Content-Length: " << content.length() << "\r\n";
+	response << "\r\n";
+	response << content;
+
+	write(_fd, response.str().c_str(), response.str().length());
+}

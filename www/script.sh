@@ -6,4 +6,4 @@ echo "\n"
 # echo "$response"
 
 # paste the full path to any image below
-cat "/nfs/homes/woumecht/Desktop/http2/www/uploads/New Project.png"
+cat "www/favicon.ico"
