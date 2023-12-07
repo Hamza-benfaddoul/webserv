@@ -3,16 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/20 22:29:48 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/12/05 15:32:13 by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Client.hpp"
 #include <fcntl.h>
-#include <variant>
 #include "dirent.h"
 
 int Client::cpt = 0;
@@ -74,8 +73,50 @@ bool	Client::receiveResponse(void)
 	return false;
 }
 
-bool	Client::deleteMethodHandler(void){
-	std::cout << _responseBuffer << std::endl;
+void Client::del(const char *path, bool &isDeleted)
+{
+    DIR *dir = opendir(path);
+    if (dir)
+    {
+        struct dirent *centent;
+        while ((centent = readdir(dir)) != NULL)
+        {
+            if (strcmp(centent->d_name, ".") != 0 && strcmp(centent->d_name, "..") != 0)
+            {
+                std::string re(path);
+                re += "/";
+                re += centent->d_name;
+                del(re.c_str(), isDeleted);
+            }
+        }
+		rmdir(path);
+    }
+    else
+    {
+        if (access(path, W_OK) == 0)
+        {
+            if (std::remove(path) != 0)
+                throw std::runtime_error("cant remove file");
+        }
+        else
+			isDeleted = false;
+    }
+}
+bool Client::deleteMethodHandler(void)
+{
+	bool isDeleted = true;
+	std::string requestedPath = this->request->getPath();
+	if (access((location.getRoot() + requestedPath).c_str(), R_OK) == -1)
+	{
+		 sendErrorResponse(404, "Not Found", getErrorPage(404),_fd);
+		return (true);
+	}
+	else
+		del((location.getRoot() + requestedPath).c_str(), isDeleted);
+	if (isDeleted)
+		write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nResource deleted successfully", 74);
+	else
+		write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nFailed to delete resource", 70);
 	return true;
 }
 
