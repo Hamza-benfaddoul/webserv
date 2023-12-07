@@ -62,7 +62,7 @@ class Client {
 		bool			fileCreated;
 		bool			canIStart;
 		bool			hasCgi;
-		int				totalBytesRead;
+		long				totalBytesRead;
 		int				Content_Length;
 		bool			_readHeader;
 		serverBlock		*_serverBlock;

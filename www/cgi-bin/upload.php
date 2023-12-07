@@ -5,7 +5,6 @@
     set_time_limit(60);
     $requestMethod = $_SERVER['REQUEST_METHOD'];
     $contentType = $_SERVER['CONTENT_TYPE'];
-    // $queryString = $_SERVER['QUERY_STRING'];
     function sendError()
     {
         header('status: 500 Internal Server Error');

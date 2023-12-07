@@ -71,40 +71,35 @@ bool Upload::start()
 
 	if (it != ourHeaders.end())
 		content_type = it->second;
-	// the cgi case.
-	// std::cout << "the path to cgi script: |||" << std::endl;
-	// std::string readTimeOut = ourLocations["proxy_read_time_out"];
-	
+	// the cgi case.	
 	if (cgi_path.length() > 0)
 	{
 		if (forked == false)
 		{
-			// std::cout << "readTimeOut: " << readTimeOut << std::endl;
-			size_t sizeOfFile = FileSize(this->filename);
-			if ((long)sizeOfFile > max_body_size)
-			{
-				sendErrorResponse(413, "Request Entity Too Large", ERROR413, this->fd_socket);
-				return true;
-			}
+			// std::cout << "size of file: " << sizeOfFile << " max body size: " << max_body_size << std::endl;
+			// size_t sizeOfFile = FileSize(this->filename);
+			// if ((long)sizeOfFile > max_body_size)
+			// {
+			// 	std::remove(this->filename.c_str());
+			// 	sendErrorResponse(413, "Request Entity Too Large", ERROR413, this->fd_socket);
+			// 	return true;
+			// }
 			std::stringstream streamFileSize;
-			streamFileSize << sizeOfFile;
+			std::cout << "total body size: " << totalBodySize << std::endl;
+			streamFileSize << this->totalBodySize;
 			forked = true;
-			// std::cout << "the location path: " << location.getLocationPath() << std::endl;
 			std::string uri = request->getPath();
 			std::string cgi_path_script = location.getRoot() + uri;
-			// std::cout << "cgi path scritp: " << cgi_path_script << std::endl;
 			// Create an array of envirment that cgi need.
-			// std::cout << "the content type is: " << content_type << std::endl;
 			char *env[] = 
 			{
-				strdup(std::string("REDIRECT_STATUS=200").c_str()),
+				strdup(std::string("REDIRECT_STATUS=100").c_str()),
 				strdup(std::string("SCRIPT_FILENAME=" + cgi_path_script).c_str()),
 				strdup(std::string("REQUEST_METHOD=" + this->request->getMethod()).c_str()),
-				strdup(std::string("QUERY_STRING=").c_str()),
 				strdup(std::string("HTTP_COOKIE=").c_str()),
 				strdup(std::string("HTTP_CONTENT_TYPE=" + content_type).c_str()),
 				strdup(std::string("CONTENT_TYPE=" + content_type).c_str()),
-				strdup(std::string("CONTENT_LENGTH=" + streamFileSize.str()).c_str()),
+				// strdup(std::string("CONTENT_LENGTH=" + streamFileSize.str()).c_str()),
 				NULL
 			};
 			// discover the path of cgi script.
@@ -280,6 +275,11 @@ bool Upload::start()
 		return (true);
 	}
 	return (false);
+}
+
+void Upload::setTotalBodySize(long in_total)
+{
+	this->totalBodySize = in_total;
 }
 
 void    Upload::writeToFileString(const std::string &source, size_t size)

@@ -572,6 +572,7 @@ bool	Client::postMethodHandler(void)
 			this->upload->writeToFileString(body.data(), body.length());
 			this->upload->endLine();
 			fileCreated = true;
+			this->upload->setTotalBodySize(totalBytesRead);
 			return this->upload->start();
 			// sendErrorResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>");
 			// return true;
@@ -611,6 +612,7 @@ bool	Client::postMethodHandler(void)
 			else
 			{
 				this->upload->writeToFileString(body, chunkSizeInt);
+				totalBytesRead += chunkSizeInt;
 				body.erase(0, chunkSizeInt);
 				isChunkComplete = true;
 				bytesRead = read(_fd, buffer, 1024);
@@ -649,7 +651,7 @@ bool	Client::postMethodHandler(void)
 		return true;
 	}
 	this->upload->endLine();
-	
+	this->upload->setTotalBodySize(totalBytesRead);
 	return this->upload->start();
 }
 

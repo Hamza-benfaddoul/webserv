@@ -2,7 +2,7 @@ server:
   listen: 2663
   server_name: localhost
   root: www
-  client_max_body_size: 20m
+  client_max_body_size: 320m
   
   location:
     - path: "/"
