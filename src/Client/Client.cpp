@@ -64,7 +64,6 @@ bool	Client::receiveResponse(void)
 	}
 	if (!_readHeader)
 	{
-		std::cout << "**********here\n";
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
@@ -181,8 +180,8 @@ bool	Client::handleDirs() {
 			(std::cout << "third" << "\n", sendErrorResponse(403, "Forbidden", ERROR403, _fd));
 		} else if (location.getAutoIndex() == true)
 		{
-			std::cout << "in case autoIndex: off:\t" << location.getRoot() + "/" + location.directory << "\n";
-			directoryListing(location.getRoot() + "/" + location.directory );
+			std::cout << "in case autoIndex: off:\t" << location.getRoot() + location.directory << "\n";
+			directoryListing(location.getRoot() + location.directory );
 		}
 	}
 	return true;
@@ -547,6 +546,7 @@ int	Client::is_request_well_formed()
 // true -> close, flase continue;
 bool	Client::postMethodHandler(void)
 {
+	std::cout << "max_client_body_size: \t" << _serverBlock->client_max_body_size << "\n";
 	// std::cout << data["upload"] << std::endl;
 	std::map<std::string, std::string> Headers = this->request->getHeaders();
 	char	buffer[1024] = {0};

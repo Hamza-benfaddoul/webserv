@@ -22,9 +22,9 @@ class serverBlock
 		std::string root;
 		int         port;
 		bool        autoIndex;
-		long	client_max_body_size;
 		std::map<std::string, std::string> attributes;
 	public:
+		long	client_max_body_size;
 		std::vector<Location> locations;
 		std::vector<std::pair<int, std::string> > errorPages;
 		serverBlock();
