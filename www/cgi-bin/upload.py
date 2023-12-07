@@ -5,9 +5,8 @@ import os
 # Create an instance of the FieldStorage class to parse the form data
 form = cgi.FieldStorage()
 
-print("Status: 200 OK\r\n")
-print("Content-Length: 100\r\n")
-print("Content-Type: text/html\r\n")
+print("Content-Type: text/html")
+print("");
 
 # Check if the file was uploaded
 if 'file' in form:
@@ -26,5 +25,8 @@ if 'file' in form:
         print('File uploaded successfully.')
     else:
         print('Error: File upload failed.')
+        exit(1)
 else:
     print('Error: No file uploaded.')
+    exit(1)
+

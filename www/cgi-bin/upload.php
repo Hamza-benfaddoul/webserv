@@ -32,20 +32,19 @@
                 fwrite($outputFile, $chunk);
             }
             fclose($outputFile);
-            fclose($stdin);
-            header('status: 200 OK');
-            $size_body = 62 + strlen($fileName);
-            header("Content-Length: " . $size_body);
             header("Content-Type: text/html");
-            print("<html><body>");
-            echo '<h2>File Upload Successful in: </h2>' . $fileName;
-            print("</body></html>");
+            // echo "\r\n\r\n";
+            echo "the file is uploaded successfuly in : " . $fileName;
+            exit(0);
         }
         else
         {
-            sendError();
+            header("Content-Type: text/html");
+            // echo "\r\n\r\n";
+            echo "Failed to upload the file!";
+            exit(1);
         }
     }
-    exit();
+    exit(0);
 
 ?>

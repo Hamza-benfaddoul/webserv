@@ -16,7 +16,8 @@ server:
     - cgi_path: [.sh, /usr/bin/sh]
     - proxy_read_time_out: 60s
 
-
+  # - cgi_path: [.go, /usr/local/go/bin/go]
+  
   location:
     - path: "/bootstrap"
     - root:   www
@@ -32,6 +33,7 @@ server:
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.sh, /bin/sh]
     - cgi_path: [.php, /usr/bin/php-cgi]
+
 
 server:
   listen: 6981

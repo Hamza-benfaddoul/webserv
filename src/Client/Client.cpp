@@ -30,6 +30,7 @@ Client::Client(size_t fd, serverBlock *serverBlock) :
 	controller = false;
 	content_length = 0;
 	hasCgi = false;
+	isChunkComplete = true;
 }
 
 bool	Client::receiveResponse(void)
@@ -149,11 +150,13 @@ bool	Client::checkDir( std::string path )
 
 bool	Client::handleDirs() {
 	std::string requestedPath = this->request->getPath();
-	if (requestedPath[requestedPath.length() - 1] != '/')
-		sendRedirectResponse(301, "Moved Permanently", requestedPath + '/');
-	else {
+	if (requestedPath[requestedPath.length() -1 ] != '/')
+	{
+		sendRedirectResponse(301, "Moved Permanently", requestedPath + "/");
+	}else {
 		if (location.index.length() > 0)
 		{
+			std::cout << "second\n";
 			std::stringstream index(location.index);
 			std::string iter;
 			while (getline(index,iter,','))
@@ -175,10 +178,11 @@ bool	Client::handleDirs() {
 				}
 			}
 		} else if(location.getAutoIndex() == false) {
-			sendErrorResponse(403, "Forbidden", ERROR403, _fd);
+			(std::cout << "third" << "\n", sendErrorResponse(403, "Forbidden", ERROR403, _fd));
 		} else if (location.getAutoIndex() == true)
 		{
-			directoryListing(location.getRoot() + "/" + location.directory );
+			std::cout << "in case autoIndex: off:\t" << location.getRoot() + location.directory << "\n";
+			directoryListing(location.getRoot() + location.directory );
 		}
 	}
 	return true;
@@ -219,7 +223,7 @@ std::string	Client::createNewFile(std::string prefix, size_t start, std::string 
 	fd.open(filename.str().c_str(), std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
 	if (!fd.is_open())
 	{
-		throw std::ios_base::failure("Failed to open filecx");
+		throw std::ios_base::failure("ERROR: check Folder `www/TempFiles` existence or permissions for Write.\n");
 	}
 	close(!fd);
 	return filename.str();
@@ -255,27 +259,24 @@ bool	Client::handleFiles( std::string path) {
 			strdup(std::string("HTTP_COOKIE=" + request->getCookie()).c_str()),
 			NULL
 		};
+		// std::cout << tmpFile << "\n";
 		size_t start = get_time('s');
 		tmpFile = createNewFile("www/TempFiles/", start, "_cgi");
-		// std::cout << tmpFile << "\n";
 		int fd = fork();
-		if (fd == -1) {
-			unlink(tmpFile.c_str());
-			return true;
-		}
 		char *argv[] = {
 			strdup(cgi_path.c_str()),
+			(extension == ".go") ? strdup("run"): strdup(""),
 			strdup((location.getRoot() + request->getPath()).c_str()),
 			NULL
 		};
 		if (fd == 0) {
 			if (freopen(tmpFile.c_str(), "w", stdout) == NULL)
-				throw std::ios_base::failure("Failed to open Fileddd");
+				throw std::ios_base::failure("Failed to open File");
 			execve(argv[0], argv, env);
 			exit(0);
 		} else {
-			int status;
-			while (waitpid(fd, &status, WNOHANG) == 0)
+			int state;
+			while (waitpid(fd, &state, WNOHANG) == 0)
 			{
 				if (get_time('s') > start + location.proxy_read_time_out)
 					kill(fd, SIGSEGV);
@@ -284,45 +285,95 @@ bool	Client::handleFiles( std::string path) {
 			readFromCgi();
 
 
-			size_t pos = content.find("\n\n");
-			std::string body_cgi;
+			ltrim(content, "\r\n");
+			size_t pos = content.find("\r\n\r\n");
+			std::string bodyCgi;
 			if (pos == std::string::npos)
-			{
-				pos = content.find("\r\n\r\n");
-				body_cgi = content.substr(pos + 4, content.length());
+			{	
+				pos = content.find("\n\n");
+				bodyCgi = content.substr(pos + 2);
 			}
 			else
-				body_cgi = content.substr(pos + 2, content.length());
+				bodyCgi = content.substr(pos + 4);
+			std::cout << "the pos is: " << pos << std::endl;
 			std::string headers = content.substr(0, pos);
-			std::vector<std::string> splited_cgi_output;
-			if (headers.find("\r\n") != std::string::npos)
-				splited_cgi_output = ft_split(headers, "\r\n");
-			else if (headers.find("\n") != std::string::npos)
-				splited_cgi_output = ft_split(headers, "\n");
-
-			for (int i = 0; i < (int)splited_cgi_output.size(); i++)
+			std::cout << "the cgi body: " << bodyCgi << std::endl;
+			std::stringstream result;
+			std::vector<std::string> splitedHeaders = ft_split(headers, "\r\n");
+			std::cout << "the state is: " << state << std::endl;
+			if (state == 0)
 			{
-				rtrim(splited_cgi_output.at(i), "\r\n");
-				ltrim(splited_cgi_output.at(i), "\r\n");
-				if (i == 0)
-				{
-					std::string http = std::string("HTTP/1.1 ");
-					std::string lineRes = splited_cgi_output.at(0);
-					lineRes = lineRes.substr(8, lineRes.length());
-					http.append(lineRes);
-					lineRes = http;
-					splited_cgi_output.at(0) = lineRes;
+				result << "HTTP/1.1 200 OK\r\n";
+				for (int i = 0; i < (int)splitedHeaders.size(); i++)
+				{	
+					if (splitedHeaders.at(i) != "\n")
+					{
+						result << splitedHeaders.at(i);
+					}
+					result << "\r\n";
 				}
-				if (splited_cgi_output.at(i).length() > 2)
-				{
-					write(_fd, splited_cgi_output.at(i).c_str(), splited_cgi_output.at(i).length());
-					write(_fd, "\r\n", 2);
-				}
+				result << "\r\n";
+				result << bodyCgi;
 			}
-			write(_fd, "\r\n", 2);
-			// std::cout << "body cgi -----------------------------> " << body_cgi << "*-*-*-*-*-*-*-*" << std::endl;
-			ltrim(body_cgi, "\r\n");
-			write(_fd ,body_cgi.c_str(), body_cgi.length());
+			else
+			{
+				result << "HTTP/1.1 500 Internal Server Error\r\n";
+				for (int i = 0; i < (int)splitedHeaders.size(); i++)
+				{	
+					if (splitedHeaders.at(i) != "\n")
+					{
+						result << splitedHeaders.at(i);
+					}
+					result << "\r\n";
+				}
+				result << "\r\n";
+				result << bodyCgi;
+			}
+			write(_fd, result.str().c_str(), result.str().length());
+
+			
+
+
+
+			// size_t pos = content.find("\n\n");
+			// std::string body_cgi;
+			// if (pos == std::string::npos)
+			// {
+			// 	pos = content.find("\r\n\r\n");
+			// 	if (pos != std::string::npos)
+			// 		body_cgi = content.substr(pos + 4, content.length());
+			// }
+			// else
+			// 	body_cgi = content.substr(pos + 2, content.length());
+			// std::string headers = content.substr(0, pos);
+			// std::vector<std::string> splited_cgi_output;
+			// if (headers.find("\r\n") != std::string::npos)
+			// 	splited_cgi_output = ft_split(headers, "\r\n");
+			// else if (headers.find("\n") != std::string::npos)
+			// 	splited_cgi_output = ft_split(headers, "\n");
+			// for (int i = 0; i < (int)splited_cgi_output.size(); i++)
+			// {
+			// 	rtrim(splited_cgi_output.at(i), "\r\n");
+			// 	ltrim(splited_cgi_output.at(i), "\r\n");
+			// 	if (i == 0)
+			// 	{
+			// 		std::string http = std::string("HTTP/1.1 ");
+			// 		std::string lineRes = splited_cgi_output.at(0);
+			// 		lineRes = lineRes.substr(8, lineRes.length());
+			// 		http.append(lineRes);
+			// 		lineRes = http;
+			// 		splited_cgi_output.at(0) = lineRes;
+			// 	}
+			// 	if (splited_cgi_output.at(i).length() > 2)
+			// 	{
+			// 		write(_fd, splited_cgi_output.at(i).c_str(), splited_cgi_output.at(i).length());
+			// 		write(_fd, "\r\n", 2);
+			// 	}
+			// }
+			// write(_fd, "\r\n", 2);
+			// // std::cout << "body cgi -----------------------------> " << body_cgi << "*-*-*-*-*-*-*-*" << std::endl;
+			// ltrim(body_cgi, "\r\n");
+			// write(_fd ,body_cgi.c_str(), body_cgi.length());
 			std::remove(tmpFile.c_str());
 			return true;
 		}
@@ -366,13 +417,15 @@ void	Client::readFromCgi()
 		if (cgi_output_content.gcount() <= 0)
 			break;
 		content.append(buffer, cgi_output_content.gcount());
-		found = content.find("\r\n\r\n");
-		if (found != std::string::npos)
-		{
-			found += 4;
-			content.substr(0, found);
+		if (cgi_output_content.eof())
 			break;
-		}
+		// found = content.find("\r\n\r\n");
+		// if (found != std::string::npos)
+		// {
+		// 	found += 4;
+		// 	content.substr(0, found);
+		// 	break;
+		// }
 	}
 	file_ouptut.close();
 	file_ouptut.open(tmpFile.c_str());
@@ -523,7 +576,7 @@ int	Client::is_request_well_formed()
 		sendErrorResponse(400, "Bad Request", ERROR400, _fd);
 		return (-1);
 	}
-	// transfer encoding is equal to chunked
+	// transfer encoding is equal to chunk"Moved Permanently"ed
 	if (ourHeaders.find("Transfer-Encoding") != ourHeaders.end() && ourHeaders["Transfer-Encoding"] != "chunked")
 	{
 		sendErrorResponse(501, "Not Implemented", ERROR501, _fd);
@@ -548,7 +601,6 @@ int	Client::is_request_well_formed()
 // true -> close, flase continue;
 bool	Client::postMethodHandler(void)
 {
-	std::cout << "client max body size: \t" << _serverBlock->client_max_body_size << "\n";
 	// std::cout << data["upload"] << std::endl;
 	std::map<std::string, std::string> Headers = this->request->getHeaders();
 	char	buffer[1024] = {0};
@@ -565,7 +617,6 @@ bool	Client::postMethodHandler(void)
 			if (this->getCgiPath(extension).length() > 0)
 				hasCgi = true;
 		}
-		std::cout << "before : " << _serverBlock->client_max_body_size << std::endl;
 		this->upload = new Upload(this->request, this->cpt, location, _fd, this->getCgiPath(extension), _serverBlock->client_max_body_size);
 		this->upload->createFile();
 		totalBytesRead = body.length();
@@ -594,6 +645,7 @@ bool	Client::postMethodHandler(void)
 			iss >> std::hex >> chunkSizeInt;
 			if (chunkSizeInt != 0)
 			{
+				totalBytesRead += chunkSizeInt;
 				chunkSizeString.clear();
 				body.erase(0, pos + 2);
 				isChunkComplete = false;
@@ -614,7 +666,6 @@ bool	Client::postMethodHandler(void)
 			else
 			{
 				this->upload->writeToFileString(body, chunkSizeInt);
-				totalBytesRead += chunkSizeInt;
 				body.erase(0, chunkSizeInt);
 				isChunkComplete = true;
 				bytesRead = read(_fd, buffer, 1024);

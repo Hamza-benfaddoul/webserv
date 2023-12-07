@@ -10,14 +10,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // $name = $data['name'];
     $name = $_POST['name'];
     // $name = "walid";
-    header('status: 200 OK');
-    // $size_body = 62 + strlen($fileName);
-    $size_body = 34 + strlen($name);
-    header("Content-Length: " . $size_body);
     header("Content-Type: text/html");
+    echo "\r\n\r\n";
     print("<html><body>");
     echo "Hello, " . $name . "!";
     print("</body></html>");
+    exit(0);
 }
 
 ?>
