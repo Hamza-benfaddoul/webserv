@@ -71,6 +71,7 @@ void    serverBlock::parseBlock(  )
 
 void	serverBlock::parseClientMaxBodySize( std::string value )
 {
+	std::cout << "daz mn hna \n";
 	char acceptedchars[15] = "0123456789kmg";
 	size_t y = 0;
 	bool	t = false;

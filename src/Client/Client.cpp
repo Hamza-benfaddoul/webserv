@@ -548,6 +548,7 @@ int	Client::is_request_well_formed()
 // true -> close, flase continue;
 bool	Client::postMethodHandler(void)
 {
+	std::cout << "client max body size: \t" << _serverBlock->client_max_body_size << "\n";
 	// std::cout << data["upload"] << std::endl;
 	std::map<std::string, std::string> Headers = this->request->getHeaders();
 	char	buffer[1024] = {0};
@@ -564,6 +565,7 @@ bool	Client::postMethodHandler(void)
 			if (this->getCgiPath(extension).length() > 0)
 				hasCgi = true;
 		}
+		std::cout << "before : " << _serverBlock->client_max_body_size << std::endl;
 		this->upload = new Upload(this->request, this->cpt, location, _fd, this->getCgiPath(extension), _serverBlock->client_max_body_size);
 		this->upload->createFile();
 		totalBytesRead = body.length();

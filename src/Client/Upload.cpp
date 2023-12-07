@@ -76,8 +76,8 @@ bool Upload::start()
 	{
 		if (forked == false)
 		{
-			// std::cout << "size of file: " << sizeOfFile << " max body size: " << max_body_size << std::endl;
-			// size_t sizeOfFile = FileSize(this->filename);
+			size_t sizeOfFile = FileSize(this->filename);
+			std::cout << "size of file: " << sizeOfFile << " max body size: " << max_body_size << std::endl;
 			// if ((long)sizeOfFile > max_body_size)
 			// {
 			// 	std::remove(this->filename.c_str());
