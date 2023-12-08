@@ -64,11 +64,11 @@ bool	Client::receiveResponse(void)
 	}
 	if (!_readHeader)
 	{
+		// std::cout << "--> " << this->request->getMethod() << std::endl;
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
 		{
-			std::cout << "post is here" << std::endl;
 			return postMethodHandler();
 		}
 		else if (this->request->getMethod().compare("DELETE") == 0)
@@ -650,7 +650,7 @@ bool	Client::postMethodHandler(void)
 			iss >> std::hex >> chunkSizeInt;
 			if (chunkSizeInt != 0)
 			{
-				totalBytesRead += chunkSizeInt;
+				// totalBytesRead += chunkSizeInt;
 				chunkSizeString.clear();
 				body.erase(0, pos + 2);
 				isChunkComplete = false;
@@ -663,13 +663,25 @@ bool	Client::postMethodHandler(void)
 		}
 		else
 		{
-			if (chunkSizeInt > body.length())
+			size_t len  = body.length();
+			if (chunkSizeInt > len)
 			{
+				std::cout << "body length: " << len << ", chunk size: " << chunkSizeInt << std::endl;
+				std::cout << "==>> : " << totalBytesRead << std::endl;
 				bytesRead = read(_fd, buffer, 1024);
+				std::cout << "bytes Read: " << bytesRead << std::endl;
 				body.append(buffer, bytesRead);
+				std::cout << "after append" << std::endl;
+				// if (len + bytesRead > chunkSizeInt)
+				// {
+				// 	this->upload->writeToFileString(body, chunkSizeInt);
+				// 	body.erase(0, chunkSizeInt);
+				// 	isChunkComplete = true;
+				// }
 			}
 			else
 			{
+				totalBytesRead += chunkSizeInt;
 				this->upload->writeToFileString(body, chunkSizeInt);
 				body.erase(0, chunkSizeInt);
 				isChunkComplete = true;

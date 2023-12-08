@@ -2,7 +2,7 @@ server:
   listen: 2663
   server_name: localhost
   root: www
-  client_max_body_size: 1g
+  client_max_body_size: 3g
   error_pages: 403 www/error/200.html
 
   location:

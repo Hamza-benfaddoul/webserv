@@ -28,7 +28,7 @@
         
         if ($outputFile)
         {
-            while ($chunk = fread($stdin, 8192)) {
+            while ($chunk = fread($stdin, 1024)) {
                 fwrite($outputFile, $chunk);
             }
             fclose($outputFile);

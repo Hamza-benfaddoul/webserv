@@ -3,14 +3,12 @@
 
 Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path, serverBlock *serverBlock) :request(req), _serverBlock(serverBlock) ,cpt(in_cpt), location(in_location), fd_socket(in_fd), cgi_path(in_cgi_path)
 {
-	// std::cout << "*****************************************construcot" << std::endl;
 	forked = false;
 	max_body_size = _serverBlock->client_max_body_size;
 }
 
 Upload::~Upload()
 {
-	std::cout << "the file should be removed is: " << this->filename << std::endl;
 	unlink(this->filename.c_str());
 	std::remove(this->filename.c_str());
 }
@@ -33,18 +31,13 @@ void	Upload::createFile()
 	std::string cptAsString = ss.str();
 	filename = "www/uploads/file" + cptAsString;
 	this->bodyContent.open(filename.c_str(), std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
-	// this->bodyContent.open(filename.c_str(), std::ios::in | std::ios::out | std::ios::trunc);
 	if (!this->bodyContent.is_open())
 	{
 		throw std::ios_base::failure("Failed to open file");
-		// std::cout << "<< !!!! >> the file was not created successfuly" << std::endl;
-		// return;
 	}
 }
 
 // start the proccess of uploading files ...
-
-
 void	Upload::sendResponse(int CODE, std::string TYPE, std::string content, std::string c_type) 
 {
 	std::stringstream response;
@@ -87,16 +80,17 @@ bool Upload::start()
 	{
 		if (forked == false)
 		{
-			size_t sizeOfFile = FileSize(this->filename);
-			std::cout << "size of file: " << sizeOfFile << " max body size: " << max_body_size << std::endl;
-			if ((long)sizeOfFile > max_body_size)
+			// size_t sizeOfFile = 	(this->filename);
+			std::cout << "size of file: " << totalBodySize << " max body size: " << max_body_size << std::endl;
+			// if ((long)sizeOfFile > max_body_size)
+			if ((long)totalBodySize > max_body_size)
 			{
 				std::remove(this->filename.c_str());
 				sendErrorResponse(413, "Request Entity Too Large", ERROR413, this->fd_socket);
 				return true;
 			}
 			std::stringstream streamFileSize;
-			std::cout << "total body size: " << sizeOfFile << std::endl;
+			// std::cout << "total body size: " << sizeOfFile << std::endl;
 			streamFileSize << totalBodySize;
 			forked = true;
 			std::string uri = request->getPath();
@@ -147,6 +141,7 @@ bool Upload::start()
 			cgi_output_filename = "www/TempFiles/cgi_output" + cptAsString;
 			//std::cout << "cgi_path: " << cgi_path << " cgi path script: " << cgi_path_script << std::endl;
 			start_c = clock();
+			std::cout << "----------> fork again" << std::endl;
 			pid = fork();
 			if (pid == 0) // the child proccess
 			{
@@ -170,6 +165,7 @@ bool Upload::start()
 		{
 			int	state;
 			int retPid = waitpid(pid, &state, WNOHANG);
+			std::cout << "ret pid: " << retPid << std::endl;
 			if (retPid == pid) // the child is done ==> the response could be success could be failed (depend on cgi output)
 			{
 				char	buffer[1024];
