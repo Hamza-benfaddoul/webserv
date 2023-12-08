@@ -1,7 +1,7 @@
 #include "Upload.hpp"
 #include "../../includes/main.hpp"
 
-Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path) : request(req), cpt(in_cpt), location(in_location), fd_socket(in_fd), cgi_path(in_cgi_path)
+Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path, serverBlock *serverBlock) :request(req), _serverBlock(serverBlock) ,cpt(in_cpt), location(in_location), fd_socket(in_fd), cgi_path(in_cgi_path)
 {
 	// std::cout << "*****************************************construcot" << std::endl;
 	forked = false;
@@ -12,6 +12,17 @@ Upload::~Upload()
 	std::cout << "the file should be removed is: " << this->filename << std::endl;
 	unlink(this->filename.c_str());
 	std::remove(this->filename.c_str());
+}
+
+std::string	Upload::getErrorPage( int errorCode ) {
+	for(size_t i = 0; i < _serverBlock->errorPages.size(); i++)
+	{
+		if (_serverBlock->errorPages.at(i).first == errorCode)
+			return _serverBlock->errorPages.at(i).second;
+	}
+	std::stringstream ss;
+	ss << errorCode;
+	return "www/error/" + ss.str() + ".html";
 }
 
 void	Upload::createFile()
@@ -58,20 +69,7 @@ std::string	Upload::checkType(std::string path)
 	return std::string("folder");
 }
 
-size_t Upload::getFileSize(std::string filename) {
-    FILE* file = fopen(filename.c_str(), "rb");
-    if (file == NULL) {
-        // handle file open error
-        return -1;
-    }
 
-    fseek(file, 0, SEEK_END);
-    size_t size = ftell(file);
-
-    fclose(file);
-
-    return size;
-}
 
 bool Upload::start()
 {
@@ -85,20 +83,23 @@ bool Upload::start()
 		content_type = it->second;
 	// the cgi case.
 	// std::cout << "the path to cgi script: |||" << std::endl;
+	// std::string readTimeOut = ourLocations["proxy_read_time_out"];
+	
 	if (cgi_path.length() > 0)
 	{
 		if (forked == false)
 		{
+			// std::cout << "readTimeOut: " << readTimeOut << std::endl;
+			size_t sizeOfFile = FileSize(this->filename);
+			std::stringstream streamFileSize;
+			streamFileSize << sizeOfFile;
 			forked = true;
-			std::cout << "the location path: " << location.getLocationPath() << std::endl;
+			// std::cout << "the location path: " << location.getLocationPath() << std::endl;
 			std::string uri = request->getPath();
 			std::string cgi_path_script = location.getRoot() + uri;
 			// std::cout << "cgi path scritp: " << cgi_path_script << std::endl;
 			// Create an array of envirment that cgi need.
-			std::cout << "the content type is: " << content_type << std::endl;
-			size_t sizeOfFile = getFileSize(this->filename);
-			std::stringstream streamFileSize;
-			streamFileSize << sizeOfFile;
+			// std::cout << "the content type is: " << content_type << std::endl;
 			char *env[] = 
 			{
 				strdup(std::string("REDIRECT_STATUS=200").c_str()),
@@ -125,11 +126,10 @@ bool Upload::start()
 						free(env[i]);
 					}
 				}
-
 				this->bodyContent.close();
 				std::remove(this->filename.c_str());
 				// sendResponse(404, "Not Found", "<html><body> <h1> 404 Not Found</h1> </body></html>", "text/html");
-				sendErrorResponse(404, "Request-URI Too Long", ERROR404, this->fd_socket);
+				sendErrorResponse(404, "Request-URI Too Long", getErrorPage(404), this->fd_socket);
 				return true;
 			}
 			// Create an array of arguments for execve
@@ -199,12 +199,15 @@ bool Upload::start()
 				// end reading from the file ---------------------
 				std::cout << "--" << cgi_output << "--" << std::endl;
 				size_t pos = cgi_output.find("\n\n");
+				std::string body_cgi;
 				if (pos == std::string::npos)
 				{
 					pos = cgi_output.find("\r\n\r\n");
+					body_cgi = cgi_output.substr(pos + 4, cgi_output.length());
 				}
+				else
+					body_cgi = cgi_output.substr(pos + 2, cgi_output.length());
 				std::cout << "the pos: " << pos << std::endl;
-				std::string body_cgi = cgi_output.substr(pos + 2, cgi_output.length());
 				std::string headers = cgi_output.substr(0, pos);
 				std::vector<std::string> splited_cgi_output;
 				if (headers.find("\r\n") != std::string::npos)
@@ -225,7 +228,7 @@ bool Upload::start()
 						lineRes = http;
 						splited_cgi_output.at(0) = lineRes;
 					}
-					std::cout << "--> " << splited_cgi_output.at(i) << "--" << std::endl;
+					// std::cout << "--> " << splited_cgi_output.at(i) << "--" << std::endl;
 					if (splited_cgi_output.at(i).length() > 2)
 					{
 						write(this->fd_socket, splited_cgi_output.at(i).c_str(), splited_cgi_output.at(i).length());
@@ -239,7 +242,7 @@ bool Upload::start()
 			else // calculate the time to live of the child proccess if > 60 means timeout();
 			{
 				end = clock();
-				if (((double)(end - start_c)) / CLOCKS_PER_SEC > 60.0)
+				if (((double)(end - start_c)) / CLOCKS_PER_SEC > (double)location.proxy_read_time_out)
 				{
 					// send respone time out !!!!!
 					kill(pid, SIGKILL);
@@ -248,7 +251,7 @@ bool Upload::start()
 					std::remove(this->filename.c_str());
 					std::remove(cgi_output_filename.c_str());
 					// sendResponse(408, "Request Timeout", "<html><body><h1>408 Request Timeout</h1></body></html>", "text/html");
-					sendErrorResponse(408, "Request Timeout", ERROR408, this->fd_socket);
+					sendErrorResponse(408, "Request Timeout", getErrorPage(408), this->fd_socket);
 
 					return (true);
 				}
@@ -272,14 +275,14 @@ bool Upload::start()
 		if (resRename != 0)
 			throw std::runtime_error("Failed to upload file");
 		// sendResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>", "text/html");
-		sendErrorResponse(200, "OK", ERROR200, this->fd_socket);
+		sendErrorResponse(200, "OK", getErrorPage(200), this->fd_socket);
 		return (true);
 	}
 	else
 	{
 		// 403 Forbidden
-		// sendResponse(403, "Forbidden", ERROR403, "text/html");
-		sendErrorResponse(403, "Forbidden", ERROR403, this->fd_socket);
+		std::remove(this->filename.c_str());
+		sendErrorResponse(403, "Forbidden", getErrorPage(403), this->fd_socket);
 		return (true);
 	}
 	return (false);

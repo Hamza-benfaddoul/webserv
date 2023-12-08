@@ -11,8 +11,46 @@ Location::Location()
 	hasCGI = false;
 	proxy_read_time_out = 60;
 	hasIndex = false;
+	returnStatus = false;
 }
 
+void	Location::parseReturn( std::string value )
+{
+	this->returnStatus = true;
+	std::stringstream ss(value);
+	std::string word;
+	int len = 0;
+	while (getline(ss, word, ' '))
+	{
+		word = advanced_trim(word, " ");
+		if (word.length() > 0)
+			len++;
+	}
+	std::cout << len << "\n";
+	if (len > 2)
+		throw std::invalid_argument("ERROR: Invalid argument in return `" + value + "`");
+	else {
+		std::stringstream ss(value);
+		std::string word;
+		getline(ss, word, ' ');
+		if (containsOnlyDigits(word))
+		{
+			returnstatusCode = atoi(word.c_str());
+			if (returnstatusCode < 300 || returnstatusCode > 399)
+				throw std::invalid_argument("ERROR: return statusCode must be between 300 and 399 `" + value + "`");
+		}
+		else
+			throw std::invalid_argument("ERROR: Invalid argument in return status Code `" + value + "`");
+		getline(ss, word, ' ');
+		word = advanced_trim(word, " ");
+		while (getline(ss, word, ' '))
+		{
+			word = advanced_trim(word, " ");
+			if (word.length() > 0)
+				returnPath = word;
+		}
+	}
+}
 
 void    Location::setAttribute( const std::string &key, std::string value )
 {
@@ -50,6 +88,8 @@ void    Location::parseLocations( void )
 			parseIndex(iterator->second);
 		else if (iterator->first == "proxy_read_time_out")
 			parseProxyReadTimeOut(iterator->second);
+		else if (iterator->first == "return")
+			parseReturn(iterator->second);
 			// parsePortNumber(iterator->second);
 		// std::cout << iterator->first << ": " << iterator->second << std::endl;
 	}

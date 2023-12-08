@@ -28,15 +28,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         // Set the destination path to save the file
         $destination = $desired_path . $file_name;
-        
+        $pathToSend = "uploads/" . $file_name;
         // Move the uploaded file to the desired path
         if (move_uploaded_file($file_tmp, $destination)) {
             header('status: 200 OK');
-            $size_body = 62 + strlen($destination);
+            $size_body = 62 + strlen($pathToSend);
             header("Content-Length: " . $size_body);
             header("Content-Type: text/html");
             print("<html><body>");
-            echo '<h2>File Upload Successful in: </h2>' . $destination;
+            echo '<h2>File Upload Successful in: </h2>' . $pathToSend;
             print("</body></html>");
         } else {
             sendError();

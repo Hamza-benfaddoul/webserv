@@ -2,7 +2,8 @@ server:
   listen: 2663
   server_name: localhost
   root: www
-
+  client_max_body_size: 20k
+  error_pages: 403 www/error/200.html
 
   location:
     - path: "/"
@@ -14,8 +15,10 @@ server:
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.php, /usr/bin/php-cgi]
     - cgi_path: [.sh, /usr/bin/sh]
-    - proxy_read_time_out: 4s
+    - cgi_path: [.go, /usr/local/go/bin/go]
+    - proxy_read_time_out: 60s
 
+# - return: 301   http://www.google.com
 
   location:
     - path: "/bootstrap"
@@ -29,9 +32,11 @@ server:
     - methods: [GET, POST]
     - upload: off
     - index: cgi-bin/index.sh
-    - cgi_path: [.py, /usr/bin/python3]
-    - cgi_path: [.sh, /bin/sh]
-    - cgi_path: [.php, /usr/bin/php-cgi]
+
+
+    # - cgi_path: [.py, /usr/bin/python3]
+    # - cgi_path: [.sh, /bin/sh]
+    # - cgi_path: [.php, /usr/bin/php-cgi]
 
 
 server:
@@ -60,5 +65,3 @@ server:
     - index: cgi-bin/index.sh
     - cgi_path: [.py, /usr/lib/python3]
     - cgi_path: [.sh, /bin/bash]
-
-

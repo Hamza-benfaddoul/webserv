@@ -24,6 +24,7 @@ class serverBlock
 		bool        autoIndex;
 		std::map<std::string, std::string> attributes;
 	public:
+		long	client_max_body_size;
 		std::vector<Location> locations;
 		std::vector<std::pair<int, std::string> > errorPages;
 		serverBlock();
@@ -36,9 +37,10 @@ class serverBlock
 		std::string trim(const std::string& str, std::string sep);
 		void    parseBlock( );
 		void    parsePortNumber( std::string value );
-		void    parseRoot(std::string value) ;
-		void    parseHost(std::string value);
-		void    parseAutoIndex(std::string value);
+		void    parseRoot( std::string value );
+		void    parseHost( std::string value );
+		void    parseAutoIndex( std::string value );
+		void	parseClientMaxBodySize( std::string value );
 
 		int     getPort(void) const;
 		bool    getAutoIndex(void) const;

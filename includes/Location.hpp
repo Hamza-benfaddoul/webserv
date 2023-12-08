@@ -19,8 +19,13 @@ private:
 	std::string	fastCgiParam;
 	std::string	include;
 	bool		autoIndex;
+
+
 	std::map<std::string, std::string>	locationAttributes;
 public:
+	bool		returnStatus;
+	int			returnstatusCode;
+	std::string	returnPath;
 	bool		isEmpty;
 	std::string	directory;
 	bool		GET;
@@ -41,6 +46,7 @@ public:
 	void			parseIndex( std::string );
 	void			parseCGI(  );
 	void			parseProxyReadTimeOut( std::string );
+	void			parseReturn( std::string );
 	std::string		getKeyFromAttributes( std::string );
 	void	toString( void ) const;
 

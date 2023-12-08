@@ -190,11 +190,13 @@ bool	Client::checkDir( std::string path )
 
 bool	Client::handleDirs() {
 	std::string requestedPath = this->request->getPath();
-	if (requestedPath[requestedPath.length() - 1] != '/')
-		sendRedirectResponse(301, "Moved Permanently", requestedPath + '/');
-	else {
+	if (requestedPath[requestedPath.length() -1 ] != '/')
+	{
+		sendRedirectResponse(301, "Moved Permanently", requestedPath + "/");
+	}else {
 		if (location.index.length() > 0)
 		{
+			std::cout << "second\n";
 			std::stringstream index(location.index);
 			std::string iter;
 			while (getline(index,iter,','))
@@ -216,10 +218,11 @@ bool	Client::handleDirs() {
 				}
 			}
 		} else if(location.getAutoIndex() == false) {
-			sendErrorResponse(403, "Forbidden", ERROR403, _fd);
+			sendErrorResponse(403, "Forbidden", getErrorPage(403), _fd);
 		} else if (location.getAutoIndex() == true)
 		{
-			directoryListing(location.getRoot() + "/" + location.directory );
+			std::cout << "in case autoIndex: off:\t" << location.getRoot() + location.directory << "\n";
+			directoryListing(location.getRoot() + location.directory );
 		}
 	}
 	return true;
@@ -260,7 +263,7 @@ std::string	Client::createNewFile(std::string prefix, size_t start, std::string 
 	fd.open(filename.str().c_str(), std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
 	if (!fd.is_open())
 	{
-		throw std::ios_base::failure("Failed to open filecx");
+		throw std::ios_base::failure("ERROR: check Folder `www/TempFiles` existence or permissions for Write.\n");
 	}
 	close(!fd);
 	return filename.str();
@@ -291,26 +294,24 @@ bool	Client::handleFiles( std::string path) {
 			strdup(std::string("SERVER_PROTOCOL=HTTP/1.1").c_str()),
 			// strdup(std::string("SERVER_SOFTWARE=Weebserv/1.0").c_str()),
 			strdup(std::string("CONTENT_TYPE=" + request->getMimeType()).c_str()),
+			// strdup(std::string("CONTENT_LENGTH=" + request->getMimeType()).c_str()),
 			strdup(std::string("REDIRECT_STATUS=200").c_str()),
 			strdup(std::string("HTTP_COOKIE=" + request->getCookie()).c_str()),
 			NULL
 		};
+		// std::cout << tmpFile << "\n";
 		size_t start = get_time('s');
 		tmpFile = createNewFile("www/TempFiles/", start, "_cgi");
-		std::cout << tmpFile << "\n";
 		int fd = fork();
-		if (fd == -1) {
-			unlink(tmpFile.c_str());
-			return true;
-		}
 		char *argv[] = {
 			strdup(cgi_path.c_str()),
+			(extension == ".go") ? strdup("run"): strdup(""),
 			strdup((location.getRoot() + request->getPath()).c_str()),
 			NULL
 		};
 		if (fd == 0) {
 			if (freopen(tmpFile.c_str(), "w", stdout) == NULL)
-				throw std::ios_base::failure("Failed to open Fileddd");
+				throw std::ios_base::failure("Failed to open File");
 			execve(argv[0], argv, env);
 			exit(0);
 		} else {
@@ -322,19 +323,17 @@ bool	Client::handleFiles( std::string path) {
 				usleep(10000);
 			}
 			readFromCgi();
-			std::cout << "PHP execution was successful.\n";
-			content = advanced_trim(content, " \n\r");
-			std::stringstream headers;
-			headers << "HTTP/1.1 200 OK\r\n";
-			headers << "Content-Length: " << content_length << "\r\n";
-			// headers << content;
-			write(_fd, headers.str().c_str(), headers.str().length());
-			write(_fd, content.c_str(), content.length());
-			fsync(_fd);
-			// else {
-			// 	std::cerr << "PHP execution failed.\n";
-			// }
-			return true;
+			std::stringstream buff;
+			buff.clear();
+			buff  << "HTTP/1.1 200"
+					<< (content.find("Content-Type: ") > content.length() ? "\r\nContent-Type: text/html\r\n" : "\r\n")\
+					<< "Content-Length: " << content_length \
+					<< "\r\n" << content;
+			if (write(_fd, buff.str().c_str(), buff.str().length()))
+			{
+				std::remove(tmpFile.c_str());
+				return true;
+			}
 		}
 		return true;
 	} else {
@@ -435,11 +434,10 @@ bool Client::getMethodHandler(void) {
 	std::string filePath = (queryStringPos != std::string::npos) ? requestedPath.substr(0, queryStringPos) : requestedPath;
 	if (access((location.getRoot() + filePath).c_str(), R_OK) == -1)
 	{
-		sendErrorResponse(404, "Not Found", ERROR404, _fd);
+		sendErrorResponse(404, "Not Found", getErrorPage(404), _fd);
 	}
 	else if (checkType() == true)
 	{
-		std::cout << "dir\n";
 		return handleDirs();
 	}
 	else if (checkType() == false)
@@ -488,8 +486,9 @@ Client::~Client()
 void	Client::sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string location) {
 	std::stringstream response;
 	response << "HTTP/1.1 " << CODE << " " << ERRORTYPE << "\r\n";
+	std::cout << "location:\t" << location << "\n";
 	response << "Location: " << location << "\r\n";
-	response << "Connection: close\r\n";
+	// response << "Connection: close\r\n";
 	response << "\r\n";
 
 	write(_fd, response.str().c_str(), response.str().length());
@@ -507,7 +506,7 @@ int	Client::is_request_well_formed()
 
 	if (location.isEmpty == true)
 	{
-		sendErrorResponse(404, "Not Found", ERROR404, _fd);
+		sendErrorResponse(404, "Not Found", getErrorPage(404), _fd);
 		return (-1);
 	}
 	std::string path = this->request->getPath();
@@ -530,26 +529,31 @@ int	Client::is_request_well_formed()
 	if (badChar == 1 || this->request->getBad() == 1 || (request->getMethod() == "POST" && it == ourHeaders.end() && ourHeaders.find("Content-Length") == ourHeaders.end()))
 	{
 		std::cout << badChar << " - " << this->request->getBad() << std::endl;
-		sendErrorResponse(400, "Bad Request", ERROR400, _fd);
+		sendErrorResponse(400, "Bad Request", getErrorPage(400), _fd);
 		return (-1);
 	}
-	// transfer encoding is equal to chunked
+	// transfer encoding is equal to chunk"Moved Permanently"ed
 	if (ourHeaders.find("Transfer-Encoding") != ourHeaders.end() && ourHeaders["Transfer-Encoding"] != "chunked")
 	{
-		sendErrorResponse(501, "Not Implemented", ERROR501, _fd);
+		sendErrorResponse(501, "Not Implemented", getErrorPage(501), _fd);
 		return (-1);
 	}
 	// request uri containe more that 2048 char
 	if (path.length() > 2048)
 	{
-		sendErrorResponse(414, "Request-URI Too Long", ERROR414, _fd);
+		sendErrorResponse(414, "Request-URI Too Long", getErrorPage(414), _fd);
 		return (-1);
+	}
+	if (location.returnStatus)
+	{
+		sendRedirectResponse(location.returnstatusCode, "Moved Permanently", location.returnPath);
+		return -1;
 	}
 	if ((request->getMethod() == "GET" && location.GET == false) ||
 		(request->getMethod() == "POST" && location.POST == false) ||
 			(request->getMethod() == "DELETE" && location.DELETE == false))
 		{
-			sendErrorResponse(405, "405 Method Not Allowed", ERROR405, _fd);
+			sendErrorResponse(405, "405 Method Not Allowed", getErrorPage(405), _fd);
 			return -1;
 		}
 	return (true);
@@ -558,6 +562,7 @@ int	Client::is_request_well_formed()
 // true -> close, flase continue;
 bool	Client::postMethodHandler(void)
 {
+	std::cout << "max_client_body_size: \t" << _serverBlock->client_max_body_size << "\n";
 	// std::cout << data["upload"] << std::endl;
 	std::map<std::string, std::string> Headers = this->request->getHeaders();
 	char	buffer[1024] = {0};
@@ -574,7 +579,7 @@ bool	Client::postMethodHandler(void)
 			if (this->getCgiPath(extension).length() > 0)
 				hasCgi = true;
 		}
-		this->upload = new Upload(this->request, this->cpt, location, _fd, this->getCgiPath(extension));
+		this->upload = new Upload(this->request, this->cpt, location, _fd, this->getCgiPath(extension), _serverBlock);
 		this->upload->createFile();
 		totalBytesRead = body.length();
 		if (Headers.find("Content-Length") != Headers.end() && totalBytesRead >= Content_Length)
@@ -634,7 +639,7 @@ bool	Client::postMethodHandler(void)
 	else if (Headers.find("Transfer-Encodgin") != Headers.end() && Headers["Transfer-Encoding"] != "chunked")
 	{
 		std::cout << "here the probleme" << std::endl;
-		sendErrorResponse(501, "Not Implemented", ERROR501, _fd);
+		sendErrorResponse(501, "Not Implemented", getErrorPage(501), _fd);
 		return true;
 	}
 	else if (controller == false &&  Headers.find("Content-Length") != Headers.end()) // ============> binary type
@@ -655,7 +660,7 @@ bool	Client::postMethodHandler(void)
 	}
 	else if (controller == false)
 	{
-		sendErrorResponse(400, "Bad Request", ERROR400, _fd);
+		sendErrorResponse(400, "Bad Request", getErrorPage(400), _fd);
 		return true;
 	}
 	this->upload->endLine();

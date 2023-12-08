@@ -166,3 +166,81 @@ void	sendErrorResponse( int CODE, std::string ERRORTYPE, std::string errorTypeFi
 
 	write(_fd, response.str().c_str(), response.str().length());
 }
+
+bool isValidClientMaxBodySize(const char *value) {
+    char *endptr;
+    long size = strtol(value, &endptr, 10);
+    if (endptr == value) {
+        return false;
+    }
+	(void) size;
+    while (std::isspace(*endptr)) {
+        ++endptr;
+    }
+    if (*endptr != '\0') {
+        char unit = std::tolower(*endptr);
+        if (unit == 'k' || unit == 'm' || unit == 'g') {
+        } else {
+            return false;
+        }
+    }
+    while (std::isspace(*++endptr)) {
+    }
+    return *endptr == '\0';
+}
+
+long convertToBytes(const char *value) {
+    char *endptr;
+    long long size = strtol(value, &endptr, 10);
+
+    if (endptr == value) {
+        return -1;
+    }
+    while (std::isspace(*endptr)) {
+        ++endptr;
+    }
+    if (*endptr != '\0') {
+        char unit = std::tolower(*endptr);
+        if (unit == 'k') {
+            size *= 1024;
+        } else if (unit == 'm') {
+            size *= 1024 * 1024;
+        } else if (unit == 'g') {
+            size *= 1024 * 1024 * 1024;
+        } else {
+            return -1;
+        }
+    }
+    return size;
+}
+
+long	convertToBytes( std::string value )
+{
+	bool status = isValidClientMaxBodySize(value.c_str());
+    std::cout << status << "\n";
+	long size = 0;
+	if (status == true)
+	{
+        size = convertToBytes(value.c_str());
+	    if (size == -1)
+    	    throw std::invalid_argument("ERROR: invalid argument in client_max_body_size: `" +value+ "`");
+    }
+    else
+        throw std::invalid_argument("ERROR: invalid argument in client_max_body_size: `" +value+ "`");
+    return size;
+}
+
+size_t FileSize(std::string filename) {
+    FILE* file = fopen(filename.c_str(), "rb");
+    if (file == NULL) {
+        // handle file open error
+        return -1;
+    }
+
+    fseek(file, 0, SEEK_END);
+    size_t size = ftell(file);
+
+    fclose(file);
+
+    return size;
+}

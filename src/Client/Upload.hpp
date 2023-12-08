@@ -10,7 +10,7 @@
 #include <dirent.h>
 #include <sys/wait.h>
 
-#include "../../includes/Location.hpp"
+#include "../../includes/serverBlock.hpp"
 class Request;
 // class Client;
 
@@ -20,6 +20,7 @@ private:
     Upload();
     std::fstream	bodyContent;
     Request *request;
+    serverBlock *_serverBlock;
     int cpt;
     std::string filename;
     std::string cgi_output_filename;
@@ -39,7 +40,7 @@ private:
 public:
     // Upload(Request *req, int in_cpt, Client in_client);
     // Upload(Request *req, int in_cpt, Location in_location, int in_fd, bool in_hasCgi);
-    Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path);
+    Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path, serverBlock *serverBlock);
     // Upload(Request *req, int in_cpt);
     ~Upload();
     void	writeToFile(const std::vector<char> & source);
@@ -50,8 +51,9 @@ public:
     void    endLine();
     void	createFile();
     bool    start();
-    size_t getFileSize(std::string filename);
     std::string	checkType(std::string path);
+    std::string	getErrorPage( int errorCode );
+
 };
 
 
