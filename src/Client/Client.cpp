@@ -262,10 +262,12 @@ bool	Client::handleFiles( std::string path) {
 		// std::cout << tmpFile << "\n";
 		size_t start = get_time('s');
 		tmpFile = createNewFile("www/TempFiles/", start, "_cgi");
+		// std::cout << "cgi path: " << cgi_path << "the path is: " << path << std::endl;
+		// std::cout << "------> " << location.getRoot() + request->getPath() << std::endl;
 		int fd = fork();
 		char *argv[] = {
 			strdup(cgi_path.c_str()),
-			(extension == ".go") ? strdup("run"): strdup(""),
+			// (extension == ".go") ? strdup("run"): strdup(""),
 			strdup((location.getRoot() + request->getPath()).c_str()),
 			NULL
 		};
@@ -284,7 +286,6 @@ bool	Client::handleFiles( std::string path) {
 			}
 			readFromCgi();
 
-
 			ltrim(content, "\r\n");
 			size_t pos = content.find("\r\n\r\n");
 			std::string bodyCgi;
@@ -300,7 +301,6 @@ bool	Client::handleFiles( std::string path) {
 			std::cout << "the cgi body: " << bodyCgi << std::endl;
 			std::stringstream result;
 			std::vector<std::string> splitedHeaders = ft_split(headers, "\r\n");
-			std::cout << "the state is: " << state << std::endl;
 			if (state == 0)
 			{
 				result << "HTTP/1.1 200 OK\r\n";
@@ -330,50 +330,6 @@ bool	Client::handleFiles( std::string path) {
 				result << bodyCgi;
 			}
 			write(_fd, result.str().c_str(), result.str().length());
-
-			
-
-
-
-			// size_t pos = content.find("\n\n");
-			// std::string body_cgi;
-			// if (pos == std::string::npos)
-			// {
-			// 	pos = content.find("\r\n\r\n");
-			// 	if (pos != std::string::npos)
-			// 		body_cgi = content.substr(pos + 4, content.length());
-			// }
-			// else
-			// 	body_cgi = content.substr(pos + 2, content.length());
-			// std::string headers = content.substr(0, pos);
-			// std::vector<std::string> splited_cgi_output;
-			// if (headers.find("\r\n") != std::string::npos)
-			// 	splited_cgi_output = ft_split(headers, "\r\n");
-			// else if (headers.find("\n") != std::string::npos)
-			// 	splited_cgi_output = ft_split(headers, "\n");
-			// for (int i = 0; i < (int)splited_cgi_output.size(); i++)
-			// {
-			// 	rtrim(splited_cgi_output.at(i), "\r\n");
-			// 	ltrim(splited_cgi_output.at(i), "\r\n");
-			// 	if (i == 0)
-			// 	{
-			// 		std::string http = std::string("HTTP/1.1 ");
-			// 		std::string lineRes = splited_cgi_output.at(0);
-			// 		lineRes = lineRes.substr(8, lineRes.length());
-			// 		http.append(lineRes);
-			// 		lineRes = http;
-			// 		splited_cgi_output.at(0) = lineRes;
-			// 	}
-			// 	if (splited_cgi_output.at(i).length() > 2)
-			// 	{
-			// 		write(_fd, splited_cgi_output.at(i).c_str(), splited_cgi_output.at(i).length());
-			// 		write(_fd, "\r\n", 2);
-			// 	}
-			// }
-			// write(_fd, "\r\n", 2);
-			// // std::cout << "body cgi -----------------------------> " << body_cgi << "*-*-*-*-*-*-*-*" << std::endl;
-			// ltrim(body_cgi, "\r\n");
-			// write(_fd ,body_cgi.c_str(), body_cgi.length());
 			std::remove(tmpFile.c_str());
 			return true;
 		}
@@ -419,13 +375,13 @@ void	Client::readFromCgi()
 		content.append(buffer, cgi_output_content.gcount());
 		if (cgi_output_content.eof())
 			break;
-		// found = content.find("\r\n\r\n");
-		// if (found != std::string::npos)
-		// {
-		// 	found += 4;
-		// 	content.substr(0, found);
-		// 	break;
-		// }
+		found = content.find("\r\n\r\n");
+		if (found != std::string::npos)
+		{
+			found += 4;
+			content.substr(0, found);
+			break;
+		}
 	}
 	file_ouptut.close();
 	file_ouptut.open(tmpFile.c_str());

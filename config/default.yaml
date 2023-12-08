@@ -13,7 +13,7 @@ server:
     - index:  [index.html, index.htm]
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.php, /usr/bin/php-cgi]
-    - cgi_path: [.sh, /usr/bin/sh]
+    - cgi_path: [.sh, /usr/bin/bash]
     - proxy_read_time_out: 60s
 
   # - cgi_path: [.go, /usr/local/go/bin/go]
@@ -31,7 +31,7 @@ server:
     - upload: off
     - index: cgi-bin/index.sh
     - cgi_path: [.py, /usr/bin/python3]
-    - cgi_path: [.sh, /bin/sh]
+    - cgi_path: [.sh, /usr/bin/bash]
     - cgi_path: [.php, /usr/bin/php-cgi]
 
 
@@ -60,4 +60,4 @@ server:
     - upload: on
     - index: cgi-bin/index.sh
     - cgi_path: [.py, /usr/lib/python3]
-    - cgi_path: [.sh, /bin/bash]
+    - cgi_path: [.sh, /usr/bin/bash]

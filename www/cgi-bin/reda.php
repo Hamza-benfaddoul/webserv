@@ -2,16 +2,10 @@
 <?php
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // $stdin = fopen('php://stdin', 'r');
-    // $fileContent = file_get_contents('php://stdin');
-    // Parse the content into an associative array
-    // parse_str($fileContent, $data);
 
-    // $name = $data['name'];
     $name = $_POST['name'];
-    // $name = "walid";
     header("Content-Type: text/html");
-    echo "\r\n\r\n";
+    echo "\r\n";
     print("<html><body>");
     echo "Hello, " . $name . "!";
     print("</body></html>");

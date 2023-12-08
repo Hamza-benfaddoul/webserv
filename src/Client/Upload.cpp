@@ -86,11 +86,12 @@ bool Upload::start()
 			}
 			std::stringstream streamFileSize;
 			std::cout << "total body size: " << sizeOfFile << std::endl;
-			streamFileSize << sizeOfFile;
+			streamFileSize << totalBodySize;
 			forked = true;
 			std::string uri = request->getPath();
 			std::string cgi_path_script = location.getRoot() + uri;
 			// Create an array of envirment that cgi need.
+			std::cout << "the content type is : " << content_type << std::endl;
 			char *env[] = 
 			{
 				strdup(std::string("REDIRECT_STATUS=100").c_str()),
@@ -99,6 +100,7 @@ bool Upload::start()
 				strdup(std::string("HTTP_COOKIE=").c_str()),
 				strdup(std::string("HTTP_CONTENT_TYPE=" + content_type).c_str()),
 				strdup(std::string("CONTENT_TYPE=" + content_type).c_str()),
+				(content_type == "application/x-www-form-urlencoded") ? strdup(std::string("CONTENT_LENGTH=" + streamFileSize.str()).c_str()) : NULL,
 				// strdup(std::string("CONTENT_LENGTH=" + streamFileSize.str()).c_str()),
 				NULL
 			};
