@@ -42,13 +42,13 @@ void	Location::parseReturn( std::string value )
 		else
 			throw std::invalid_argument("ERROR: Invalid argument in return status Code `" + value + "`");
 		getline(ss, word, ' ');
-		// DIR *pDir;
-		// pDir = opendir ((getRoot() + "/" + word).c_str());
-		// if (pDir == NULL) {
-		// 	throw std::invalid_argument("ERROR: Invalid argument in return Path `" + value + "`");
-		// }else{
-			returnPath = word;
-		// }
+		word = advanced_trim(word, " ");
+		while (getline(ss, word, ' '))
+		{
+			word = advanced_trim(word, " ");
+			if (word.length() > 0)
+				returnPath = word;
+		}
 	}
 }
 

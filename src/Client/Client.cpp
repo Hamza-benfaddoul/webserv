@@ -3,16 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/20 22:29:48 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/12/05 15:32:13 by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Client.hpp"
 #include <fcntl.h>
-#include <variant>
 #include "dirent.h"
 
 int Client::cpt = 0;
@@ -75,8 +74,50 @@ bool	Client::receiveResponse(void)
 	return false;
 }
 
-bool	Client::deleteMethodHandler(void){
-	std::cout << _responseBuffer << std::endl;
+void Client::del(const char *path, bool &isDeleted)
+{
+    DIR *dir = opendir(path);
+    if (dir)
+    {
+        struct dirent *centent;
+        while ((centent = readdir(dir)) != NULL)
+        {
+            if (strcmp(centent->d_name, ".") != 0 && strcmp(centent->d_name, "..") != 0)
+            {
+                std::string re(path);
+                re += "/";
+                re += centent->d_name;
+                del(re.c_str(), isDeleted);
+            }
+        }
+		rmdir(path);
+    }
+    else
+    {
+        if (access(path, W_OK) == 0)
+        {
+            if (std::remove(path) != 0)
+                throw std::runtime_error("cant remove file");
+        }
+        else
+			isDeleted = false;
+    }
+}
+bool Client::deleteMethodHandler(void)
+{
+	bool isDeleted = true;
+	std::string requestedPath = this->request->getPath();
+	if (access((location.getRoot() + requestedPath).c_str(), R_OK) == -1)
+	{
+		 sendErrorResponse(404, "Not Found", getErrorPage(404),_fd);
+		return (true);
+	}
+	else
+		del((location.getRoot() + requestedPath).c_str(), isDeleted);
+	if (isDeleted)
+		write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nResource deleted successfully", 74);
+	else
+		write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nFailed to delete resource", 70);
 	return true;
 }
 
@@ -178,7 +219,7 @@ bool	Client::handleDirs() {
 				}
 			}
 		} else if(location.getAutoIndex() == false) {
-			(std::cout << "third" << "\n", sendErrorResponse(403, "Forbidden", ERROR403, _fd));
+			sendErrorResponse(403, "Forbidden", getErrorPage(403), _fd);
 		} else if (location.getAutoIndex() == true)
 		{
 			std::cout << "in case autoIndex: off:\t" << location.getRoot() + location.directory << "\n";
@@ -434,11 +475,10 @@ bool Client::getMethodHandler(void) {
 	std::string filePath = (queryStringPos != std::string::npos) ? requestedPath.substr(0, queryStringPos) : requestedPath;
 	if (access((location.getRoot() + filePath).c_str(), R_OK) == -1)
 	{
-		sendErrorResponse(404, "Not Found", ERROR404, _fd);
+		sendErrorResponse(404, "Not Found", getErrorPage(404), _fd);
 	}
 	else if (checkType() == true)
 	{
-		std::cout << "dir\n";
 		return handleDirs();
 	}
 	else if (checkType() == false)
@@ -487,8 +527,9 @@ Client::~Client()
 void	Client::sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string location) {
 	std::stringstream response;
 	response << "HTTP/1.1 " << CODE << " " << ERRORTYPE << "\r\n";
+	std::cout << "location:\t" << location << "\n";
 	response << "Location: " << location << "\r\n";
-	response << "Connection: close\r\n";
+	// response << "Connection: close\r\n";
 	response << "\r\n";
 
 	write(_fd, response.str().c_str(), response.str().length());
@@ -506,7 +547,7 @@ int	Client::is_request_well_formed()
 
 	if (location.isEmpty == true)
 	{
-		sendErrorResponse(404, "Not Found", ERROR404, _fd);
+		sendErrorResponse(404, "Not Found", getErrorPage(404), _fd);
 		return (-1);
 	}
 	std::string path = this->request->getPath();
@@ -529,26 +570,31 @@ int	Client::is_request_well_formed()
 	if (badChar == 1 || this->request->getBad() == 1 || (request->getMethod() == "POST" && it == ourHeaders.end() && ourHeaders.find("Content-Length") == ourHeaders.end()))
 	{
 		std::cout << badChar << " - " << this->request->getBad() << std::endl;
-		sendErrorResponse(400, "Bad Request", ERROR400, _fd);
+		sendErrorResponse(400, "Bad Request", getErrorPage(400), _fd);
 		return (-1);
 	}
 	// transfer encoding is equal to chunk"Moved Permanently"ed
 	if (ourHeaders.find("Transfer-Encoding") != ourHeaders.end() && ourHeaders["Transfer-Encoding"] != "chunked")
 	{
-		sendErrorResponse(501, "Not Implemented", ERROR501, _fd);
+		sendErrorResponse(501, "Not Implemented", getErrorPage(501), _fd);
 		return (-1);
 	}
 	// request uri containe more that 2048 char
 	if (path.length() > 2048)
 	{
-		sendErrorResponse(414, "Request-URI Too Long", ERROR414, _fd);
+		sendErrorResponse(414, "Request-URI Too Long", getErrorPage(414), _fd);
 		return (-1);
+	}
+	if (location.returnStatus)
+	{
+		sendRedirectResponse(location.returnstatusCode, "Moved Permanently", location.returnPath);
+		return -1;
 	}
 	if ((request->getMethod() == "GET" && location.GET == false) ||
 		(request->getMethod() == "POST" && location.POST == false) ||
 			(request->getMethod() == "DELETE" && location.DELETE == false))
 		{
-			sendErrorResponse(405, "405 Method Not Allowed", ERROR405, _fd);
+			sendErrorResponse(405, "405 Method Not Allowed", getErrorPage(405), _fd);
 			return -1;
 		}
 	return (true);
@@ -573,7 +619,7 @@ bool	Client::postMethodHandler(void)
 			if (this->getCgiPath(extension).length() > 0)
 				hasCgi = true;
 		}
-		this->upload = new Upload(this->request, this->cpt, location, _fd, this->getCgiPath(extension), _serverBlock->client_max_body_size);
+		this->upload = new Upload(this->request, this->cpt, location, _fd, this->getCgiPath(extension), _serverBlock);
 		this->upload->createFile();
 		totalBytesRead = body.length();
 		if (Headers.find("Content-Length") != Headers.end() && totalBytesRead >= Content_Length)
@@ -635,7 +681,7 @@ bool	Client::postMethodHandler(void)
 	else if (Headers.find("Transfer-Encodgin") != Headers.end() && Headers["Transfer-Encoding"] != "chunked")
 	{
 		std::cout << "here the probleme" << std::endl;
-		sendErrorResponse(501, "Not Implemented", ERROR501, _fd);
+		sendErrorResponse(501, "Not Implemented", getErrorPage(501), _fd);
 		return true;
 	}
 	else if (controller == false &&  Headers.find("Content-Length") != Headers.end()) // ============> binary type
@@ -656,7 +702,7 @@ bool	Client::postMethodHandler(void)
 	}
 	else if (controller == false)
 	{
-		sendErrorResponse(400, "Bad Request", ERROR400, _fd);
+		sendErrorResponse(400, "Bad Request", getErrorPage(400), _fd);
 		return true;
 	}
 	this->upload->endLine();

@@ -2,8 +2,9 @@ server:
   listen: 2663
   server_name: localhost
   root: www
-  client_max_body_size: 320m
-  
+  client_max_body_size: 20k
+  error_pages: 403 www/error/200.html
+
   location:
     - path: "/"
     - root:   www
@@ -18,6 +19,8 @@ server:
 
   # - cgi_path: [.go, /usr/local/go/bin/go]
   
+# - return: 301   http://www.google.com
+
   location:
     - path: "/bootstrap"
     - root:   www
@@ -33,6 +36,11 @@ server:
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.sh, /usr/bin/bash]
     - cgi_path: [.php, /usr/bin/php-cgi]
+
+
+    # - cgi_path: [.py, /usr/bin/python3]
+    # - cgi_path: [.sh, /bin/sh]
+    # - cgi_path: [.php, /usr/bin/php-cgi]
 
 
 server:

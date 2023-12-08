@@ -1,8 +1,7 @@
 #include "Upload.hpp"
 #include "../../includes/main.hpp"
 
-Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path, long in_max_body_size) : 
-	request(req), cpt(in_cpt), location(in_location), fd_socket(in_fd), cgi_path(in_cgi_path), max_body_size(in_max_body_size)
+Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path, serverBlock *serverBlock) :request(req), _serverBlock(serverBlock) ,cpt(in_cpt), location(in_location), fd_socket(in_fd), cgi_path(in_cgi_path)
 {
 	// std::cout << "*****************************************construcot" << std::endl;
 	forked = false;
@@ -13,6 +12,17 @@ Upload::~Upload()
 	std::cout << "the file should be removed is: " << this->filename << std::endl;
 	unlink(this->filename.c_str());
 	std::remove(this->filename.c_str());
+}
+
+std::string	Upload::getErrorPage( int errorCode ) {
+	for(size_t i = 0; i < _serverBlock->errorPages.size(); i++)
+	{
+		if (_serverBlock->errorPages.at(i).first == errorCode)
+			return _serverBlock->errorPages.at(i).second;
+	}
+	std::stringstream ss;
+	ss << errorCode;
+	return "www/error/" + ss.str() + ".html";
 }
 
 void	Upload::createFile()
@@ -118,7 +128,8 @@ bool Upload::start()
 				}
 				this->bodyContent.close();
 				std::remove(this->filename.c_str());
-				sendErrorResponse(404, "Request-URI Too Long", ERROR404, this->fd_socket);
+				// sendResponse(404, "Not Found", "<html><body> <h1> 404 Not Found</h1> </body></html>", "text/html");
+				sendErrorResponse(404, "Request-URI Too Long", getErrorPage(404), this->fd_socket);
 				return true;
 			}
 			// Create an array of arguments for execve
@@ -236,7 +247,7 @@ bool Upload::start()
 					std::remove(this->filename.c_str());
 					std::remove(cgi_output_filename.c_str());
 					// sendResponse(408, "Request Timeout", "<html><body><h1>408 Request Timeout</h1></body></html>", "text/html");
-					sendErrorResponse(408, "Request Timeout", ERROR408, this->fd_socket);
+					sendErrorResponse(408, "Request Timeout", getErrorPage(408), this->fd_socket);
 
 					return (true);
 				}
@@ -260,13 +271,14 @@ bool Upload::start()
 		if (resRename != 0)
 			throw std::runtime_error("Failed to upload file");
 		// sendResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>", "text/html");
-		sendErrorResponse(200, "OK", ERROR200, this->fd_socket);
+		sendErrorResponse(200, "OK", getErrorPage(200), this->fd_socket);
 		return (true);
 	}
 	else
 	{
 		// 403 Forbidden
-		sendErrorResponse(403, "Forbidden", ERROR403, this->fd_socket);
+		std::remove(this->filename.c_str());
+		sendErrorResponse(403, "Forbidden", getErrorPage(403), this->fd_socket);
 		return (true);
 	}
 	return (false);

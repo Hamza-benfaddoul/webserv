@@ -112,6 +112,8 @@ class Client {
 
 		Location	getCurrentLocation();
 
+		void	del(const char *path, bool &isDeleted);
+
 	public:
 		Client(size_t fd, serverBlock *serverBlock);
 		std::map<std::string, std::string> getOurLocations() const;
