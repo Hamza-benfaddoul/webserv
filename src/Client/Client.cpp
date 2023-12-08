@@ -67,7 +67,10 @@ bool	Client::receiveResponse(void)
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)
+		{
+			std::cout << "post is here" << std::endl;
 			return postMethodHandler();
+		}
 		else if (this->request->getMethod().compare("DELETE") == 0)
 			return deleteMethodHandler();
 	}
@@ -337,9 +340,9 @@ bool	Client::handleFiles( std::string path) {
 			}
 			else
 				bodyCgi = content.substr(pos + 4);
-			std::cout << "the pos is: " << pos << std::endl;
+			// std::cout << "the pos is: " << pos << std::endl;
 			std::string headers = content.substr(0, pos);
-			std::cout << "the cgi body: " << bodyCgi << std::endl;
+			// std::cout << "the cgi body: " << bodyCgi << std::endl;
 			std::stringstream result;
 			std::vector<std::string> splitedHeaders = ft_split(headers, "\r\n");
 			if (state == 0)

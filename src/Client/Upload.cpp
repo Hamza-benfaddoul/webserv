@@ -5,6 +5,7 @@ Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::s
 {
 	// std::cout << "*****************************************construcot" << std::endl;
 	forked = false;
+	max_body_size = _serverBlock->client_max_body_size;
 }
 
 Upload::~Upload()
@@ -87,7 +88,7 @@ bool Upload::start()
 		if (forked == false)
 		{
 			size_t sizeOfFile = FileSize(this->filename);
-			// std::cout << "size of file: " << sizeOfFile << " max body size: " << max_body_size << std::endl;
+			std::cout << "size of file: " << sizeOfFile << " max body size: " << max_body_size << std::endl;
 			if ((long)sizeOfFile > max_body_size)
 			{
 				std::remove(this->filename.c_str());
