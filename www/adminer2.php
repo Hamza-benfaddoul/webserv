@@ -1,6 +1,6 @@
 <?php
 
-sleep (2);
+sleep (8);
 echo "wach al 7biba\n";
 
 ?>

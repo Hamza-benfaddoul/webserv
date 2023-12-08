@@ -15,8 +15,7 @@
 #include "dirent.h"
 
 int Client::cpt = 0;
-Client::Client(size_t fd, serverBlock *serverBlock) :
-	_fd(fd), location(), _serverBlock(serverBlock)
+Client::Client(size_t fd, serverBlock *serverBlock) : _fd(fd), location(), _serverBlock(serverBlock)
 {
 	_fdFile = -1;
 	this->_readHeader = true;
@@ -32,12 +31,12 @@ Client::Client(size_t fd, serverBlock *serverBlock) :
 	isChunkComplete = true;
 }
 
-bool	Client::receiveResponse(void)
+bool Client::receiveResponse(void)
 {
 	if (_readHeader)
 	{
-		char	buffer[1024] = {0};
-		int		bytesRead;
+		char buffer[1024] = {0};
+		int bytesRead;
 		bytesRead = read(_fd, buffer, 1024);
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
@@ -79,32 +78,32 @@ bool	Client::receiveResponse(void)
 
 void Client::del(const char *path, bool &isDeleted)
 {
-    DIR *dir = opendir(path);
-    if (dir)
-    {
-        struct dirent *centent;
-        while ((centent = readdir(dir)) != NULL)
-        {
-            if (strcmp(centent->d_name, ".") != 0 && strcmp(centent->d_name, "..") != 0)
-            {
-                std::string re(path);
-                re += "/";
-                re += centent->d_name;
-                del(re.c_str(), isDeleted);
-            }
-        }
+	DIR *dir = opendir(path);
+	if (dir)
+	{
+		struct dirent *centent;
+		while ((centent = readdir(dir)) != NULL)
+		{
+			if (strcmp(centent->d_name, ".") != 0 && strcmp(centent->d_name, "..") != 0)
+			{
+				std::string re(path);
+				re += "/";
+				re += centent->d_name;
+				del(re.c_str(), isDeleted);
+			}
+		}
 		rmdir(path);
-    }
-    else
-    {
-        if (access(path, W_OK) == 0)
-        {
-            if (std::remove(path) != 0)
-                throw std::runtime_error("cant remove file");
-        }
-        else
+	}
+	else
+	{
+		if (access(path, W_OK) == 0)
+		{
+			if (std::remove(path) != 0)
+				throw std::runtime_error("cant remove file");
+		}
+		else
 			isDeleted = false;
-    }
+	}
 }
 bool Client::deleteMethodHandler(void)
 {
@@ -112,7 +111,7 @@ bool Client::deleteMethodHandler(void)
 	std::string requestedPath = this->request->getPath();
 	if (access((location.getRoot() + requestedPath).c_str(), R_OK) == -1)
 	{
-		 sendErrorResponse(404, "Not Found", getErrorPage(404),_fd);
+		sendErrorResponse(404, "Not Found", getErrorPage(404), _fd);
 		return (true);
 	}
 	else
@@ -124,12 +123,13 @@ bool Client::deleteMethodHandler(void)
 	return true;
 }
 
-Location	Client::getCurrentLocation()
+Location Client::getCurrentLocation()
 {
 	std::string requestedPath = this->request->getPath();
 	size_t directoryEndPos = requestedPath.find("/", 1);
 	std::string directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(0, directoryEndPos) : requestedPath;
-	for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) {
+	for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++)
+	{
 		Location test = this->_serverBlock->getLocations().at(i);
 		if (regFile(test.getRoot() + directory))
 		{
@@ -161,25 +161,26 @@ Location	Client::getCurrentLocation()
 	return Location();
 }
 
-bool	Client::checkRequestPath( std::string path )
+bool Client::checkRequestPath(std::string path)
 {
 	return (path[path.length() - 1] == '/') ? 1 : 0;
 }
 
-bool	Client::checkType()
+bool Client::checkType()
 {
 	std::string requestedPath = this->request->getPath();
 	DIR *pDir;
 
-	pDir = opendir ((_serverBlock->getRoot() + requestedPath).c_str());
-	if (pDir == NULL) {
+	pDir = opendir((_serverBlock->getRoot() + requestedPath).c_str());
+	if (pDir == NULL)
+	{
 		return false;
 	}
-	closedir (pDir);
+	closedir(pDir);
 	return true;
 }
 
-bool	Client::checkDir( std::string path )
+bool Client::checkDir(std::string path)
 {
 	// std::cout << "path:\t" << path << "\n";
 	for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) // LOcations
@@ -192,28 +193,33 @@ bool	Client::checkDir( std::string path )
 	return false;
 }
 
-bool	Client::handleDirs() {
+bool Client::handleDirs()
+{
 	std::string requestedPath = this->request->getPath();
-	if (requestedPath[requestedPath.length() -1 ] != '/')
+	if (requestedPath[requestedPath.length() - 1] != '/')
 	{
 		sendRedirectResponse(301, "Moved Permanently", requestedPath + "/");
-	}else {
+	}
+	else
+	{
 		if (location.index.length() > 0)
 		{
 			std::cout << "second\n";
 			std::stringstream index(location.index);
 			std::string iter;
-			while (getline(index,iter,','))
+			while (getline(index, iter, ','))
 			{
 				iter = advanced_trim(iter, " ");
 				struct dirent *pDirent;
 				DIR *pDir;
-				pDir = opendir ((location.getRoot() + "/" + location.directory).c_str());
-				if (pDir == NULL) {
+				pDir = opendir((location.getRoot() + "/" + location.directory).c_str());
+				if (pDir == NULL)
+				{
 					std::cout << "Cannot open directory\n";
 					return 1;
 				}
-				while ((pDirent = readdir(pDir)) != NULL) {
+				while ((pDirent = readdir(pDir)) != NULL)
+				{
 					if (strcmp(iter.c_str(), pDirent->d_name) == 0)
 					{
 						handleFiles(location.getRoot() + "/" + location.directory + "/" + iter);
@@ -221,12 +227,15 @@ bool	Client::handleDirs() {
 					}
 				}
 			}
-		} else if(location.getAutoIndex() == false) {
+		}
+		else if (location.getAutoIndex() == false)
+		{
 			sendErrorResponse(403, "Forbidden", getErrorPage(403), _fd);
-		} else if (location.getAutoIndex() == true)
+		}
+		else if (location.getAutoIndex() == true)
 		{
 			std::cout << "in case autoIndex: off:\t" << location.getRoot() + location.directory << "\n";
-			directoryListing(location.getRoot() + location.directory );
+			directoryListing(location.getRoot() + location.directory);
 		}
 	}
 	return true;
@@ -234,7 +243,7 @@ bool	Client::handleDirs() {
 #include <unistd.h>
 #include <sys/wait.h>
 
-std::string Client::getCgiPath( std::string extension)
+std::string Client::getCgiPath(std::string extension)
 {
 	for (size_t i = 0; i < location.cgi.size(); i++)
 	{
@@ -244,20 +253,22 @@ std::string Client::getCgiPath( std::string extension)
 	return "";
 }
 
-std::string extractBodyFromContent(const std::string& content, std::string &header) {
-    // Find the end of headers (CRLFCRLF)
-    size_t found = content.find("\r\n\r\n");
-    // If headers were found, return the substring after the headers
-    if (found != std::string::npos) {
+std::string extractBodyFromContent(const std::string &content, std::string &header)
+{
+	// Find the end of headers (CRLFCRLF)
+	size_t found = content.find("\r\n\r\n");
+	// If headers were found, return the substring after the headers
+	if (found != std::string::npos)
+	{
 		header = content.substr(0, found + 4);
 		// std::cout  << header ;
-        return content.substr(found + 4);
-    }
-    // Headers not found, return an empty string or handle accordingly
-    return "";
+		return content.substr(found + 4);
+	}
+	// Headers not found, return an empty string or handle accordingly
+	return "";
 }
 
-std::string	Client::createNewFile(std::string prefix, size_t start, std::string suffix)
+std::string Client::createNewFile(std::string prefix, size_t start, std::string suffix)
 {
 	std::stringstream ss, filename;
 	ss << start;
@@ -269,43 +280,46 @@ std::string	Client::createNewFile(std::string prefix, size_t start, std::string 
 	{
 		throw std::ios_base::failure("ERROR: check Folder `www/TempFiles` existence or permissions for Write.\n");
 	}
-	close(!fd);
+	fd.close();
 	return filename.str();
 }
 
-bool	Client::handleFiles( std::string path) {
+bool Client::handleFiles(std::string path)
+{
 	size_t dotPos = path.find_last_of('.');
 	size_t markPos = path.find_last_of('?');
 	std::string extension;
-	if (dotPos != std::string::npos && (markPos == std::string::npos || dotPos > markPos)) {
+	if (dotPos != std::string::npos && (markPos == std::string::npos || dotPos > markPos))
+	{
 		extension = path.substr(dotPos);
 	}
 	// std::cout << extension << "\n";
 	size_t position = this->request->getPath().find('?');
 	std::string cgi_path = getCgiPath(extension);
-	if (cgi_path.length() > 0){
+	if (cgi_path.length() > 0)
+	{
 		std::stringstream ss;
-		ss <<  _serverBlock->getPort();
+		ss << _serverBlock->getPort();
 		char *env[] =
-		{
-			strdup(std::string("REDIRECT_STATUS=200").c_str()),
-			strdup(std::string("SCRIPT_FILENAME=" + path).c_str()),
-			strdup(std::string("CACHE_CONTROL=no-cache").c_str()),
-			(path == location.getRoot() + request->getPath()) ? strdup(std::string("QUERY_STRING=").c_str()): strdup(std::string("QUERY_STRING=" + request->getPath().substr(position+1)).c_str()),
-			strdup(std::string("REQUEST_METHOD=" + request->getMethod()).c_str()),
-			strdup(std::string("SERVER_NAME=localhost").c_str()),
-			strdup(std::string("SERVER_PORT=" + ss.str()).c_str()),
-			strdup(std::string("SERVER_PROTOCOL=HTTP/1.1").c_str()),
-			// strdup(std::string("SERVER_SOFTWARE=Weebserv/1.0").c_str()),
-			strdup(std::string("CONTENT_TYPE=" + request->getMimeType()).c_str()),
-			// strdup(std::string("CONTENT_LENGTH=" + request->getMimeType()).c_str()),
-			strdup(std::string("REDIRECT_STATUS=200").c_str()),
-			strdup(std::string("HTTP_COOKIE=" + request->getCookie()).c_str()),
-			NULL
-		};
+			{
+				strdup(std::string("REDIRECT_STATUS=200").c_str()),
+				strdup(std::string("SCRIPT_FILENAME=" + path).c_str()),
+				strdup(std::string("CACHE_CONTROL=no-cache").c_str()),
+				(path == location.getRoot() + request->getPath()) ? strdup(std::string("QUERY_STRING=").c_str()) : strdup(std::string("QUERY_STRING=" + request->getPath().substr(position + 1)).c_str()),
+				strdup(std::string("REQUEST_METHOD=" + request->getMethod()).c_str()),
+				strdup(std::string("SERVER_NAME=localhost").c_str()),
+				strdup(std::string("SERVER_PORT=" + ss.str()).c_str()),
+				strdup(std::string("SERVER_PROTOCOL=HTTP/1.1").c_str()),
+				// strdup(std::string("SERVER_SOFTWARE=Weebserv/1.0").c_str()),
+				strdup(std::string("CONTENT_TYPE=" + request->getMimeType()).c_str()),
+				// strdup(std::string("CONTENT_LENGTH=" + request->getMimeType()).c_str()),
+				strdup(std::string("REDIRECT_STATUS=200").c_str()),
+				strdup(std::string("HTTP_COOKIE=" + request->getCookie()).c_str()),
+				NULL};
 		// std::cout << tmpFile << "\n";
-		size_t start = get_time('s');
-		tmpFile = createNewFile("www/TempFiles/", start, "_cgi");
+		start_c = clock();
+		tmpFile = createNewFile("www/TempFiles/", start_c / CLOCKS_PER_SEC, "_cgi");
+		// std::cout << start << std::endl;
 		// std::cout << "cgi path: " << cgi_path << "the path is: " << path << std::endl;
 		// std::cout << "------> " << location.getRoot() + request->getPath() << std::endl;
 		int fd = fork();
@@ -313,28 +327,36 @@ bool	Client::handleFiles( std::string path) {
 			strdup(cgi_path.c_str()),
 			// (extension == ".go") ? strdup("run"): strdup(""),
 			strdup((location.getRoot() + request->getPath()).c_str()),
-			NULL
-		};
-		if (fd == 0) {
+			NULL};
+		if (fd == 0)
+		{
 			if (freopen(tmpFile.c_str(), "w", stdout) == NULL)
 				throw std::ios_base::failure("Failed to open File");
 			execve(argv[0], argv, env);
+			perror("execve:");
 			exit(0);
-		} else {
+		}
+		else
+		{
 			int state;
 			while (waitpid(fd, &state, WNOHANG) == 0)
 			{
-				if (get_time('s') > start + location.proxy_read_time_out)
-					kill(fd, SIGSEGV);
-				usleep(10000);
+				clock_t end = clock();
+				double elapsed_secs = static_cast<double>(end - start_c) / CLOCKS_PER_SEC;
+				if (elapsed_secs > (location.proxy_read_time_out) / 1000.0)
+				{
+					kill(fd, SIGKILL);
+					std::remove(tmpFile.c_str());
+					return true;
+				}
+				usleep(100000); 
 			}
 			readFromCgi();
-
 			ltrim(content, "\r\n");
 			size_t pos = content.find("\r\n\r\n");
 			std::string bodyCgi;
 			if (pos == std::string::npos)
-			{	
+			{
 				pos = content.find("\n\n");
 				bodyCgi = content.substr(pos + 2);
 			}
@@ -345,11 +367,19 @@ bool	Client::handleFiles( std::string path) {
 			// std::cout << "the cgi body: " << bodyCgi << std::endl;
 			std::stringstream result;
 			std::vector<std::string> splitedHeaders = ft_split(headers, "\r\n");
-			if (state == 0)
+			if (state == 0 && headers.find("Location: ") != std::string::npos)
+			{
+				// std::cout << headers << "\n\n";
+				parseHeaderLocation(splitedHeaders);
+				fsync(_fd);
+				std::remove(tmpFile.c_str());
+				return true;
+			}
+			else if (state == 0)
 			{
 				result << "HTTP/1.1 200 OK\r\n";
 				for (int i = 0; i < (int)splitedHeaders.size(); i++)
-				{	
+				{
 					if (splitedHeaders.at(i) != "\n")
 					{
 						result << splitedHeaders.at(i);
@@ -363,7 +393,7 @@ bool	Client::handleFiles( std::string path) {
 			{
 				result << "HTTP/1.1 500 Internal Server Error\r\n";
 				for (int i = 0; i < (int)splitedHeaders.size(); i++)
-				{	
+				{
 					if (splitedHeaders.at(i) != "\n")
 					{
 						result << splitedHeaders.at(i);
@@ -375,13 +405,17 @@ bool	Client::handleFiles( std::string path) {
 			}
 			write(_fd, result.str().c_str(), result.str().length());
 			std::remove(tmpFile.c_str());
+			fsync(_fd);
 			return true;
 		}
 		return true;
-	} else {
+	}
+	else
+	{
 		if (_fdFile == -1)
 			_fdFile = open(path.c_str(), O_RDONLY);
-		if (_fdFile > -1) {
+		if (_fdFile > -1)
+		{
 			std::string mimeType = getMimeTypeFromExtension(path);
 			if (isRead == false)
 			{
@@ -404,15 +438,36 @@ bool	Client::handleFiles( std::string path) {
 	}
 }
 
-void	Client::readFromCgi()
+void Client::parseHeaderLocation(std::vector<std::string> headers)
+{
+	std::stringstream response;
+	std::vector<std::string>::iterator it = headers.begin();
+	char *status;
+	if (it->find("Status: ") != std::string::npos)
+		status = (char *)it->c_str() + 8;
+	std::stringstream ss(status);
+	std::string word;
+	getline(ss, word, ' ');
+	int statusCode = atoi(word.c_str());
+	getline(ss, word, '\r');
+	std::string errorStatus = word;
+	response << "HTTP/1.1 " << statusCode << " " << errorStatus << "\r\n";
+	it++;
+	if (it != headers.end() && it->find("Location: ") != std::string::npos)
+		status = (char *)it->c_str() + 10;
+	response << "Location: " << status << "\r\n\r\n";
+	write(_fd, response.str().c_str(), response.str().length());
+}
+void Client::readFromCgi()
 {
 	std::fstream cgi_output_content;
 	cgi_output_content.open(tmpFile.c_str(), std::ios::in);
-	if(!cgi_output_content.is_open())
+	if (!cgi_output_content.is_open())
 		throw std::ios_base::failure("Failed to open file");
 	char buffer[1024];
 	size_t found = 0;
-	while (1) {
+	while (1)
+	{
 		cgi_output_content.read(buffer, 1024);
 		if (cgi_output_content.gcount() <= 0)
 			break;
@@ -431,27 +486,33 @@ void	Client::readFromCgi()
 	file_ouptut.open(tmpFile.c_str());
 	file_ouptut.seekg(0, std::ios::end);
 	content_length = file_ouptut.tellg();
-    content_length -= found;
-    file_ouptut.seekg(found, std::ios::beg);
+	content_length -= found;
+	file_ouptut.seekg(found, std::ios::beg);
 }
 
-bool Client::serveImage() {
-	if (_fdFile > -1){
+bool Client::serveImage()
+{
+	if (_fdFile > -1)
+	{
 		size_t chunkSize = 1024;
 		char buffer[chunkSize];
-		int	bytesRead = read(_fdFile, buffer, chunkSize);
-		if ( bytesRead > 0){
+		int bytesRead = read(_fdFile, buffer, chunkSize);
+		if (bytesRead > 0)
+		{
 			std::stringstream chunkHeader;
 			chunkHeader << std::hex << bytesRead << "\r\n";
 			chunkHeader.write(buffer, bytesRead);
 			chunkHeader << "\r\n";
 			ssize_t bytes_written = write(_fd, chunkHeader.str().c_str(), chunkHeader.str().length());
-			if (bytes_written == -1) {
+			if (bytes_written == -1)
+			{
 				return true;
 			}
 			fsync(_fd);
 			return false;
-		}else{
+		}
+		else
+		{
 			write(_fd, "0\r\n\r\n", 5);
 			close(_fdFile);
 			_fdFile = -1;
@@ -461,8 +522,9 @@ bool Client::serveImage() {
 	return true;
 }
 
-std::string	Client::getErrorPage( int errorCode ) {
-	for(size_t i = 0; i < _serverBlock->errorPages.size(); i++)
+std::string Client::getErrorPage(int errorCode)
+{
+	for (size_t i = 0; i < _serverBlock->errorPages.size(); i++)
 	{
 		if (_serverBlock->errorPages.at(i).first == errorCode)
 			return _serverBlock->errorPages.at(i).second;
@@ -472,7 +534,8 @@ std::string	Client::getErrorPage( int errorCode ) {
 	return "www/error/" + ss.str() + ".html";
 }
 
-bool Client::getMethodHandler(void) {
+bool Client::getMethodHandler(void)
+{
 	std::string requestedPath = this->request->getPath();
 	size_t queryStringPos = requestedPath.find('?');
 	std::string filePath = (queryStringPos != std::string::npos) ? requestedPath.substr(0, queryStringPos) : requestedPath;
@@ -490,7 +553,6 @@ bool Client::getMethodHandler(void) {
 	}
 	return true;
 }
-
 
 bool Client::run(void)
 {
@@ -527,7 +589,8 @@ Client::~Client()
 // 	write(_fd, response.str().c_str(), response.str().length());
 // }
 
-void	Client::sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string location) {
+void Client::sendRedirectResponse(int CODE, std::string ERRORTYPE, std::string location)
+{
 	std::stringstream response;
 	response << "HTTP/1.1 " << CODE << " " << ERRORTYPE << "\r\n";
 	std::cout << "location:\t" << location << "\n";
@@ -540,12 +603,12 @@ void	Client::sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string 
 
 // ======================= POST method ==========================================
 
-int	Client::is_request_well_formed()
+int Client::is_request_well_formed()
 {
 
 	// ***** FOR WALID {*******
 	// hanta checker if (location.isEmpty = true)
-		// sendError404
+	// sendError404
 	// ***** }          *******
 
 	if (location.isEmpty == true)
@@ -555,7 +618,7 @@ int	Client::is_request_well_formed()
 	}
 	std::string path = this->request->getPath();
 	std::string charAllowed = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=%";
-	int	badChar = 0;
+	int badChar = 0;
 
 	for (int i = 0; i < (int)path.length(); i++)
 	{
@@ -569,7 +632,7 @@ int	Client::is_request_well_formed()
 
 	std::map<std::string, std::string> ourHeaders = this->request->getHeaders();
 	std::map<std::string, std::string>::iterator it = ourHeaders.find("Transfer-Encoding");
-	//bad request
+	// bad request
 	if (badChar == 1 || this->request->getBad() == 1 || (request->getMethod() == "POST" && it == ourHeaders.end() && ourHeaders.find("Content-Length") == ourHeaders.end()))
 	{
 		std::cout << badChar << " - " << this->request->getBad() << std::endl;
@@ -595,21 +658,21 @@ int	Client::is_request_well_formed()
 	}
 	if ((request->getMethod() == "GET" && location.GET == false) ||
 		(request->getMethod() == "POST" && location.POST == false) ||
-			(request->getMethod() == "DELETE" && location.DELETE == false))
-		{
-			sendErrorResponse(405, "405 Method Not Allowed", getErrorPage(405), _fd);
-			return -1;
-		}
+		(request->getMethod() == "DELETE" && location.DELETE == false))
+	{
+		sendErrorResponse(405, "405 Method Not Allowed", getErrorPage(405), _fd);
+		return -1;
+	}
 	return (true);
 }
 
 // true -> close, flase continue;
-bool	Client::postMethodHandler(void)
+bool Client::postMethodHandler(void)
 {
 	// std::cout << data["upload"] << std::endl;
 	std::map<std::string, std::string> Headers = this->request->getHeaders();
-	char	buffer[1024] = {0};
-	int		bytesRead;
+	char buffer[1024] = {0};
+	int bytesRead;
 
 	if (fileCreated == false)
 	{
@@ -687,7 +750,7 @@ bool	Client::postMethodHandler(void)
 		sendErrorResponse(501, "Not Implemented", getErrorPage(501), _fd);
 		return true;
 	}
-	else if (controller == false &&  Headers.find("Content-Length") != Headers.end()) // ============> binary type
+	else if (controller == false && Headers.find("Content-Length") != Headers.end()) // ============> binary type
 	{
 		if (totalBytesRead < this->Content_Length)
 		{
@@ -713,7 +776,7 @@ bool	Client::postMethodHandler(void)
 	return this->upload->start();
 }
 
-void	Client::directoryListing(std::string path)
+void Client::directoryListing(std::string path)
 {
 	std::string html = generateDirectoryListing(path);
 
