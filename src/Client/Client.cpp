@@ -218,7 +218,7 @@ bool	Client::handleDirs() {
 				}
 			}
 		} else if(location.getAutoIndex() == false) {
-			(std::cout << "third" << "\n", sendErrorResponse(403, "Forbidden", ERROR403, _fd));
+			sendErrorResponse(403, "Forbidden", getErrorPage(403), _fd);
 		} else if (location.getAutoIndex() == true)
 		{
 			std::cout << "in case autoIndex: off:\t" << location.getRoot() + location.directory << "\n";
