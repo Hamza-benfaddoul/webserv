@@ -583,6 +583,7 @@ int	Client::is_request_well_formed()
 		return (-1);
 	}
 	// request uri containe more that 2048 char
+	std::cout << "path length: " << path.length() << std::endl;
 	if (path.length() > 2048)
 	{
 		sendErrorResponse(414, "Request-URI Too Long", getErrorPage(414), _fd);
@@ -666,12 +667,10 @@ bool	Client::postMethodHandler(void)
 			size_t len  = body.length();
 			if (chunkSizeInt > len)
 			{
-				std::cout << "body length: " << len << ", chunk size: " << chunkSizeInt << std::endl;
-				std::cout << "==>> : " << totalBytesRead << std::endl;
+				//std::cout << "body length: " << len << ", chunk size: " << chunkSizeInt << std::endl;
+				//std::cout << "==>> : " << totalBytesRead << std::endl;
 				bytesRead = read(_fd, buffer, 1024);
-				std::cout << "bytes Read: " << bytesRead << std::endl;
 				body.append(buffer, bytesRead);
-				std::cout << "after append" << std::endl;
 				// if (len + bytesRead > chunkSizeInt)
 				// {
 				// 	this->upload->writeToFileString(body, chunkSizeInt);

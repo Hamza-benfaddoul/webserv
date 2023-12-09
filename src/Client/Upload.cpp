@@ -124,7 +124,7 @@ bool Upload::start()
 				this->bodyContent.close();
 				std::remove(this->filename.c_str());
 				// sendResponse(404, "Not Found", "<html><body> <h1> 404 Not Found</h1> </body></html>", "text/html");
-				sendErrorResponse(404, "Request-URI Too Long", getErrorPage(404), this->fd_socket);
+				sendErrorResponse(414, "Request-URI Too Long", getErrorPage(414), this->fd_socket);
 				return true;
 			}
 			// Create an array of arguments for execve
@@ -165,7 +165,6 @@ bool Upload::start()
 		{
 			int	state;
 			int retPid = waitpid(pid, &state, WNOHANG);
-			std::cout << "ret pid: " << retPid << std::endl;
 			if (retPid == pid) // the child is done ==> the response could be success could be failed (depend on cgi output)
 			{
 				char	buffer[1024];
@@ -202,7 +201,24 @@ bool Upload::start()
 				std::stringstream result;
 				std::vector<std::string> splitedHeaders = ft_split(headers, "\r\n");
 				std::cout << "the state is: " << state << std::endl;
-				if (state == 0)
+				if (state == 0 && cgi_output.find("Location: ") != std::string::npos)
+				{
+					std::string status = splitedHeaders.at(0).substr(8);
+					result << "HTTP/1.1 ";
+					result << status;
+					result << "\r\n";
+					for (int i = 1; i < (int)splitedHeaders.size(); i++)
+					{
+						if (splitedHeaders.at(i) != "\n")
+						{
+							result << splitedHeaders.at(i);
+						}
+						result << "\r\n";
+					}
+					result << "\r\n";
+					result << bodyCgi;
+				}
+				else if (state == 0)
 				{
 					result << "HTTP/1.1 200 OK\r\n";
 					for (int i = 0; i < (int)splitedHeaders.size(); i++)
@@ -230,6 +246,7 @@ bool Upload::start()
 					result << "\r\n";
 					result << bodyCgi;
 				}
+				std::cout << "\n\n the final result: " << result.str() << std::endl;
 				write(fd_socket, result.str().c_str(), result.str().length());
 			}
 			else // calculate the time to live of the child proccess if > 60 means timeout();
