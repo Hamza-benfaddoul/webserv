@@ -324,6 +324,7 @@ bool	Client::handleFiles( std::string path) {
 			int state;
 			while (waitpid(fd, &state, WNOHANG) == 0)
 			{
+				std::cout << "no hang" << std::endl;
 				if (get_time('s') > start + location.proxy_read_time_out)
 					kill(fd, SIGSEGV);
 				usleep(10000);

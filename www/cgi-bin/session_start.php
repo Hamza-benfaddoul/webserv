@@ -1,8 +1,11 @@
 <?php
+    // Start the session
+    session_start();
 
-    session_start(); 
-        
-    $_SESSION["Rollnumber"] = "11"; 
-    $_SESSION["Name"] = "Ajay"; 
+    // Set session variables
+    $_SESSION['user_id'] = 123;
+    $_SESSION['username'] = 'john_doe';
 
+    echo 'Session created.';
+    exit();
 ?>
