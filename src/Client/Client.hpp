@@ -53,6 +53,7 @@ class Client {
 		std::string content;
 		// Response	*response;
 		std::string postRequest;
+		long fileSize;
 		clock_t end;
 		clock_t start_c;
 		static int 		cpt;
@@ -92,7 +93,7 @@ class Client {
 		void	directoryListing(std::string);
 		void	parseChunk();
 		bool	readFile( const std::string, std::ifstream &);
-		bool	serveImage();
+		bool	serveImage( std::string &ss );
 		std::string	createNewFile(std::string prefix, size_t start, std::string suffix);
 		
 		void parseHeaderLocation( std::vector<std::string >);
