@@ -53,7 +53,8 @@ class Client {
 		std::string content;
 		// Response	*response;
 		std::string postRequest;
-
+		clock_t end;
+		clock_t start_c;
 		static int 		cpt;
 		long			readd;
 		int				totalRead;
@@ -93,7 +94,8 @@ class Client {
 		bool	readFile( const std::string, std::ifstream &);
 		bool	serveImage();
 		std::string	createNewFile(std::string prefix, size_t start, std::string suffix);
-
+		
+		void parseHeaderLocation( std::vector<std::string >);
 		void	readFromCgi();
 		void	sendResponse(void);
 		void	sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string location);
