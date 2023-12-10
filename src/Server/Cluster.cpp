@@ -12,7 +12,6 @@
 
 #include "../../includes/main.hpp"
 
-
 Cluster::Cluster() {}
 
 Cluster::Cluster( std::vector<serverBlock> serverBlocks)

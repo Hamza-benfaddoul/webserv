@@ -235,18 +235,16 @@ bool Upload::start()
 				}
 				write(fd_socket, result.str().c_str(), result.str().length());
 			}
-			else // calculate the time to live of the child proccess if > 60 means timeout();
+			else
 			{
 				end = clock();
 				if (((double)(end - start_c)) / CLOCKS_PER_SEC > (double)location.proxy_read_time_out)
 				{
-					// send respone time out !!!!!
 					kill(pid, SIGKILL);
 					close(cgi_output_fd);
 					this->bodyContent.close();
 					std::remove(this->filename.c_str());
 					std::remove(cgi_output_filename.c_str());
-					// sendResponse(408, "Request Timeout", "<html><body><h1>408 Request Timeout</h1></body></html>", "text/html");
 					sendErrorResponse(408, "Request Timeout", getErrorPage(408), this->fd_socket);
 					return (true);
 				}

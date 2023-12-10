@@ -64,7 +64,9 @@ bool Client::receiveResponse(void)
 	if (!_readHeader)
 	{
 		if (this->request->getMethod().compare("GET") == 0)
+		{
 			return getMethodHandler();
+		}
 		else if (this->request->getMethod().compare("POST") == 0)
 		{
 			return postMethodHandler();
@@ -215,6 +217,7 @@ bool Client::handleDirs()
 					std::cout << "Cannot open directory\n";
 					return 1;
 				}
+				int fileCount = 0;
 				while ((pDirent = readdir(pDir)) != NULL)
 				{
 					if (strcmp(iter.c_str(), pDirent->d_name) == 0)
@@ -222,7 +225,14 @@ bool Client::handleDirs()
 						handleFiles(location.getRoot() + "/" + location.directory + "/" + iter);
 						return true;
 					}
+					fileCount++;
 				}
+				if (fileCount <= 2)
+				{
+					sendErrorResponse(403, "Forbidden", getErrorPage(403), _fd);
+					return true;
+				}
+				closedir(pDir);
 			}
 		}
 		else if (location.getAutoIndex() == false)
@@ -269,7 +279,6 @@ std::string Client::createNewFile(std::string prefix, size_t start, std::string 
 	std::stringstream ss, filename;
 	ss << start;
 	filename << prefix << start << suffix;
-	std::cout << filename.str().c_str() << std::endl;
 	std::fstream fd;
 	fd.open(filename.str().c_str(), std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
 	if (!fd.is_open())
@@ -292,7 +301,7 @@ bool Client::handleFiles(std::string path)
 	}
 	size_t position = this->request->getPath().find('?');
 	std::string cgi_path = getCgiPath(extension);
-	if (cgi_path.length() > 0)
+	if (cgi_path.length() > 0 && (extension == ".php" || extension == ".py" || extension == ".pl" || extension == ".go" || extension == ".sh"))
 	{
 		std::stringstream ss;
 		ss << _serverBlock->getPort();
@@ -306,9 +315,8 @@ bool Client::handleFiles(std::string path)
 				strdup(std::string("SERVER_NAME=localhost").c_str()),
 				strdup(std::string("SERVER_PORT=" + ss.str()).c_str()),
 				strdup(std::string("SERVER_PROTOCOL=HTTP/1.1").c_str()),
-				// strdup(std::string("SERVER_SOFTWARE=Weebserv/1.0").c_str()),
+				strdup(std::string("SERVER_SOFTWARE=Weebserv/1.0").c_str()),
 				strdup(std::string("CONTENT_TYPE=" + request->getMimeType()).c_str()),
-				// strdup(std::string("CONTENT_LENGTH=" + request->getMimeType()).c_str()),
 				strdup(std::string("REDIRECT_STATUS=200").c_str()),
 				strdup(std::string("HTTP_COOKIE=" + request->getCookie()).c_str()),
 				NULL};
@@ -396,6 +404,15 @@ bool Client::handleFiles(std::string path)
 			write(_fd, result.str().c_str(), result.str().length());
 			std::remove(tmpFile.c_str());
 			fsync(_fd);
+			for (size_t i = 0; env[i]; i++)
+			{
+				free(env[i]);
+			}
+			for (size_t i = 0; argv[i]; i++)
+			{
+				free(argv[i]);
+			}
+			
 			return true;
 		}
 		return true;
@@ -420,8 +437,7 @@ bool Client::handleFiles(std::string path)
 			if (isRead == true)
 			{
 				std::string head = headers.str();
-				bool t  = serveImage(head);
-				return t;
+				return serveImage(head);
 			}
 		}
 		// return readFile(path);
@@ -483,32 +499,40 @@ void Client::readFromCgi()
 
 bool Client::serveImage(std::string &headers)
 {
+	bool endOfFile = false;
     if (_fdFile > -1)
     {
         size_t chunkSize = 1024;
         char buffer[chunkSize];
-        int bytesRead = read(_fdFile, buffer, chunkSize);
+        size_t bytesRead = read(_fdFile, buffer, chunkSize);
         if (bytesRead > 0)
-        {
-            std::stringstream chunkHeader;
-            chunkHeader << std::hex << bytesRead << "\r\n";
-            headers.append(chunkHeader.str());
-            headers.append(buffer, bytesRead);
-            headers.append("\r\n");
-            write(_fd, headers.c_str(), headers.length());
-            fsync(_fd);
-            return false;
-        }
-        else if (bytesRead == 0)
-        {
-            write(_fd, "0\r\n\r\n", 5);
-            close(_fdFile);
-            isRead = false;
-            _fdFile = -1;
-            return true;
-        }
+		{
+			std::stringstream chunkHeader;
+			chunkHeader << std::hex << bytesRead << "\r\n";
+			headers.append(chunkHeader.str());
+			headers.append(buffer, bytesRead);
+			headers.append("\r\n");
+			if (bytesRead < chunkSize)
+			{
+				headers.append("0\r\n\r\n");
+				close(_fdFile);
+				isRead = false;
+				_fdFile = -1;
+				endOfFile = true;
+			}
+		}
+		else if (bytesRead == 0)
+		{
+			headers.append("0\r\n\r\n");
+			close(_fdFile);
+			isRead = false;
+			_fdFile = -1;
+			endOfFile = true;
+		}
     }
-    return true;
+	write(_fd, headers.c_str(), headers.length());
+	fsync(_fd);
+    return endOfFile;
 }
 std::string Client::getErrorPage(int errorCode)
 {
@@ -581,7 +605,6 @@ void Client::sendRedirectResponse(int CODE, std::string ERRORTYPE, std::string l
 {
 	std::stringstream response;
 	response << "HTTP/1.1 " << CODE << " " << ERRORTYPE << "\r\n";
-	std::cout << "location:\t" << location << "\n";
 	response << "Location: " << location << "\r\n";
 	// response << "Connection: close\r\n";
 	response << "\r\n";
