@@ -10,7 +10,6 @@ Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::s
 
 Upload::~Upload()
 {
-	std::cout << "the file should be removed is: " << this->filename << std::endl;
 	unlink(this->filename.c_str());
 	std::remove(this->filename.c_str());
 }
@@ -88,7 +87,6 @@ bool Upload::start()
 		if (forked == false)
 		{
 			size_t sizeOfFile = FileSize(this->filename);
-			std::cout << "size of file: " << sizeOfFile << " max body size: " << max_body_size << std::endl;
 			if ((long)sizeOfFile > max_body_size)
 			{
 				std::remove(this->filename.c_str());
@@ -96,13 +94,11 @@ bool Upload::start()
 				return true;
 			}
 			std::stringstream streamFileSize;
-			std::cout << "total body size: " << sizeOfFile << std::endl;
 			streamFileSize << totalBodySize;
 			forked = true;
 			std::string uri = request->getPath();
 			std::string cgi_path_script = location.getRoot() + uri;
 			// Create an array of envirment that cgi need.
-			std::cout << "the content type is : " << content_type << std::endl;
 			char *env[] = 
 			{
 				strdup(std::string("REDIRECT_STATUS=100").c_str()),
@@ -189,7 +185,6 @@ bool Upload::start()
 					std::cerr << "Error reading from file." << std::endl;
 				}
 				// end reading from the file ---------------------
-				std::cout << "--" << cgi_output << "--" << std::endl;
 				ltrim(cgi_output, "\r\n");
 				size_t pos = cgi_output.find("\r\n\r\n");
 				std::string bodyCgi;
@@ -200,12 +195,9 @@ bool Upload::start()
 				}
 				else
 					bodyCgi = cgi_output.substr(pos + 4);
-				std::cout << "the pos is: " << pos << std::endl;
 				std::string headers = cgi_output.substr(0, pos);
-				std::cout << "the cgi body: " << bodyCgi << std::endl;
 				std::stringstream result;
 				std::vector<std::string> splitedHeaders = ft_split(headers, "\r\n");
-				std::cout << "the state is: " << state << std::endl;
 				if (state == 0)
 				{
 					result << "HTTP/1.1 200 OK\r\n";
@@ -236,18 +228,16 @@ bool Upload::start()
 				}
 				write(fd_socket, result.str().c_str(), result.str().length());
 			}
-			else // calculate the time to live of the child proccess if > 60 means timeout();
+			else
 			{
 				end = clock();
 				if (((double)(end - start_c)) / CLOCKS_PER_SEC > (double)location.proxy_read_time_out)
 				{
-					// send respone time out !!!!!
 					kill(pid, SIGKILL);
 					close(cgi_output_fd);
 					this->bodyContent.close();
 					std::remove(this->filename.c_str());
 					std::remove(cgi_output_filename.c_str());
-					// sendResponse(408, "Request Timeout", "<html><body><h1>408 Request Timeout</h1></body></html>", "text/html");
 					sendErrorResponse(408, "Request Timeout", getErrorPage(408), this->fd_socket);
 					return (true);
 				}

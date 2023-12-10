@@ -233,7 +233,6 @@ long convertToBytes(const char *value) {
 long	convertToBytes( std::string value )
 {
 	bool status = isValidClientMaxBodySize(value.c_str());
-    std::cout << status << "\n";
 	long size = 0;
 	if (status == true)
 	{

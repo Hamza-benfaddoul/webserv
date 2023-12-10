@@ -17,6 +17,7 @@ serverBlock::serverBlock(): locations() {
 	port = -1;
 	autoIndex = 0;
 	client_max_body_size = 1048576;
+	// host = 2130706433;
 }
 // void serverBlock::setLocation(std::map<std::string, std::string> vec) { this->locations.push_back(vec); }
 void serverBlock::setAttribute(std::string key, std::string value) { this->attributes[key] = value; }
@@ -28,6 +29,8 @@ uint32_t serverBlock::getHost(void) const {
 	uint32_t res = 0;
 	std::string parsed;
 	std::stringstream input_stringstream(host);
+	if (host.length() == 0)
+		return 2130706433;
 	int count = 24;
 	while (getline(input_stringstream,parsed,'.'))
 	{
@@ -62,8 +65,6 @@ void    serverBlock::parseBlock(  )
 		port = 0;
 	if (getRoot().length() == 0)
 		root = "www";
-	if (getHost() == 0)
-		host = "127.0.0.1";
 	// Location
 	// std::cout << "END OF SERVER INFOS\n\n\n";
 

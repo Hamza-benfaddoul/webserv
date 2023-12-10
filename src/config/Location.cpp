@@ -26,7 +26,6 @@ void	Location::parseReturn( std::string value )
 		if (word.length() > 0)
 			len++;
 	}
-	std::cout << len << "\n";
 	if (len > 2)
 		throw std::invalid_argument("ERROR: Invalid argument in return `" + value + "`");
 	else {
