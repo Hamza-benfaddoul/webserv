@@ -56,11 +56,9 @@ void    serverBlock::parseBlock(  )
 			parseAutoIndex(attr_it->second);
 	}
 	if (getPort() == -1)
-		port = 0;
+		port = 80;
 	if (getRoot().length() == 0)
 		root = "www";
-	if (getHost() == 0)
-		host = "127.0.0.1";
 	// Location
 	// std::cout << "END OF SERVER INFOS\n\n\n";
 
