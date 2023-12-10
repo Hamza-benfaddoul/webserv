@@ -63,7 +63,7 @@ bool Client::receiveResponse(void)
 	}
 	if (!_readHeader)
 	{
-		// std::cout << "--> " << this->request->getMethod() << std::endl;
+		std::cout << "--> " << location.proxy_read_time_out << std::endl;
 		if (this->request->getMethod().compare("GET") == 0)
 			return getMethodHandler();
 		else if (this->request->getMethod().compare("POST") == 0)

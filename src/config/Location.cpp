@@ -90,6 +90,7 @@ void    Location::parseLocations( void )
 			parseProxyReadTimeOut(iterator->second);
 		else if (iterator->first == "return")
 			parseReturn(iterator->second);
+		
 			// parsePortNumber(iterator->second);
 		// std::cout << iterator->first << ": " << iterator->second << std::endl;
 	}

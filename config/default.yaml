@@ -15,7 +15,7 @@ server:
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.php, /usr/bin/php-cgi]
     - cgi_path: [.sh, /usr/bin/bash]
-    - proxy_read_time_out: 4s
+    - proxy_read_time_out: 2m
 
 # - return: 301   http://www.google.com
 

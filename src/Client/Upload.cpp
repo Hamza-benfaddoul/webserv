@@ -252,6 +252,7 @@ bool Upload::start()
 			else // calculate the time to live of the child proccess if > 60 means timeout();
 			{
 				end = clock();
+				std::cout << "end - start: " << ((double)(end - start_c)) / CLOCKS_PER_SEC << " time out: " << location.proxy_read_time_out << std::endl;
 				if (((double)(end - start_c)) / CLOCKS_PER_SEC > (double)location.proxy_read_time_out)
 				{
 					// send respone time out !!!!!
