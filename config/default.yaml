@@ -1,22 +1,21 @@
 server:
-  listen: 2663
-  server_name: localhost
-  root: www
-  client_max_body_size: 20k
+  listen: 5000
+  host: 10.13.100.100
+  root: www/
+  client_max_body_size: 1g
   error_pages: 403 www/error/200.html
 
   location:
     - path: "/"
-    - root:   www
+    - root:   www/
     - upload: on
     - autoindex: on
     - methods: [DELETE, POST, GET]
     - index:  [index.html, index.htm]
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.php, /usr/bin/php-cgi]
-    - cgi_path: [.sh, /usr/bin/sh]
-    - cgi_path: [.go, /usr/local/go/bin/go]
-    - proxy_read_time_out: 60s
+    - cgi_path: [.sh, /usr/bin/bash]
+    - proxy_read_time_out: 4s
 
 # - return: 301   http://www.google.com
 
@@ -32,6 +31,9 @@ server:
     - methods: [GET, POST]
     - upload: off
     - index: cgi-bin/index.sh
+    - cgi_path: [.py, /usr/bin/python3]
+    - cgi_path: [.sh, /usr/bin/bash]
+    - cgi_path: [.php, /usr/bin/php-cgi]
 
 
     # - cgi_path: [.py, /usr/bin/python3]
@@ -39,29 +41,29 @@ server:
     # - cgi_path: [.php, /usr/bin/php-cgi]
 
 
-server:
-  listen: 6981
-  server_name: localhost
-  root: www
-  location:
-    - path: "/dsdsd"
-    - root:   www
-    - autoindex: on
-    - methods: [GET, POST]
-    - index:  [index.html, index.htm]
+# server:
+#   listen: 6981
+#   server_name: localhost
+#   root: www
+#   location:
+#     - path: "/dsdsd"
+#     - root:   www
+#     - autoindex: on
+#     - methods: [GET, POST]
+#     - index:  [index.html, index.htm]
 
-  location:
-    - path: "/bootstrap"
-    - root:   www
-    - autoindex: on
-    - methods: [GET, POST]
-    - index:  [index.html, index.htm]
+#   location:
+#     - path: "/bootstrap"
+#     - root:   www
+#     - autoindex: on
+#     - methods: [GET, POST]
+#     - index:  [index.html, index.htm]
 
-  location:
-    - path: "/cgi-bin"
-    - root: www
-    - methods: [GET, POST]
-    - upload: on
-    - index: cgi-bin/index.sh
-    - cgi_path: [.py, /usr/lib/python3]
-    - cgi_path: [.sh, /bin/bash]
+#   location:
+#     - path: "/cgi-bin"
+#     - root: www
+#     - methods: [GET, POST]
+#     - upload: on
+#     - index: cgi-bin/index.sh
+#     - cgi_path: [.py, /usr/lib/python3]
+#     - cgi_path: [.sh, /usr/bin/bash]

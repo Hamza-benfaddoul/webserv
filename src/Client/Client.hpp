@@ -30,6 +30,7 @@
 #define ERROR405 "www/error/405.html"
 #define ERROR408 "www/error/408.html"
 #define ERROR400 "www/error/400.html"
+#define ERROR413 "www/error/413.html"
 #define ERROR414 "www/error/414.html"
 #define ERROR501 "www/error/501.html"
 #define ERROR200 "www/error/200.html"
@@ -52,7 +53,9 @@ class Client {
 		std::string content;
 		// Response	*response;
 		std::string postRequest;
-
+		long fileSize;
+		clock_t end;
+		clock_t start_c;
 		static int 		cpt;
 		long			readd;
 		int				totalRead;
@@ -61,7 +64,7 @@ class Client {
 		bool			fileCreated;
 		bool			canIStart;
 		bool			hasCgi;
-		int				totalBytesRead;
+		long				totalBytesRead;
 		int				Content_Length;
 		bool			_readHeader;
 		serverBlock		*_serverBlock;
@@ -90,9 +93,10 @@ class Client {
 		void	directoryListing(std::string);
 		void	parseChunk();
 		bool	readFile( const std::string, std::ifstream &);
-		bool	serveImage();
+		bool	serveImage( std::string &ss );
 		std::string	createNewFile(std::string prefix, size_t start, std::string suffix);
-
+		
+		void parseHeaderLocation( std::vector<std::string >);
 		void	readFromCgi();
 		void	sendResponse(void);
 		void	sendRedirectResponse( int CODE, std::string ERRORTYPE, std::string location);

@@ -34,7 +34,8 @@ private:
     clock_t end;
     bool hasCgi;
     std::string cgi_path;
-
+    long max_body_size;
+    long    totalBodySize;
     // Client client;
 
 public:
@@ -51,6 +52,7 @@ public:
     void    endLine();
     void	createFile();
     bool    start();
+    void    setTotalBodySize(long   in_total);
     std::string	checkType(std::string path);
     std::string	getErrorPage( int errorCode );
 

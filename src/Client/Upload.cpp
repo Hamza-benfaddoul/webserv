@@ -5,11 +5,11 @@ Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::s
 {
 	// std::cout << "*****************************************construcot" << std::endl;
 	forked = false;
+	max_body_size = _serverBlock->client_max_body_size;
 }
 
 Upload::~Upload()
 {
-	std::cout << "the file should be removed is: " << this->filename << std::endl;
 	unlink(this->filename.c_str());
 	std::remove(this->filename.c_str());
 }
@@ -81,35 +81,34 @@ bool Upload::start()
 
 	if (it != ourHeaders.end())
 		content_type = it->second;
-	// the cgi case.
-	// std::cout << "the path to cgi script: |||" << std::endl;
-	// std::string readTimeOut = ourLocations["proxy_read_time_out"];
-	
+	// the cgi case.	
 	if (cgi_path.length() > 0)
 	{
 		if (forked == false)
 		{
-			// std::cout << "readTimeOut: " << readTimeOut << std::endl;
 			size_t sizeOfFile = FileSize(this->filename);
+			if ((long)sizeOfFile > max_body_size)
+			{
+				std::remove(this->filename.c_str());
+				sendErrorResponse(413, "Request Entity Too Large", ERROR413, this->fd_socket);
+				return true;
+			}
 			std::stringstream streamFileSize;
-			streamFileSize << sizeOfFile;
+			streamFileSize << totalBodySize;
 			forked = true;
-			// std::cout << "the location path: " << location.getLocationPath() << std::endl;
 			std::string uri = request->getPath();
 			std::string cgi_path_script = location.getRoot() + uri;
-			// std::cout << "cgi path scritp: " << cgi_path_script << std::endl;
 			// Create an array of envirment that cgi need.
-			// std::cout << "the content type is: " << content_type << std::endl;
 			char *env[] = 
 			{
-				strdup(std::string("REDIRECT_STATUS=200").c_str()),
+				strdup(std::string("REDIRECT_STATUS=100").c_str()),
 				strdup(std::string("SCRIPT_FILENAME=" + cgi_path_script).c_str()),
 				strdup(std::string("REQUEST_METHOD=" + this->request->getMethod()).c_str()),
-				strdup(std::string("QUERY_STRING=").c_str()),
 				strdup(std::string("HTTP_COOKIE=").c_str()),
 				strdup(std::string("HTTP_CONTENT_TYPE=" + content_type).c_str()),
 				strdup(std::string("CONTENT_TYPE=" + content_type).c_str()),
-				strdup(std::string("CONTENT_LENGTH=" + streamFileSize.str()).c_str()),
+				(content_type == "application/x-www-form-urlencoded") ? strdup(std::string("CONTENT_LENGTH=" + streamFileSize.str()).c_str()) : NULL,
+				// strdup(std::string("CONTENT_LENGTH=" + streamFileSize.str()).c_str()),
 				NULL
 			};
 			// discover the path of cgi script.
@@ -122,9 +121,7 @@ bool Upload::start()
 				for (int i = 0; env[i]; i++)
 				{
 					if (env[i])
-					{
 						free(env[i]);
-					}
 				}
 				this->bodyContent.close();
 				std::remove(this->filename.c_str());
@@ -159,25 +156,16 @@ bool Upload::start()
 				exit(0);
 			}
 			// free all ressources of argv and env.
-			bool envBool, argvBool = true;
-			for (int i = 0; env[i] || argv[i]; i++)
-			{
-				if (envBool && env[i])
-				{
-					free(env[i]);
-					envBool = false;
-				}
-				if (argvBool && argv[i])
-				{
-					free(argv[i]);
-					argvBool = false;
-				}	
-			}
+			for (int i = 0; env[i] != NULL; i++)
+				free(env[i]);
+			for (int i = 0; argv[i] != NULL; i++)
+				free(argv[i]);
+			
 		}
 		if (forked == true) // here the cgi is allready runing so we must wait for hem until finished or (time out in case of error), also we must WNOHANG its a webserv you know :)
 		{
-			int retPid = waitpid(pid, NULL, WNOHANG);
-			// std::cout << "redPid: " << retPid << " and pid: " << pid << std::endl;
+			int	state;
+			int retPid = waitpid(pid, &state, WNOHANG);
 			if (retPid == pid) // the child is done ==> the response could be success could be failed (depend on cgi output)
 			{
 				char	buffer[1024];
@@ -197,62 +185,60 @@ bool Upload::start()
 					std::cerr << "Error reading from file." << std::endl;
 				}
 				// end reading from the file ---------------------
-				std::cout << "--" << cgi_output << "--" << std::endl;
-				size_t pos = cgi_output.find("\n\n");
-				std::string body_cgi;
+				ltrim(cgi_output, "\r\n");
+				size_t pos = cgi_output.find("\r\n\r\n");
+				std::string bodyCgi;
 				if (pos == std::string::npos)
-				{
-					pos = cgi_output.find("\r\n\r\n");
-					body_cgi = cgi_output.substr(pos + 4, cgi_output.length());
+				{	
+					pos = cgi_output.find("\n\n");
+					bodyCgi = cgi_output.substr(pos + 2);
 				}
 				else
-					body_cgi = cgi_output.substr(pos + 2, cgi_output.length());
-				std::cout << "the pos: " << pos << std::endl;
+					bodyCgi = cgi_output.substr(pos + 4);
 				std::string headers = cgi_output.substr(0, pos);
-				std::vector<std::string> splited_cgi_output;
-				if (headers.find("\r\n") != std::string::npos)
-					splited_cgi_output = ft_split(headers, "\r\n");
-				else if (headers.find("\n") != std::string::npos)
-					splited_cgi_output = ft_split(headers, "\n");
-
-				for (int i = 0; i < (int)splited_cgi_output.size(); i++)
+				std::stringstream result;
+				std::vector<std::string> splitedHeaders = ft_split(headers, "\r\n");
+				if (state == 0)
 				{
-					rtrim(splited_cgi_output.at(i), "\r\n");
-					ltrim(splited_cgi_output.at(i), "\r\n");
-					if (i == 0)
-					{
-						std::string http = std::string("HTTP/1.1 ");
-						std::string lineRes = splited_cgi_output.at(0);
-						lineRes = lineRes.substr(8, lineRes.length());
-						http.append(lineRes);
-						lineRes = http;
-						splited_cgi_output.at(0) = lineRes;
+					result << "HTTP/1.1 200 OK\r\n";
+					for (int i = 0; i < (int)splitedHeaders.size(); i++)
+					{	
+						if (splitedHeaders.at(i) != "\n")
+						{
+							result << splitedHeaders.at(i);
+						}
+						result << "\r\n";
 					}
-					// std::cout << "--> " << splited_cgi_output.at(i) << "--" << std::endl;
-					if (splited_cgi_output.at(i).length() > 2)
-					{
-						write(this->fd_socket, splited_cgi_output.at(i).c_str(), splited_cgi_output.at(i).length());
-						write(this->fd_socket, "\r\n", 2);
-					}
+					result << "\r\n";
+					result << bodyCgi;
 				}
-				write(this->fd_socket, "\r\n", 2);
-				// std::cout << "body cgi -----------------------------> " << body_cgi << "*-*-*-*-*-*-*-*" << std::endl;
-				write(this->fd_socket ,body_cgi.c_str(), body_cgi.length());
+				else
+				{
+					result << "HTTP/1.1 500 Internal Server Error\r\n";
+					for (int i = 0; i < (int)splitedHeaders.size(); i++)
+					{	
+						if (splitedHeaders.at(i) != "\n")
+						{
+							result << splitedHeaders.at(i);
+						}
+						result << "\r\n";
+					}
+					result << "\r\n";
+					result << bodyCgi;
+				}
+				write(fd_socket, result.str().c_str(), result.str().length());
 			}
-			else // calculate the time to live of the child proccess if > 60 means timeout();
+			else
 			{
 				end = clock();
 				if (((double)(end - start_c)) / CLOCKS_PER_SEC > (double)location.proxy_read_time_out)
 				{
-					// send respone time out !!!!!
 					kill(pid, SIGKILL);
 					close(cgi_output_fd);
 					this->bodyContent.close();
 					std::remove(this->filename.c_str());
 					std::remove(cgi_output_filename.c_str());
-					// sendResponse(408, "Request Timeout", "<html><body><h1>408 Request Timeout</h1></body></html>", "text/html");
 					sendErrorResponse(408, "Request Timeout", getErrorPage(408), this->fd_socket);
-
 					return (true);
 				}
 				return false;
@@ -286,6 +272,11 @@ bool Upload::start()
 		return (true);
 	}
 	return (false);
+}
+
+void Upload::setTotalBodySize(long in_total)
+{
+	this->totalBodySize = in_total;
 }
 
 void    Upload::writeToFileString(const std::string &source, size_t size)

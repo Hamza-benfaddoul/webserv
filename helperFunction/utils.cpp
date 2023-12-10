@@ -167,6 +167,22 @@ void	sendErrorResponse( int CODE, std::string ERRORTYPE, std::string errorTypeFi
 	write(_fd, response.str().c_str(), response.str().length());
 }
 
+
+size_t FileSize(std::string filename) {
+    FILE* file = fopen(filename.c_str(), "rb");
+    if (file == NULL) {
+        // handle file open error
+        return -1;
+    }
+
+    fseek(file, 0, SEEK_END);
+    size_t size = ftell(file);
+
+    fclose(file);
+
+    return size;
+}
+
 bool isValidClientMaxBodySize(const char *value) {
     char *endptr;
     long size = strtol(value, &endptr, 10);
@@ -217,7 +233,6 @@ long convertToBytes(const char *value) {
 long	convertToBytes( std::string value )
 {
 	bool status = isValidClientMaxBodySize(value.c_str());
-    std::cout << status << "\n";
 	long size = 0;
 	if (status == true)
 	{
@@ -227,20 +242,5 @@ long	convertToBytes( std::string value )
     }
     else
         throw std::invalid_argument("ERROR: invalid argument in client_max_body_size: `" +value+ "`");
-    return size;
-}
-
-size_t FileSize(std::string filename) {
-    FILE* file = fopen(filename.c_str(), "rb");
-    if (file == NULL) {
-        // handle file open error
-        return -1;
-    }
-
-    fseek(file, 0, SEEK_END);
-    size_t size = ftell(file);
-
-    fclose(file);
-
     return size;
 }

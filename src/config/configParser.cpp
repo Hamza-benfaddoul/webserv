@@ -63,7 +63,8 @@ bool configParser::loadFile()
 			while (std::getline(file, line)) {
 				size_t commentPos = line.find('#');
 				if (commentPos != std::string::npos) {
-					line = line.substr(0, commentPos);
+					throw std::runtime_error("Error: Found an invalid pattern related to #!!!.");
+					// line = line.substr(0, commentPos);
 				}
 				if (line.empty()) {
 					continue;
@@ -126,6 +127,11 @@ void	configParser::parseLocation( std::ifstream& file, serverBlock &currentServe
 	std::string line;
 
     while (std::getline(file, line)) {
+		size_t commentPos = line.find('#');
+		if (commentPos != std::string::npos) {
+			throw std::runtime_error("Error: Found an invalid pattern related to #!!!.");
+			// line = line.substr(0, commentPos);
+		}
         if (line.find("location:") != std::string::npos ) {
             exceptionsManager("Location Blocks Must be differentiated with a new line!!!.");
         } else if (line.empty()) {
