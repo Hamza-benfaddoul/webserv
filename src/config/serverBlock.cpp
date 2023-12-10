@@ -29,8 +29,6 @@ uint32_t serverBlock::getHost(void) const {
 	uint32_t res = 0;
 	std::string parsed;
 	std::stringstream input_stringstream(host);
-	if (host.length() == 0)
-		return 2130706433;
 	int count = 24;
 	while (getline(input_stringstream,parsed,'.'))
 	{
