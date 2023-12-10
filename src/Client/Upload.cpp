@@ -81,9 +81,6 @@ bool Upload::start()
 	{
 		if (forked == false)
 		{
-			// size_t sizeOfFile = 	(this->filename);
-			std::cout << "size of file: " << totalBodySize << " max body size: " << max_body_size << std::endl;
-			// if ((long)sizeOfFile > max_body_size)
 			if ((long)totalBodySize > max_body_size)
 			{
 				std::remove(this->filename.c_str());
@@ -91,13 +88,11 @@ bool Upload::start()
 				return true;
 			}
 			std::stringstream streamFileSize;
-			// std::cout << "total body size: " << sizeOfFile << std::endl;
 			streamFileSize << totalBodySize;
 			forked = true;
 			std::string uri = request->getPath();
 			std::string cgi_path_script = location.getRoot() + uri;
 			// Create an array of envirment that cgi need.
-			std::cout << "the content type is : " << content_type << std::endl;
 			char *env[] = 
 			{
 				strdup(std::string("REDIRECT_STATUS=100").c_str()),
@@ -107,10 +102,8 @@ bool Upload::start()
 				strdup(std::string("HTTP_CONTENT_TYPE=" + content_type).c_str()),
 				strdup(std::string("CONTENT_TYPE=" + content_type).c_str()),
 				(content_type == "application/x-www-form-urlencoded") ? strdup(std::string("CONTENT_LENGTH=" + streamFileSize.str()).c_str()) : NULL,
-				// strdup(std::string("CONTENT_LENGTH=" + streamFileSize.str()).c_str()),
 				NULL
 			};
-			// discover the path of cgi script.
 		
 			// check if the script (cgi) is regular (exist and the path is valid)
 			struct stat fileStat;
@@ -124,7 +117,6 @@ bool Upload::start()
 				}
 				this->bodyContent.close();
 				std::remove(this->filename.c_str());
-				// sendResponse(404, "Not Found", "<html><body> <h1> 404 Not Found</h1> </body></html>", "text/html");
 				sendErrorResponse(414, "Request-URI Too Long", getErrorPage(414), this->fd_socket);
 				return true;
 			}
@@ -140,9 +132,7 @@ bool Upload::start()
 			ss << this->cpt;
 			std::string cptAsString = ss.str();
 			cgi_output_filename = "www/TempFiles/cgi_output" + cptAsString;
-			//std::cout << "cgi_path: " << cgi_path << " cgi path script: " << cgi_path_script << std::endl;
 			start_c = clock();
-			std::cout << "----------> fork again" << std::endl;
 			pid = fork();
 			if (pid == 0) // the child proccess
 			{
@@ -185,7 +175,6 @@ bool Upload::start()
 					std::cerr << "Error reading from file." << std::endl;
 				}
 				// end reading from the file ---------------------
-				std::cout << "--" << cgi_output << "--" << std::endl;
 				ltrim(cgi_output, "\r\n");
 				size_t pos = cgi_output.find("\r\n\r\n");
 				std::string bodyCgi;
@@ -196,12 +185,9 @@ bool Upload::start()
 				}
 				else
 					bodyCgi = cgi_output.substr(pos + 4);
-				std::cout << "the pos is: " << pos << std::endl;
 				std::string headers = cgi_output.substr(0, pos);
-				std::cout << "the cgi body: " << bodyCgi << std::endl;
 				std::stringstream result;
 				std::vector<std::string> splitedHeaders = ft_split(headers, "\r\n");
-				std::cout << "the state is: " << state << std::endl;
 				if (state == 0 && cgi_output.find("Location: ") != std::string::npos)
 				{
 					std::string status = splitedHeaders.at(0).substr(8);
@@ -247,13 +233,11 @@ bool Upload::start()
 					result << "\r\n";
 					result << bodyCgi;
 				}
-				std::cout << "\n\n the final result: " << result.str() << std::endl;
 				write(fd_socket, result.str().c_str(), result.str().length());
 			}
 			else // calculate the time to live of the child proccess if > 60 means timeout();
 			{
 				end = clock();
-				std::cout << "end - start: " << ((double)(end - start_c)) / CLOCKS_PER_SEC << " time out: " << location.proxy_read_time_out << std::endl;
 				if (((double)(end - start_c)) / CLOCKS_PER_SEC > (double)location.proxy_read_time_out)
 				{
 					// send respone time out !!!!!
@@ -285,7 +269,6 @@ bool Upload::start()
 		int	resRename = std::rename(this->filename.c_str(), newFileName.c_str());
 		if (resRename != 0)
 			throw std::runtime_error("Failed to upload file");
-		// sendResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>", "text/html");
 		sendErrorResponse(200, "OK", getErrorPage(200), this->fd_socket);
 		return (true);
 	}

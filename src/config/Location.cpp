@@ -26,7 +26,6 @@ void	Location::parseReturn( std::string value )
 		if (word.length() > 0)
 			len++;
 	}
-	std::cout << len << "\n";
 	if (len > 2)
 		throw std::invalid_argument("ERROR: Invalid argument in return `" + value + "`");
 	else {
@@ -148,7 +147,6 @@ void	Location::parseCGI()
 
 void Location::parseAutoIndex( const std::string &value)
 {
-	// std::cout << value.find("on") << std::endl;
 	if (std::string("on").compare(value) != 0 && std::string("off").compare(value) != 0 )
 		throw std::runtime_error("ERROR: Auto Index EXPECTS just `on` or `off` !!!.");
 	else if (value == "on")
@@ -160,7 +158,6 @@ void Location::parseAutoIndex( const std::string &value)
 
 void    Location::parseRoot( const std::string &root )
 {
-	// std::cout << root << std::endl;
 	if (!root.empty())
 	{
 		struct stat s;
@@ -225,3 +222,4 @@ void Location::exceptionsManager(std::string c)
 {
 	throw std::runtime_error("Error: " + c);
 }
+

@@ -15,7 +15,7 @@ server:
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.php, /usr/bin/php-cgi]
     - cgi_path: [.sh, /usr/bin/bash]
-    - proxy_read_time_out: 30s
+    - proxy_read_time_out: 60s
 
 # - return: 301   http://www.google.com
 
@@ -30,16 +30,10 @@ server:
     - root: www
     - methods: [GET, POST]
     - upload: on
-    - index: cgi-bin/index.sh
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.sh, /usr/bin/bash]
     - cgi_path: [.php, /usr/bin/php-cgi]
-    - proxy_read_time_out: 30s
-
-
-    # - cgi_path: [.py, /usr/bin/python3]
-    # - cgi_path: [.sh, /bin/sh]
-    # - cgi_path: [.php, /usr/bin/php-cgi]
+    - proxy_read_time_out: 60s
 
 
 server:

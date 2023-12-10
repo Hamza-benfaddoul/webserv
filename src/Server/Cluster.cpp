@@ -74,7 +74,6 @@ void Cluster::run(void)
 				if (client_fd == -1) {
 					throw std::runtime_error("could not accept client");
 				}
-				// std::cout << " server index " << events[n].data.fd - _servers[0]->getFd() << std::endl;
 				_clients.at(client_fd) = new Client(client_fd,_servers[events[n].data.fd - _servers[0]->getFd()]->_serverBlock);
 				ev.events = EPOLLIN | EPOLLOUT;
 				ev.data.fd = client_fd;
