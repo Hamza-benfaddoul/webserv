@@ -1,8 +1,8 @@
 server:
   listen: 5000
-  host: 0.0.0.0 
+  host: 0.0.0.0
   root: www/
-  client_max_body_size: 1g
+  client_max_body_size: 2g
   error_pages: 403 www/error/200.html
 
   location:
@@ -15,8 +15,7 @@ server:
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.php, /usr/bin/php-cgi]
     - cgi_path: [.sh, /usr/bin/bash]
-    - proxy_read_time_out: 4s
-
+    - proxy_read_time_out: 60s
 
   location:
     - path: "/bootstrap"
@@ -28,9 +27,8 @@ server:
     - path: "/cgi-bin"
     - root: www
     - methods: [GET, POST]
-    - upload: off
-    - index: cgi-bin/index.sh
+    - upload: on
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.sh, /usr/bin/bash]
     - cgi_path: [.php, /usr/bin/php-cgi]
-
+    - proxy_read_time_out: 60s
