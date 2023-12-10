@@ -28,7 +28,6 @@ void    Server::run(void)
 {
 	initServerSocket();
 	listenToClient();
-	setsockopt(_socketfd, SOL_SOCKET, SO_REUSEADDR, NULL, sizeof(int));
 }
 
 void    Server::initServerSocket()
@@ -37,13 +36,13 @@ void    Server::initServerSocket()
 	if (_socketfd < 0)
 		throw std::runtime_error("could not create socket");
 	this->setupIp();
-
 	int opt = 1;
     if (setsockopt(_socketfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1) {
         perror("setsockopt failed");
         close(_socketfd);
         exit(EXIT_FAILURE);
     }
+
 	// bind the IP and port to the server
 	std::stringstream ss;
 	ss <<  (getIp()>> 24) << "."  << ((getIp()>> 16)& 255) << "." << ((getIp()>> 8)&255) << "." << (getIp()&255) << ":" << getPort();

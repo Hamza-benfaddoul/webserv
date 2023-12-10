@@ -456,7 +456,7 @@ void Client::parseHeaderLocation(std::vector<std::string> headers)
 {
 	std::stringstream response;
 	std::vector<std::string>::iterator it = headers.begin();
-	char *status;
+	char *status = NULL;
 	if (it->find("Status: ") != std::string::npos)
 		status = (char *)it->c_str() + 8;
 	std::stringstream ss(status);
