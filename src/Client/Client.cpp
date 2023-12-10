@@ -204,7 +204,6 @@ bool Client::handleDirs()
 	{
 		if (location.index.length() > 0)
 		{
-			std::cout << "second\n";
 			std::stringstream index(location.index);
 			std::string iter;
 			while (getline(index, iter, ','))
@@ -234,7 +233,6 @@ bool Client::handleDirs()
 		}
 		else if (location.getAutoIndex() == true)
 		{
-			std::cout << "in case autoIndex: off:\t" << location.getRoot() + location.directory << "\n";
 			directoryListing(location.getRoot() + location.directory);
 		}
 	}
@@ -284,6 +282,7 @@ std::string Client::createNewFile(std::string prefix, size_t start, std::string 
 	return filename.str();
 }
 
+
 bool Client::handleFiles(std::string path)
 {
 	size_t dotPos = path.find_last_of('.');
@@ -298,6 +297,7 @@ bool Client::handleFiles(std::string path)
 	std::string cgi_path = getCgiPath(extension);
 	if (cgi_path.length() > 0)
 	{
+		std::cout << "cgi path" << std::endl;
 		std::stringstream ss;
 		ss << _serverBlock->getPort();
 		char *env[] =
@@ -358,7 +358,8 @@ bool Client::handleFiles(std::string path)
 			if (pos == std::string::npos)
 			{
 				pos = content.find("\n\n");
-				bodyCgi = content.substr(pos + 2);
+				if (pos != std::string::npos)
+					bodyCgi = content.substr(pos + 2);
 			}
 			else
 				bodyCgi = content.substr(pos + 4);
@@ -417,20 +418,23 @@ bool Client::handleFiles(std::string path)
 		if (_fdFile > -1)
 		{
 			std::string mimeType = getMimeTypeFromExtension(path);
+			std::stringstream headers;
 			if (isRead == false)
 			{
-				std::stringstream headers;
 				headers << "HTTP/1.1 200 OK\r\n";
 				headers << "Content-Type: " << mimeType << "\r\n";
 				headers << "Transfer-Encoding: chunked\r\n";
 				headers << "Content-Disposition: inline\r\n";
 				headers << "Connection: close\r\n\r\n";
-				write(_fd, headers.str().c_str(), headers.str().length());
 				isRead = true;
 			}
 			if (isRead == true)
 			{
-				return serveImage();
+				std::string head = headers.str();
+				bool t  = serveImage(head);
+				std::cout << "t:\t"<< t << "\n";
+				std::cout << "read:\t" << isRead << std::endl;
+				return t;
 			}
 		}
 		// return readFile(path);
@@ -490,38 +494,38 @@ void Client::readFromCgi()
 	file_ouptut.seekg(found, std::ios::beg);
 }
 
-bool Client::serveImage()
+bool Client::serveImage(std::string &headers)
 {
-	if (_fdFile > -1)
-	{
-		size_t chunkSize = 1024;
-		char buffer[chunkSize];
-		int bytesRead = read(_fdFile, buffer, chunkSize);
-		if (bytesRead > 0)
-		{
-			std::stringstream chunkHeader;
-			chunkHeader << std::hex << bytesRead << "\r\n";
-			chunkHeader.write(buffer, bytesRead);
-			chunkHeader << "\r\n";
-			ssize_t bytes_written = write(_fd, chunkHeader.str().c_str(), chunkHeader.str().length());
-			if (bytes_written == -1)
-			{
-				return true;
-			}
-			fsync(_fd);
-			return false;
-		}
-		else
-		{
-			write(_fd, "0\r\n\r\n", 5);
-			close(_fdFile);
-			_fdFile = -1;
-			return true;
-		}
-	}
-	return true;
+    if (_fdFile > -1)
+    {
+        size_t chunkSize = 1024;
+        char buffer[chunkSize];
+        int bytesRead = read(_fdFile, buffer, chunkSize);
+        std::cout << "bytesRead:\t" << bytesRead << "\n";
+        if (bytesRead > 0)
+        {
+            std::stringstream chunkHeader;
+            chunkHeader << std::hex << bytesRead << "\r\n";
+            headers.append(chunkHeader.str());
+            headers.append(buffer, bytesRead);
+            headers.append("\r\n");
+            std::cout << "_fd:\t" << _fd << "\n";
+            write(_fd, headers.c_str(), headers.length());
+            fsync(_fd);
+            std::cout << "content_length:\t" << content_length << "\n";
+            return false;
+        }
+        else if (bytesRead == 0)
+        {
+            write(_fd, "0\r\n\r\n", 5);
+            close(_fdFile);
+            isRead = false;
+            _fdFile = -1;
+            return true;
+        }
+    }
+    return true;
 }
-
 std::string Client::getErrorPage(int errorCode)
 {
 	for (size_t i = 0; i < _serverBlock->errorPages.size(); i++)
