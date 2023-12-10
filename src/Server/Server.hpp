@@ -19,7 +19,7 @@ class serverBlock;
 
 class Server {
 	public:
-		Server(uint32_t ip=INADDR_ANY, unsigned short port=80, serverBlock *serverBlock=NULL);
+		Server(uint32_t ip=0, unsigned short port=80, serverBlock *serverBlock=NULL);
 		~Server();
 
 		int	getFd() const;

@@ -60,7 +60,7 @@ void    serverBlock::parseBlock(  )
 			parseClientMaxBodySize(attr_it->second);
 	}
 	if (getPort() == -1)
-		port = 0;
+		port = 80;
 	if (getRoot().length() == 0)
 		root = "www";
 	// Location
