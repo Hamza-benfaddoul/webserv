@@ -1,7 +1,8 @@
 #include "Upload.hpp"
 #include "../../includes/main.hpp"
 
-Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path, serverBlock *serverBlock) :request(req), _serverBlock(serverBlock) ,cpt(in_cpt), location(in_location), fd_socket(in_fd), cgi_path(in_cgi_path)
+Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path, serverBlock *serverBlock)
+	: request(req), _serverBlock(serverBlock) ,cpt(in_cpt), fd_socket(in_fd), cgi_path(in_cgi_path) , location(in_location)
 {
 	forked = false;
 	max_body_size = _serverBlock->client_max_body_size;
