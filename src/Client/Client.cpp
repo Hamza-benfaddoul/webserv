@@ -73,8 +73,15 @@ bool Client::receiveResponse(void)
 		}
 		else if (this->request->getMethod().compare("DELETE") == 0)
 			return deleteMethodHandler();
-		else
+		else if (this->request->getMethod().compare("HEAD") == 0)
+		{
+			sendHeadErrorResponse(501, "Not Implemented", _fd);
+			return true;
+		} else
+		{
 			sendErrorResponse(501, "Not Implemented", getErrorPage(501), _fd);
+			return true;
+		}
 	}
 	return false;
 }
