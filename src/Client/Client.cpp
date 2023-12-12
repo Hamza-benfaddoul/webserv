@@ -73,6 +73,8 @@ bool Client::receiveResponse(void)
 		}
 		else if (this->request->getMethod().compare("DELETE") == 0)
 			return deleteMethodHandler();
+		else
+			sendErrorResponse(501, "Not Implemented", getErrorPage(501), _fd);
 	}
 	return false;
 }
@@ -353,7 +355,7 @@ bool Client::handleFiles(std::string path)
 					std::remove(tmpFile.c_str());
 					return true;
 				}
-				usleep(100000); 
+				usleep(100000);
 			}
 			readFromCgi();
 			ltrim(content, "\r\n");
@@ -419,7 +421,7 @@ bool Client::handleFiles(std::string path)
 			{
 				free(argv[i]);
 			}
-			
+
 			return true;
 		}
 		return true;
@@ -488,13 +490,13 @@ void Client::readFromCgi()
 		content.append(buffer, cgi_output_content.gcount());
 		if (cgi_output_content.eof())
 			break;
-		found = content.find("\r\n\r\n");
-		if (found != std::string::npos)
-		{
-			found += 4;
-			content.substr(0, found);
-			break;
-		}
+		// found = content.find("\r\n\r\n");
+		// if (found != std::string::npos)
+		// {
+		// 	found += 4;
+		// 	content.substr(0, found);
+		// 	break;
+		// }
 	}
 	file_ouptut.close();
 	file_ouptut.open(tmpFile.c_str());
