@@ -39,6 +39,8 @@ void	Upload::createFile()
 }
 
 // start the proccess of uploading files ...
+
+
 void	Upload::sendResponse(int CODE, std::string TYPE, std::string content, std::string c_type) 
 {
 	std::stringstream response;
@@ -76,7 +78,7 @@ bool Upload::start()
 
 	if (it != ourHeaders.end())
 		content_type = it->second;
-	// the cgi case.	
+	// the cgi case.
 	if (cgi_path.length() > 0)
 	{
 		if (forked == false)
@@ -93,7 +95,7 @@ bool Upload::start()
 			std::string uri = request->getPath();
 			std::string cgi_path_script = location.getRoot() + uri;
 			// Create an array of envirment that cgi need.
-			char *env[] = 
+			char *env[] =
 			{
 				strdup(std::string("REDIRECT_STATUS=100").c_str()),
 				strdup(std::string("SCRIPT_FILENAME=" + cgi_path_script).c_str()),
@@ -102,8 +104,10 @@ bool Upload::start()
 				strdup(std::string("HTTP_CONTENT_TYPE=" + content_type).c_str()),
 				strdup(std::string("CONTENT_TYPE=" + content_type).c_str()),
 				(content_type == "application/x-www-form-urlencoded") ? strdup(std::string("CONTENT_LENGTH=" + streamFileSize.str()).c_str()) : NULL,
+				// strdup(std::string("CONTENT_LENGTH=" + streamFileSize.str()).c_str()),
 				NULL
 			};
+			// discover the path of cgi script.
 		
 			// check if the script (cgi) is regular (exist and the path is valid)
 			struct stat fileStat;
@@ -121,7 +125,7 @@ bool Upload::start()
 				return true;
 			}
 			// Create an array of arguments for execve
-			char* argv[] = 
+			char* argv[] =
 			{
 				strdup(cgi_path.c_str()),
 				strdup(cgi_path_script.c_str()),
@@ -150,7 +154,7 @@ bool Upload::start()
 				free(env[i]);
 			for (int i = 0; argv[i] != NULL; i++)
 				free(argv[i]);
-			
+
 		}
 		if (forked == true) // here the cgi is allready runing so we must wait for hem until finished or (time out in case of error), also we must WNOHANG its a webserv you know :)
 		{
@@ -179,7 +183,7 @@ bool Upload::start()
 				size_t pos = cgi_output.find("\r\n\r\n");
 				std::string bodyCgi;
 				if (pos == std::string::npos)
-				{	
+				{
 					pos = cgi_output.find("\n\n");
 					bodyCgi = cgi_output.substr(pos + 2);
 				}
@@ -209,7 +213,7 @@ bool Upload::start()
 				{
 					result << "HTTP/1.1 200 OK\r\n";
 					for (int i = 0; i < (int)splitedHeaders.size(); i++)
-					{	
+					{
 						if (splitedHeaders.at(i) != "\n")
 						{
 							result << splitedHeaders.at(i);
@@ -223,7 +227,7 @@ bool Upload::start()
 				{
 					result << "HTTP/1.1 500 Internal Server Error\r\n";
 					for (int i = 0; i < (int)splitedHeaders.size(); i++)
-					{	
+					{
 						if (splitedHeaders.at(i) != "\n")
 						{
 							result << splitedHeaders.at(i);

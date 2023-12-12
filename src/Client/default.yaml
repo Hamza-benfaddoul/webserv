@@ -1,8 +1,8 @@
 server:
   listen: 5000
-  host: 0.0.0.0
+  host: 127.0.0.1
   root: www/
-  client_max_body_size: 2g
+  client_max_body_size: 1g
   error_pages: 403 www/error/200.html
 
   location:
@@ -15,7 +15,8 @@ server:
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.php, /usr/bin/php-cgi]
     - cgi_path: [.sh, /usr/bin/bash]
-    - proxy_read_time_out: 60s
+    - proxy_read_time_out: 4s
+
 
   location:
     - path: "/uploads"
@@ -28,7 +29,7 @@ server:
     - root: www
     - methods: [GET, POST]
     - upload: on
+    - index: cgi-bin/index.sh
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.sh, /usr/bin/bash]
     - cgi_path: [.php, /usr/bin/php-cgi]
-    - proxy_read_time_out: 60s
