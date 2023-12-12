@@ -45,7 +45,7 @@ bool Client::receiveResponse(void)
 		{
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
-			this->request->printRequest();
+			// this->request->printRequest();
 			this->body = this->request->getBodyString();
 			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
 			if (Oheaders.find("Content-Length") != Oheaders.end())
@@ -185,7 +185,6 @@ bool Client::checkType()
 
 bool Client::checkDir(std::string path)
 {
-	// std::cout << "path:\t" << path << "\n";
 	for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++) // LOcations
 	{
 		std::string locationPath, initialPath;
@@ -325,9 +324,6 @@ bool Client::handleFiles(std::string path)
 				NULL};
 		start_c = clock();
 		tmpFile = createNewFile("www/TempFiles/", start_c / CLOCKS_PER_SEC, "_cgi");
-		// std::cout << start << std::endl;
-		// std::cout << "cgi path: " << cgi_path << "the path is: " << path << std::endl;
-		// std::cout << "------> " << location.getRoot() + request->getPath() << std::endl;
 		int fd = fork();
 		char *argv[] = {
 			strdup(cgi_path.c_str()),
@@ -369,14 +365,11 @@ bool Client::handleFiles(std::string path)
 			}
 			else
 				bodyCgi = content.substr(pos + 4);
-			// std::cout << "the pos is: " << pos << std::endl;
 			std::string headers = content.substr(0, pos);
-			// std::cout << "the cgi body: " << bodyCgi << std::endl;
 			std::stringstream result;
 			std::vector<std::string> splitedHeaders = ft_split(headers, "\r\n");
 			if (state == 0 && headers.find("Location: ") != std::string::npos)
 			{
-				// std::cout << headers << "\n\n";
 				parseHeaderLocation(splitedHeaders);
 				fsync(_fd);
 				std::remove(tmpFile.c_str());
@@ -458,7 +451,7 @@ void Client::parseHeaderLocation(std::vector<std::string> headers)
 {
 	std::stringstream response;
 	std::vector<std::string>::iterator it = headers.begin();
-	char *status;
+	char *status = NULL;
 	if (it->find("Status: ") != std::string::npos)
 		status = (char *)it->c_str() + 8;
 	std::stringstream ss(status);
@@ -688,7 +681,6 @@ int Client::is_request_well_formed()
 // true -> close, flase continue;
 bool Client::postMethodHandler(void)
 {
-	// std::cout << data["upload"] << std::endl;
 	std::map<std::string, std::string> Headers = this->request->getHeaders();
 	char buffer[1024] = {0};
 	int bytesRead;
@@ -732,7 +724,7 @@ bool Client::postMethodHandler(void)
 			iss >> std::hex >> chunkSizeInt;
 			if (chunkSizeInt != 0)
 			{
-				totalBytesRead += chunkSizeInt;
+				// totalBytesRead += chunkSizeInt;
 				chunkSizeString.clear();
 				body.erase(0, pos + 2);
 				isChunkComplete = false;
@@ -745,13 +737,15 @@ bool Client::postMethodHandler(void)
 		}
 		else
 		{
-			if (chunkSizeInt > body.length())
+			size_t len  = body.length();
+			if (chunkSizeInt > len)
 			{
 				bytesRead = read(_fd, buffer, 1024);
 				body.append(buffer, bytesRead);
 			}
 			else
 			{
+				totalBytesRead += chunkSizeInt;
 				this->upload->writeToFileString(body, chunkSizeInt);
 				body.erase(0, chunkSizeInt);
 				isChunkComplete = true;

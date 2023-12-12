@@ -1,8 +1,17 @@
-<?php 
-  
-session_start(); 
-  
-echo 'The Name of the student is :' . $_SESSION["Name"] . '<br>';  
-echo 'The Roll number of the student is :' . $_SESSION["Rollnumber"] . '<br>'; 
-  
-?> 
+<?php
+    // Start the session
+    session_start();
+
+    // Access session variables
+    if (isset($_SESSION["user_id"]) && isset($_SESSION["username"]))
+    {
+        $user_id = $_SESSION['user_id'];
+        $username = $_SESSION['username'];
+        echo "User ID: $user_id<br>";
+        echo "Username: $username";
+    }
+    else
+        echo "The session is empty !!!!";
+
+
+?>

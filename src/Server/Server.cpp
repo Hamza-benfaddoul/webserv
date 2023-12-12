@@ -28,7 +28,6 @@ void    Server::run(void)
 {
 	initServerSocket();
 	listenToClient();
-	setsockopt(_socketfd, SOL_SOCKET, SO_REUSEADDR, NULL, sizeof(int));
 }
 
 void    Server::initServerSocket()
@@ -37,16 +36,16 @@ void    Server::initServerSocket()
 	if (_socketfd < 0)
 		throw std::runtime_error("could not create socket");
 	this->setupIp();
-
 	int opt = 1;
     if (setsockopt(_socketfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1) {
         perror("setsockopt failed");
         close(_socketfd);
         exit(EXIT_FAILURE);
     }
+
 	// bind the IP and port to the server
 	std::stringstream ss;
-	ss <<  (getIp()>> 24) << "."  << ((getIp()>> 16)& 255) << "." << ((getIp()>> 8)&255) << ":" << getPort();
+	ss <<  (getIp()>> 24) << "."  << ((getIp()>> 16)& 255) << "." << ((getIp()>> 8)&255) << "." << (getIp()&255) << ":" << getPort();
 	if (bind(_socketfd, (const struct sockaddr *)&_server_address, (socklen_t)sizeof(_server_address)) < 0)
 		throw std::runtime_error("Could not bind the address " + ss.str());
 }
@@ -64,6 +63,7 @@ void    Server::listenToClient()
 	std::cout << (getIp() 			& 255)	<< ":";
 	std::cout <<  getPort() 				<< std::endl;
 }
+
 
 int	Server::getFd() const { return (_socketfd);}
 int Server::getIp() const { return (_ip); };

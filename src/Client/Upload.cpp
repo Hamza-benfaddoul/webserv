@@ -1,9 +1,9 @@
 #include "Upload.hpp"
 #include "../../includes/main.hpp"
 
-Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path, serverBlock *serverBlock) :request(req), _serverBlock(serverBlock) ,cpt(in_cpt), location(in_location), fd_socket(in_fd), cgi_path(in_cgi_path)
+Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path, serverBlock *serverBlock)
+	: request(req), _serverBlock(serverBlock) ,cpt(in_cpt), fd_socket(in_fd), cgi_path(in_cgi_path) , location(in_location)
 {
-	// std::cout << "*****************************************construcot" << std::endl;
 	forked = false;
 	max_body_size = _serverBlock->client_max_body_size;
 }
@@ -32,19 +32,16 @@ void	Upload::createFile()
 	std::string cptAsString = ss.str();
 	filename = "www/uploads/file" + cptAsString;
 	this->bodyContent.open(filename.c_str(), std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
-	// this->bodyContent.open(filename.c_str(), std::ios::in | std::ios::out | std::ios::trunc);
 	if (!this->bodyContent.is_open())
 	{
 		throw std::ios_base::failure("Failed to open file");
-		// std::cout << "<< !!!! >> the file was not created successfuly" << std::endl;
-		// return;
 	}
 }
 
 // start the proccess of uploading files ...
 
 
-void	Upload::sendResponse(int CODE, std::string TYPE, std::string content, std::string c_type)
+void	Upload::sendResponse(int CODE, std::string TYPE, std::string content, std::string c_type) 
 {
 	std::stringstream response;
 	response << "HTTP/1.1 " << CODE << " " << TYPE << "\r\n";
@@ -86,8 +83,7 @@ bool Upload::start()
 	{
 		if (forked == false)
 		{
-			size_t sizeOfFile = FileSize(this->filename);
-			if ((long)sizeOfFile > max_body_size)
+			if ((long)totalBodySize > max_body_size)
 			{
 				std::remove(this->filename.c_str());
 				sendErrorResponse(413, "Request Entity Too Large", ERROR413, this->fd_socket);
@@ -107,12 +103,12 @@ bool Upload::start()
 				strdup(std::string("HTTP_COOKIE=").c_str()),
 				strdup(std::string("HTTP_CONTENT_TYPE=" + content_type).c_str()),
 				strdup(std::string("CONTENT_TYPE=" + content_type).c_str()),
-				// (content_type == "application/x-www-form-urlencoded") ? strdup(std::string("CONTENT_LENGTH=" + streamFileSize.str()).c_str()) : NULL,
+				(content_type == "application/x-www-form-urlencoded") ? strdup(std::string("CONTENT_LENGTH=" + streamFileSize.str()).c_str()) : NULL,
 				// strdup(std::string("CONTENT_LENGTH=" + streamFileSize.str()).c_str()),
 				NULL
 			};
 			// discover the path of cgi script.
-
+		
 			// check if the script (cgi) is regular (exist and the path is valid)
 			struct stat fileStat;
     		bool is_file = (stat(cgi_path_script.c_str(), &fileStat) == 0) && S_ISREG(fileStat.st_mode);
@@ -125,8 +121,7 @@ bool Upload::start()
 				}
 				this->bodyContent.close();
 				std::remove(this->filename.c_str());
-				// sendResponse(404, "Not Found", "<html><body> <h1> 404 Not Found</h1> </body></html>", "text/html");
-				sendErrorResponse(404, "Request-URI Too Long", getErrorPage(404), this->fd_socket);
+				sendErrorResponse(414, "Request-URI Too Long", getErrorPage(414), this->fd_socket);
 				return true;
 			}
 			// Create an array of arguments for execve
@@ -141,7 +136,6 @@ bool Upload::start()
 			ss << this->cpt;
 			std::string cptAsString = ss.str();
 			cgi_output_filename = "www/TempFiles/cgi_output" + cptAsString;
-			//std::cout << "cgi_path: " << cgi_path << " cgi path script: " << cgi_path_script << std::endl;
 			start_c = clock();
 			pid = fork();
 			if (pid == 0) // the child proccess
@@ -198,7 +192,24 @@ bool Upload::start()
 				std::string headers = cgi_output.substr(0, pos);
 				std::stringstream result;
 				std::vector<std::string> splitedHeaders = ft_split(headers, "\r\n");
-				if (state == 0)
+				if (state == 0 && cgi_output.find("Location: ") != std::string::npos)
+				{
+					std::string status = splitedHeaders.at(0).substr(8);
+					result << "HTTP/1.1 ";
+					result << status;
+					result << "\r\n";
+					for (int i = 1; i < (int)splitedHeaders.size(); i++)
+					{
+						if (splitedHeaders.at(i) != "\n")
+						{
+							result << splitedHeaders.at(i);
+						}
+						result << "\r\n";
+					}
+					result << "\r\n";
+					result << bodyCgi;
+				}
+				else if (state == 0)
 				{
 					result << "HTTP/1.1 200 OK\r\n";
 					for (int i = 0; i < (int)splitedHeaders.size(); i++)
@@ -260,7 +271,6 @@ bool Upload::start()
 		int	resRename = std::rename(this->filename.c_str(), newFileName.c_str());
 		if (resRename != 0)
 			throw std::runtime_error("Failed to upload file");
-		// sendResponse(200, "OK", "<html><body><h1>200 Success</h1></body></html>", "text/html");
 		sendErrorResponse(200, "OK", getErrorPage(200), this->fd_socket);
 		return (true);
 	}

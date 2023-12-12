@@ -24,7 +24,6 @@ private:
     int cpt;
     std::string filename;
     std::string cgi_output_filename;
-    Location location;
     int     fd_socket;
     bool    forked;
     int	cgi_output_fd;
@@ -39,6 +38,7 @@ private:
     // Client client;
 
 public:
+    Location location;
     // Upload(Request *req, int in_cpt, Client in_client);
     // Upload(Request *req, int in_cpt, Location in_location, int in_fd, bool in_hasCgi);
     Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::string in_cgi_path, serverBlock *serverBlock);
