@@ -56,6 +56,11 @@ class Client {
 		long fileSize;
 		clock_t end;
 		clock_t start_c;
+		// -----------------------------
+		pid_t				ss1;
+		bool				forked;
+		int					fd;
+		// -----------------------------
 		static int 		cpt;
 		long			readd;
 		int				totalRead;
@@ -95,7 +100,7 @@ class Client {
 		bool	readFile( const std::string, std::ifstream &);
 		bool	serveImage( std::string &ss );
 		std::string	createNewFile(std::string prefix, size_t start, std::string suffix);
-		
+
 		void parseHeaderLocation( std::vector<std::string >);
 		void	readFromCgi();
 		void	sendResponse(void);

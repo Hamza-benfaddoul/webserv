@@ -1,4 +1,5 @@
 <?php
 
-phpinfo();
+sleep(5);
+echo "sleepped";
 ?>
