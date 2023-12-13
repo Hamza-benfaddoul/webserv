@@ -292,6 +292,7 @@ void Upload::setTotalBodySize(long in_total)
 void    Upload::writeToFileString(const std::string &source, size_t size)
 {
 	bodyContent.write(source.data(), size);
+
 }
 
 void    Upload::writeToFileString(const std::string &source)

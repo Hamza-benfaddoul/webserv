@@ -69,12 +69,21 @@ bool Client::receiveResponse(void)
 		}
 		else if (this->request->getMethod().compare("POST") == 0)
 		{
+			// if the body of the post method is empty return error response.
+			if (body.length() == 0)
+			{
+				sendErrorResponse(400, "Bad Request", getErrorPage(400), _fd);
+				return true;
+			}
 			return postMethodHandler();
 		}
 		else if (this->request->getMethod().compare("DELETE") == 0)
 			return deleteMethodHandler();
 		else
+		{
 			sendErrorResponse(501, "Not Implemented", getErrorPage(501), _fd);
+			return true;
+		}
 	}
 	return false;
 }
@@ -701,7 +710,7 @@ bool Client::postMethodHandler(void)
 		totalBytesRead = body.length();
 		if (Headers.find("Content-Length") != Headers.end() && totalBytesRead >= Content_Length)
 		{
-			this->upload->writeToFileString(body.data(), body.length());
+			this->upload->writeToFileString(body, body.length());
 			this->upload->endLine();
 			fileCreated = true;
 			this->upload->setTotalBodySize(totalBytesRead);
