@@ -251,6 +251,7 @@ bool Client::handleDirs()
 		}
 		else if (location.getAutoIndex() == true)
 		{
+			std::cout << "directory listing" << location.getRoot() + location.directory << "\n";
 			directoryListing(location.getRoot() + location.directory);
 		}
 	}
