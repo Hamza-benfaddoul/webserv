@@ -1,5 +1,5 @@
 #!/bin/bash
-
+sleep 120
 echo "Content-Type: image/jpg"
 echo ""
 

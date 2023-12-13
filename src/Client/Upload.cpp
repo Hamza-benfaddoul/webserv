@@ -10,7 +10,7 @@ Upload::Upload(Request *req, int in_cpt, Location in_location, int in_fd, std::s
 
 Upload::~Upload()
 {
-	unlink(this->filename.c_str());
+	// unlink(this->filename.c_str());
 	std::remove(this->filename.c_str());
 }
 
@@ -41,7 +41,7 @@ void	Upload::createFile()
 // start the proccess of uploading files ...
 
 
-void	Upload::sendResponse(int CODE, std::string TYPE, std::string content, std::string c_type) 
+void	Upload::sendResponse(int CODE, std::string TYPE, std::string content, std::string c_type)
 {
 	std::stringstream response;
 	response << "HTTP/1.1 " << CODE << " " << TYPE << "\r\n";
@@ -108,7 +108,7 @@ bool Upload::start()
 				NULL
 			};
 			// discover the path of cgi script.
-		
+
 			// check if the script (cgi) is regular (exist and the path is valid)
 			struct stat fileStat;
     		bool is_file = (stat(cgi_path_script.c_str(), &fileStat) == 0) && S_ISREG(fileStat.st_mode);
@@ -133,9 +133,8 @@ bool Upload::start()
 			};
 			// create the file where the out of cgi get stored
 			std::stringstream ss;
-			ss << this->cpt;
-			std::string cptAsString = ss.str();
-			cgi_output_filename = "www/TempFiles/cgi_output" + cptAsString;
+			ss << (clock() / CLOCKS_PER_SEC);
+			cgi_output_filename = "www/TempFiles/cgi_output" + ss.str();
 			start_c = clock();
 			pid = fork();
 			if (pid == 0) // the child proccess
@@ -166,7 +165,7 @@ bool Upload::start()
 				std::fstream cgi_output_content;
 				cgi_output_content.open(cgi_output_filename.c_str(), std::ios::in);
 				if(!cgi_output_content.is_open())
-					throw std::ios_base::failure("Failed to open file");
+					throw std::ios_base::failure("Failed to open fileeeeeeeeeeee");
 				// start reading from the file -------------------
 				while (1)
 				{

@@ -162,7 +162,15 @@ void	sendErrorResponse( int CODE, std::string ERRORTYPE, std::string errorTypeFi
 	response << "Content-Type: text/html; charset=UTF-8\r\n";
 	response << "Content-Length: " << content.length() << "\r\n";
 	response << "\r\n";
-	response << content;
+    response << content;
+
+	write(_fd, response.str().c_str(), response.str().length());
+}
+void	sendHeadErrorResponse( int CODE, std::string ERRORTYPE, int _fd) {
+	std::stringstream response;
+	response << "HTTP/1.1 " << CODE << " " << ERRORTYPE << "\r\n";
+	response << "Content-Type: text/html; charset=UTF-8\r\n";
+	response << "\r\n";
 
 	write(_fd, response.str().c_str(), response.str().length());
 }
