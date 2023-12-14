@@ -37,4 +37,4 @@ server:
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.sh, /usr/bin/bash]
     - cgi_path: [.php, /usr/bin/php-cgi]
-    - proxy_read_time_out: 10s
+    - proxy_read_time_out: 60s

@@ -46,7 +46,7 @@ bool Client::receiveResponse(void)
 		{
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
-			this->request->printRequest();
+			// this->request->printRequest();
 			this->body = this->request->getBodyString();
 			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
 			if (Oheaders.find("Content-Length") != Oheaders.end())
@@ -55,6 +55,7 @@ bool Client::receiveResponse(void)
 				Content_Length = strtod(C_Length.c_str(), NULL);
 			}
 			location = getCurrentLocation();
+			std::cout << "here: " << location.getLocationPath() << std::endl;
 			_readHeader = false;
 			if (is_request_well_formed() == -1)
 				return true;
@@ -144,7 +145,7 @@ Location Client::getCurrentLocation()
 {
 	std::string requestedPath = this->request->getPath();
 	std::string directory;
-	if (regFile(location.getRoot() + requestedPath))
+	if (regFile(_serverBlock->getRoot() + requestedPath))
 	{
 		size_t directoryEndPos = requestedPath.find("/", 1);
 		directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(0, directoryEndPos) : requestedPath;
