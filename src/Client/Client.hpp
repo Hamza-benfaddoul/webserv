@@ -119,7 +119,7 @@ class Client {
 		std::string getCgiPath( std::string );
 
 		Location	getCurrentLocation();
-
+		std::string	generateDirectoryListing(const std::string& directoryPath);
 		void	del(const char *path, bool &isDeleted);
 
 	public:

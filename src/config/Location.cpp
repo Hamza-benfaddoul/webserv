@@ -12,6 +12,7 @@ Location::Location()
 	proxy_read_time_out = 60;
 	hasIndex = false;
 	returnStatus = false;
+	autoIndex = false;
 }
 
 void	Location::parseReturn( std::string value )
@@ -151,8 +152,6 @@ void Location::parseAutoIndex( const std::string &value)
 		throw std::runtime_error("ERROR: Auto Index EXPECTS just `on` or `off` !!!.");
 	else if (value == "on")
 		autoIndex = true;
-	else
-		autoIndex = false;
 	// else if ( std::string("off").compare(value) != 0 )
 }
 
