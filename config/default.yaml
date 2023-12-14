@@ -3,7 +3,7 @@ server:
   host: 0.0.0.0
   root: www/
   client_max_body_size: 2g
-  error_pages: 403 www/error/200.html
+  error_pages: 403 www/error/403.html
 
   location:
     - path: "/"
@@ -24,6 +24,12 @@ server:
     - methods: [DELETE, POST, GET]
 
   location:
+    - path: "/uploads/shared"
+    - root:   www
+    - autoindex: on
+    - methods: [DELETE, POST, GET]
+
+  location:
     - path: "/cgi-bin"
     - root: www
     - methods: [GET, POST]
@@ -31,4 +37,4 @@ server:
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.sh, /usr/bin/bash]
     - cgi_path: [.php, /usr/bin/php-cgi]
-    - proxy_read_time_out: 60s
+    - proxy_read_time_out: 10s
