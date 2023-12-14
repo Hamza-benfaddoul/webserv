@@ -138,6 +138,7 @@ Location Client::getCurrentLocation()
 {
 	std::string requestedPath = this->request->getPath();
 	std::string directory;
+
 	if (regFile(location.getRoot() + requestedPath))
 	{
 		size_t directoryEndPos = requestedPath.find("/", 1);
@@ -145,7 +146,7 @@ Location Client::getCurrentLocation()
 	}
 	else
 	{
-		directory = (requestedPath.at(requestedPath.length() - 1) == '/') ? requestedPath.substr(0, requestedPath.length() - 1) : requestedPath;
+		directory = (requestedPath.length() > 1 && requestedPath.at(requestedPath.length() - 1) == '/' && isdigit(requestedPath.at(requestedPath.length() - 2))) ? requestedPath.substr(0, requestedPath.length() - 1) : requestedPath;
 	}
 	for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++)
 	{
@@ -579,12 +580,16 @@ bool Client::getMethodHandler(void)
 	std::string requestedPath = this->request->getPath();
 	size_t queryStringPos = requestedPath.find('?');
 	std::string filePath = (queryStringPos != std::string::npos) ? requestedPath.substr(0, queryStringPos) : requestedPath;
+	// std::cout << location.getRoot() + filePath << std::endl;
+	std::cout << location.getRoot() << std::endl;
+	std::cout << filePath << std::endl;
 	if (access((location.getRoot() + filePath).c_str(), R_OK) == -1)
 	{
 		sendErrorResponse(404, "Not Found", getErrorPage(404), _fd);
 	}
 	else if (checkType() == true)
 	{
+		std::cout << "handleDirs" << std::endl;
 		return handleDirs();
 	}
 	else if (checkType() == false)
@@ -914,11 +919,11 @@ std::string Client::generateDirectoryListing(const std::string& directoryPath)
                 std::string listItemClass;
                 std::string iconSrc;
                 if (S_ISDIR(entryStat.st_mode)) {
-                    href = name + "/";
+                    href =  location.directory + "/" + name + "/";
                     listItemClass = "folder";
                     iconSrc = "https://img.icons8.com/material-rounded/24/folder-invoices.png";
                 } else if(S_ISREG(entryStat.st_mode)) {
-                    href = directoryPath + "/" + name;
+                    href = location.directory + "/" + name;
                     listItemClass = "file";
                     iconSrc = "https://img.icons8.com/doodle/24/file--v1.png";
                 }

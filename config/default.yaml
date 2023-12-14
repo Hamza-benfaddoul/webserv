@@ -7,7 +7,7 @@ server:
 
   location:
     - path: "/"
-    - root:   www/
+    - root:   www
     - upload: on
     - autoindex: on
     - methods: [DELETE, POST, GET]
@@ -24,16 +24,11 @@ server:
     - methods: [DELETE, POST, GET]
 
   location:
-    - path: "/uploads/shared"
-    - root:   www
-    - autoindex: on
-    - methods: [DELETE, POST, GET]
-
-  location:
     - path: "/cgi-bin"
     - root: www
     - methods: [GET, POST]
     - upload: on
+    - autoindex: on
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.sh, /usr/bin/bash]
     - cgi_path: [.php, /usr/bin/php-cgi]
