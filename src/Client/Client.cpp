@@ -137,10 +137,16 @@ bool Client::deleteMethodHandler(void)
 Location Client::getCurrentLocation()
 {
 	std::string requestedPath = this->request->getPath();
-	// size_t directoryEndPos = requestedPath.find("/", 1);
-	std::string directory = (requestedPath.at(requestedPath.length() - 1) == '/') ? requestedPath.substr(0, requestedPath.length() - 1) : requestedPath;
-	// (directoryEndPos != std::string::npos) ? requestedPath.substr(0, directoryEndPos) : requestedPath;
-
+	std::string directory;
+	if (regFile(location.getRoot() + requestedPath))
+	{
+		size_t directoryEndPos = requestedPath.find("/", 1);
+		directory = (directoryEndPos != std::string::npos) ? requestedPath.substr(0, directoryEndPos) : requestedPath;
+	}
+	else
+	{
+		directory = (requestedPath.at(requestedPath.length() - 1) == '/') ? requestedPath.substr(0, requestedPath.length() - 1) : requestedPath;
+	}
 	for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++)
 	{
 		Location test = this->_serverBlock->getLocations().at(i);
