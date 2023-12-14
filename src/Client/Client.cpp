@@ -71,7 +71,7 @@ bool Client::receiveResponse(void)
 		else if (this->request->getMethod().compare("POST") == 0)
 		{
 			// if the body of the post method is empty return error response.
-			if ( this->request->getBodyString().length() == 0)
+			if (this->request->getBodyString().length() == 0)
 			{
 				sendErrorResponse(400, "Bad Request", getErrorPage(400), _fd);
 				return true;
