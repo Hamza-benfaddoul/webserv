@@ -3,6 +3,10 @@
 <?php
     // Accessing CGI environment variables in PHP
     set_time_limit(60);
+    while(1)
+    {
+        
+    }
     $requestMethod = $_SERVER['REQUEST_METHOD'];
     $contentType = $_SERVER['CONTENT_TYPE'];
     function sendError()

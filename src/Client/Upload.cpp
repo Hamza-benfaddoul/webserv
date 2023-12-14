@@ -241,6 +241,7 @@ bool Upload::start()
 			else
 			{
 				end = clock();
+				std::cout << "-->  " << location.proxy_read_time_out << std::endl;
 				if (((double)(end - start_c)) / CLOCKS_PER_SEC > (double)location.proxy_read_time_out)
 				{
 					kill(pid, SIGKILL);

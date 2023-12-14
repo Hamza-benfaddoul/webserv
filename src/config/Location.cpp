@@ -90,7 +90,6 @@ void    Location::parseLocations( void )
 			parseProxyReadTimeOut(iterator->second);
 		else if (iterator->first == "return")
 			parseReturn(iterator->second);
-		
 			// parsePortNumber(iterator->second);
 		// std::cout << iterator->first << ": " << iterator->second << std::endl;
 	}
@@ -104,7 +103,7 @@ void	Location::parseProxyReadTimeOut( std::string timeOut )
 	std::istringstream iss(timeOut);
     int value;
     std::string unit;
-    
+
     if (!(iss >> value >> unit) || unit.length() > 1) {
         throw std::invalid_argument("Invalid time format");
     }
@@ -157,19 +156,18 @@ void Location::parseAutoIndex( const std::string &value)
 
 void    Location::parseRoot( const std::string &root )
 {
-	if (!root.empty())
-	{
-		struct stat s;
-		if( stat( root.c_str(), &s ) != 0 )
-			exceptionsManager("cannot access " + root );
-		else if( s.st_mode & S_IFDIR ){
-			this->root = root;
-			return ;
-		}  // S_ISDIR() doesn't exist on my windows
-			// exceptionsManager(root + " is a directory");
-		else
-			exceptionsManager(root +  " is not a directory");
-	}
+	if (root.length() > 0 && root.at(root.length() - 1) == '/')
+		this->root = root.substr(0, root.length() - 1);
+	struct stat s;
+	if( stat( root.c_str(), &s ) != 0 )
+		exceptionsManager("cannot access " + root );
+	else if( s.st_mode & S_IFDIR ){
+		this->root = root;
+		return ;
+	}  // S_ISDIR() doesn't exist on my windows
+		// exceptionsManager(root + " is a directory");
+	else
+		exceptionsManager(root +  " is not a directory");
 	this->root = "www";
 }
 
