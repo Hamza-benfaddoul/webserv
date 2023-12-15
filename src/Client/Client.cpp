@@ -236,25 +236,18 @@ bool Client::handleDirs()
 					std::cout << "Cannot open directory\n";
 					return 1;
 				}
-				int fileCount = 0;
 				while ((pDirent = readdir(pDir)) != NULL)
 				{
 					if (strcmp(iter.c_str(), pDirent->d_name) == 0)
 					{
-						handleFiles(location.getRoot() + location.directory + "/" + iter);
-						return true;
+						return handleFiles(location.getRoot() + location.directory + "/" + iter);
 					}
-					std::cout << location.getRoot() + location.directory + pDirent->d_name << "\n";
-					if (regFile(location.getRoot() + location.directory + "/" + pDirent->d_name))
-						fileCount++;
-				}
-				if (fileCount <= 2)
-				{
-					sendErrorResponse(403, "Forbidden", getErrorPage(403), _fd);
-					return true;
 				}
 				closedir(pDir);
+	
 			}
+			sendErrorResponse(403, "Forbidden", getErrorPage(403), _fd);
+			return true;
 		}
 		else if (location.getAutoIndex() == false)
 		{
@@ -434,7 +427,7 @@ bool Client::handleFiles(std::string path)
 				double elapsed_secs = static_cast<double>(end - start_c) / CLOCKS_PER_SEC;
 				if (elapsed_secs >= (location.proxy_read_time_out))
 				{
-					std::cout << kill(fd, SIGKILL) << std::endl;
+					kill(fd, SIGKILL);
 					std::remove(tmpFile.c_str());
 					sendErrorResponse(408, "Request Timeout", getErrorPage(408), _fd);
 					return true;
@@ -895,8 +888,6 @@ std::string Client::generateDirectoryListing(const std::string& directoryPath)
 	DIR* dir;
 	struct dirent* entry;
 	struct stat entryStat;
-	// Open the directory
-	std::cout << "directoryPath: " << directoryPath << std::endl;
 	dir = opendir(directoryPath.c_str());
 	if (dir != NULL) {
 		// Read directory entries
