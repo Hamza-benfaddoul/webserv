@@ -40,5 +40,6 @@ request.txt
 www/index.html
 TODO
 www/uploads/*
+www/TempFiles/*
 www/bodyFiles/*
 
