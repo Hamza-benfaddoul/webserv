@@ -1,6 +1,6 @@
 <?php
 
-	sleep(5);
-	echo "hello";
+    sleep(5);
+    echo "walid";
 
 ?>

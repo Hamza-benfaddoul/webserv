@@ -223,7 +223,6 @@ bool Client::handleDirs()
 	{
 		if (location.index.length() > 0 && location.hasIndex == true)
 		{
-
 			std::stringstream index(location.index);
 			std::string iter;
 			while (getline(index, iter, ','))
@@ -237,23 +236,18 @@ bool Client::handleDirs()
 					std::cout << "Cannot open directory\n";
 					return 1;
 				}
-				int fileCount = 0;
 				while ((pDirent = readdir(pDir)) != NULL)
 				{
 					if (strcmp(iter.c_str(), pDirent->d_name) == 0)
 					{
-						handleFiles(location.getRoot() + location.directory + "/" + iter);
-						return true;
+						return handleFiles(location.getRoot() + location.directory + "/" + iter);
 					}
-					fileCount++;
-				}
-				if (fileCount <= 2)
-				{
-					sendErrorResponse(403, "Forbidden", getErrorPage(403), _fd);
-					return true;
 				}
 				closedir(pDir);
+	
 			}
+			sendErrorResponse(403, "Forbidden", getErrorPage(403), _fd);
+			return true;
 		}
 		else if (location.getAutoIndex() == false)
 		{
@@ -431,10 +425,8 @@ bool Client::handleFiles(std::string path)
 			}else{
 				end = clock();
 				double elapsed_secs = static_cast<double>(end - start_c) / CLOCKS_PER_SEC;
-				if (elapsed_secs > (location.proxy_read_time_out))
+				if (elapsed_secs >= (location.proxy_read_time_out))
 				{
-					std::cout<< "elapsed_secs: " << elapsed_secs << "\n";
-					std::cout<< "location.proxy_read_time_out: " << location.proxy_read_time_out<< "\n";
 					kill(fd, SIGKILL);
 					std::remove(tmpFile.c_str());
 					sendErrorResponse(408, "Request Timeout", getErrorPage(408), _fd);
@@ -896,8 +888,6 @@ std::string Client::generateDirectoryListing(const std::string& directoryPath)
 	DIR* dir;
 	struct dirent* entry;
 	struct stat entryStat;
-	// Open the directory
-	std::cout << "directoryPath: " << directoryPath << std::endl;
 	dir = opendir(directoryPath.c_str());
 	if (dir != NULL) {
 		// Read directory entries

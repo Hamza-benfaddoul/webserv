@@ -99,7 +99,7 @@ const std::string &Request::getMethod() const { return method; }
 const std::string &Request::getPath() const { return path; }
 const std::map<std::string, std::string> &Request::getHeaders() const {return this->headers; }
 const std::vector<std::string> & Request::getBody() const { return this->body; }
-const std::string &Request::getBodyString() const { return this->bodyString; }
+std::string &Request::getBodyString() { return this->bodyString; }
 const std::string &Request::getMimeType()
 {
     std::istringstream iss(headers.find("Accept")->second);

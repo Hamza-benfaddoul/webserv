@@ -133,9 +133,9 @@ bool Upload::start()
 			};
 			// create the file where the out of cgi get stored
 			std::stringstream ss;
-			ss << this->cpt;
-			std::string cptAsString = ss.str();
-			cgi_output_filename = "www/TempFiles/cgi_output" + clock() / CLOCKS_PER_SEC;
+			// ss << (clock() / CLOCKS_PER_SEC);
+			ss << cpt;
+			cgi_output_filename = "www/TempFiles/cgi_output" + ss.str();
 			start_c = clock();
 			pid = fork();
 			if (pid == 0) // the child proccess
@@ -292,6 +292,7 @@ void Upload::setTotalBodySize(long in_total)
 void    Upload::writeToFileString(const std::string &source, size_t size)
 {
 	bodyContent.write(source.data(), size);
+
 }
 
 void    Upload::writeToFileString(const std::string &source)

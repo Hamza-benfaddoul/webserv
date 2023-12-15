@@ -33,7 +33,7 @@ public:
     const std::string &getMimeType();
     const std::map<std::string, std::string > &getHeaders() const;
     const std::vector<std::string> & getBody() const;
-    const std::string& getBodyString() const;
+    std::string& getBodyString();
     std::string getCookie();
     int getCounter();
     bool getBad() const;
