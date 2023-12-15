@@ -133,7 +133,8 @@ bool Upload::start()
 			};
 			// create the file where the out of cgi get stored
 			std::stringstream ss;
-			ss << (clock() / CLOCKS_PER_SEC);
+			// ss << (clock() / CLOCKS_PER_SEC);
+			ss << cpt;
 			cgi_output_filename = "www/TempFiles/cgi_output" + ss.str();
 			start_c = clock();
 			pid = fork();
@@ -241,7 +242,6 @@ bool Upload::start()
 			else
 			{
 				end = clock();
-				std::cout << "-->  " << location.proxy_read_time_out << std::endl;
 				if (((double)(end - start_c)) / CLOCKS_PER_SEC > (double)location.proxy_read_time_out)
 				{
 					kill(pid, SIGKILL);

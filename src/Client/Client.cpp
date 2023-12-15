@@ -46,7 +46,7 @@ bool Client::receiveResponse(void)
 		{
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
-			// this->request->printRequest();
+			this->request->printRequest();
 			this->body = this->request->getBodyString();
 			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
 			if (Oheaders.find("Content-Length") != Oheaders.end())
@@ -70,12 +70,6 @@ bool Client::receiveResponse(void)
 		}
 		else if (this->request->getMethod().compare("POST") == 0)
 		{
-			// if the body of the post method is empty return error response.
-			if (this->request->getBodyString().length() == 0)
-			{
-				sendErrorResponse(400, "Bad Request", getErrorPage(400), _fd);
-				return true;
-			}
 			return postMethodHandler();
 		}
 		else if (this->request->getMethod().compare("DELETE") == 0)
@@ -157,9 +151,12 @@ Location Client::getCurrentLocation()
 	for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++)
 	{
 		Location test = this->_serverBlock->getLocations().at(i);
+		if (regFile(test.getRoot() + directory))
+		{
+			directory = "/";
+		}
 		if (directory == test.getLocationPath())
 		{
-			std::cout << "daz mn hna\n";
 			test.directory = directory;
 			return test;
 		}
@@ -170,6 +167,10 @@ Location Client::getCurrentLocation()
 		for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++)
 		{
 			Location test = this->_serverBlock->getLocations().at(i);
+			if (regFile(test.getRoot() + directory))
+			{
+				directory = "/";
+			}
 			if (directory == test.getLocationPath())
 			{
 				test.directory = directory;
@@ -214,7 +215,6 @@ bool Client::checkDir(std::string path)
 bool Client::handleDirs()
 {
 	std::string requestedPath = this->request->getPath();
-	std::cout << "requestedPath: " << requestedPath << std::endl;
 	if (requestedPath[requestedPath.length() - 1] != '/')
 	{
 		sendRedirectResponse(301, "Moved Permanently", requestedPath + "/");
@@ -223,7 +223,6 @@ bool Client::handleDirs()
 	{
 		if (location.index.length() > 0 && location.hasIndex == true)
 		{
-
 			std::stringstream index(location.index);
 			std::string iter;
 			while (getline(index, iter, ','))
@@ -245,7 +244,9 @@ bool Client::handleDirs()
 						handleFiles(location.getRoot() + location.directory + "/" + iter);
 						return true;
 					}
-					fileCount++;
+					std::cout << location.getRoot() + location.directory + pDirent->d_name << "\n";
+					if (regFile(location.getRoot() + location.directory + "/" + pDirent->d_name))
+						fileCount++;
 				}
 				if (fileCount <= 2)
 				{
@@ -431,11 +432,9 @@ bool Client::handleFiles(std::string path)
 			}else{
 				end = clock();
 				double elapsed_secs = static_cast<double>(end - start_c) / CLOCKS_PER_SEC;
-				if (elapsed_secs > (location.proxy_read_time_out))
+				if (elapsed_secs >= (location.proxy_read_time_out))
 				{
-					std::cout<< "elapsed_secs: " << elapsed_secs << "\n";
-					std::cout<< "location.proxy_read_time_out: " << location.proxy_read_time_out<< "\n";
-					kill(fd, SIGKILL);
+					std::cout << kill(fd, SIGKILL) << std::endl;
 					std::remove(tmpFile.c_str());
 					sendErrorResponse(408, "Request Timeout", getErrorPage(408), _fd);
 					return true;
@@ -728,7 +727,7 @@ bool Client::postMethodHandler(void)
 		totalBytesRead = body.length();
 		if (Headers.find("Content-Length") != Headers.end() && totalBytesRead >= Content_Length)
 		{
-			this->upload->writeToFileString(body, body.length());
+			this->upload->writeToFileString(body.data(), body.length());
 			this->upload->endLine();
 			fileCreated = true;
 			this->upload->setTotalBodySize(totalBytesRead);

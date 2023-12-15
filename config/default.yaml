@@ -11,11 +11,11 @@ server:
     - upload: on
     - autoindex: on
     - methods: [DELETE, POST, GET]
-    - index:  [index.html, index.htm]
+    - index:  [test.php, index.html]
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.php, /usr/bin/php-cgi]
     - cgi_path: [.sh, /usr/bin/bash]
-    - proxy_read_time_out: 10s
+    - proxy_read_time_out: 5s
 
   location:
     - path: "/uploads"

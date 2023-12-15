@@ -77,7 +77,6 @@ void Cluster::run(void)
 					_clients.resize(client_fd + 1);
 				}
 				_clients.at(client_fd) = new Client(client_fd,_servers[events[n].data.fd - _servers[0]->getFd()]->_serverBlock);
-				std::cout << "done\n";
 				ev.events = EPOLLIN | EPOLLOUT;
 				ev.data.fd = client_fd;
 				if (epoll_ctl(epollfd, EPOLL_CTL_ADD, client_fd, &ev) == -1) {
@@ -87,7 +86,7 @@ void Cluster::run(void)
 			else if (events[n].data.fd >= 3){
 				if (_clients.at(events[n].data.fd)->run()) // return true when client close the connection
 				{
-					// std::cout << "client allh irahmo\n";
+					std::cout << "client allh irahmo\n";
 					epoll_ctl(epollfd, EPOLL_CTL_DEL, events[n].data.fd, &ev);
 					close(events[n].data.fd);
 					delete _clients.at(events[n].data.fd);
