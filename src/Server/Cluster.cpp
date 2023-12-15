@@ -38,7 +38,7 @@ Cluster::~Cluster()
 	}
 }
 
-#define MAX_EVENTS  100
+#define MAX_EVENTS  1024
 
 void Cluster::run(void)
 {
@@ -68,12 +68,16 @@ void Cluster::run(void)
 		}
 
 		for (n = 0; n < nfds; ++n) {
-			if (events[n].data.fd >= 3 && events[n].data.fd <= _servers.at(_servers.size()- 1)->getFd()) {
+			if (events[n].data.fd >= 3 && events[n].data.fd <= _servers.at(_servers.size()- 1)->getFd() ) {
 				client_fd = accept(events[n].data.fd,NULL, NULL);
 				if (client_fd == -1) {
 					throw std::runtime_error("could not accept client");
 				}
+				if (client_fd >= (int)_clients.size()) {
+					_clients.resize(client_fd + 1);
+				}
 				_clients.at(client_fd) = new Client(client_fd,_servers[events[n].data.fd - _servers[0]->getFd()]->_serverBlock);
+				std::cout << "done\n";
 				ev.events = EPOLLIN | EPOLLOUT;
 				ev.data.fd = client_fd;
 				if (epoll_ctl(epollfd, EPOLL_CTL_ADD, client_fd, &ev) == -1) {
