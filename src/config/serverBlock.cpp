@@ -93,6 +93,8 @@ void	serverBlock::parseClientMaxBodySize( std::string value )
 
 void serverBlock::parseRoot(std::string value) {
 	// std::cout << value << std::endl;
+	if (value.length() > 0 && value.at(value.length() - 1) == '/')
+		value = value.substr(0, value.length() - 1);
 	std::ifstream file;
 	if (value.length() > 0)
 		file.open( value.c_str() );
