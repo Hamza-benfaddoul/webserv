@@ -107,6 +107,7 @@ void Client::del(const char *path, bool &isDeleted)
 	}
 	else
 	{
+		std::cout << path << std::endl;
 		if (access(path, W_OK) == 0)
 		{
 			if (std::remove(path) != 0)
@@ -151,10 +152,6 @@ Location Client::getCurrentLocation()
 	for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++)
 	{
 		Location test = this->_serverBlock->getLocations().at(i);
-		if (regFile(test.getRoot() + directory))
-		{
-			directory = "/";
-		}
 		if (directory == test.getLocationPath())
 		{
 			test.directory = directory;
@@ -167,10 +164,6 @@ Location Client::getCurrentLocation()
 		for (size_t i = 0; i != this->_serverBlock->getLocations().size(); i++)
 		{
 			Location test = this->_serverBlock->getLocations().at(i);
-			if (regFile(test.getRoot() + directory))
-			{
-				directory = "/";
-			}
 			if (directory == test.getLocationPath())
 			{
 				test.directory = directory;
