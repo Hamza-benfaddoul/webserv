@@ -64,6 +64,7 @@ void    Server::listenToClient()
 	std::cout <<  getPort() 				<< std::endl;
 }
 
+
 int	Server::getFd() const { return (_socketfd);}
 int Server::getIp() const { return (_ip); };
 int Server::getPort() const { return (_port); };

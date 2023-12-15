@@ -29,6 +29,7 @@ Client::Client(size_t fd, serverBlock *serverBlock) : _fd(fd), location(), _serv
 	content_length = 0;
 	hasCgi = false;
 	isChunkComplete = true;
+	forked = false;
 }
 
 bool Client::receiveResponse(void)
@@ -73,6 +74,15 @@ bool Client::receiveResponse(void)
 		}
 		else if (this->request->getMethod().compare("DELETE") == 0)
 			return deleteMethodHandler();
+		else if (this->request->getMethod().compare("HEAD") == 0)
+		{
+			sendHeadErrorResponse(501, "Not Implemented", _fd);
+			return true;
+		} else
+		{
+			sendErrorResponse(501, "Not Implemented", getErrorPage(501), _fd);
+			return true;
+		}
 	}
 	return false;
 }
@@ -241,6 +251,7 @@ bool Client::handleDirs()
 		}
 		else if (location.getAutoIndex() == true)
 		{
+			std::cout << "directory listing" << location.getRoot() + location.directory << "\n";
 			directoryListing(location.getRoot() + location.directory);
 		}
 	}
@@ -303,107 +314,42 @@ bool Client::handleFiles(std::string path)
 	std::string cgi_path = getCgiPath(extension);
 	if (cgi_path.length() > 0 && (extension == ".php" || extension == ".py" || extension == ".pl" || extension == ".go" || extension == ".sh"))
 	{
-		std::stringstream ss;
-		ss << _serverBlock->getPort();
-		char *env[] =
-			{
-				strdup(std::string("REDIRECT_STATUS=200").c_str()),
-				strdup(std::string("SCRIPT_FILENAME=" + path).c_str()),
-				strdup(std::string("CACHE_CONTROL=no-cache").c_str()),
-				(path == location.getRoot() + request->getPath()) ? strdup(std::string("QUERY_STRING=").c_str()) : strdup(std::string("QUERY_STRING=" + request->getPath().substr(position + 1)).c_str()),
-				strdup(std::string("REQUEST_METHOD=" + request->getMethod()).c_str()),
-				strdup(std::string("SERVER_NAME=localhost").c_str()),
-				strdup(std::string("SERVER_PORT=" + ss.str()).c_str()),
-				strdup(std::string("SERVER_PROTOCOL=HTTP/1.1").c_str()),
-				strdup(std::string("SERVER_SOFTWARE=Weebserv/1.0").c_str()),
-				strdup(std::string("CONTENT_TYPE=" + request->getMimeType()).c_str()),
-				strdup(std::string("REDIRECT_STATUS=200").c_str()),
-				strdup(std::string("HTTP_COOKIE=" + request->getCookie()).c_str()),
+		if (forked == false)
+		{
+			forked = true;
+			std::stringstream ss;
+			ss << _serverBlock->getPort();
+			char *env[] =
+				{
+					strdup(std::string("REDIRECT_STATUS=200").c_str()),
+					strdup(std::string("SCRIPT_FILENAME=" + path).c_str()),
+					strdup(std::string("CACHE_CONTROL=no-cache").c_str()),
+					(path == location.getRoot() + request->getPath()) ? strdup(std::string("QUERY_STRING=").c_str()) : strdup(std::string("QUERY_STRING=" + request->getPath().substr(position + 1)).c_str()),
+					strdup(std::string("REQUEST_METHOD=" + request->getMethod()).c_str()),
+					strdup(std::string("SERVER_NAME=localhost").c_str()),
+					strdup(std::string("SERVER_PORT=" + ss.str()).c_str()),
+					strdup(std::string("SERVER_PROTOCOL=HTTP/1.1").c_str()),
+					strdup(std::string("SERVER_SOFTWARE=Weebserv/1.0").c_str()),
+					strdup(std::string("CONTENT_TYPE=" + request->getMimeType()).c_str()),
+					strdup(std::string("REDIRECT_STATUS=200").c_str()),
+					strdup(std::string("HTTP_COOKIE=" + request->getCookie()).c_str()),
+					NULL};
+			tmpFile = createNewFile("www/TempFiles/", clock() / CLOCKS_PER_SEC, "_cgi");
+			start_c = clock();
+			fd = fork();
+			char *argv[] = {
+				strdup(cgi_path.c_str()),
+				// (extension == ".go") ? strdup("run"): strdup(""),
+				strdup((location.getRoot() + request->getPath()).c_str()),
 				NULL};
-		start_c = clock();
-		tmpFile = createNewFile("www/TempFiles/", start_c / CLOCKS_PER_SEC, "_cgi");
-		int fd = fork();
-		char *argv[] = {
-			strdup(cgi_path.c_str()),
-			// (extension == ".go") ? strdup("run"): strdup(""),
-			strdup((location.getRoot() + request->getPath()).c_str()),
-			NULL};
-		if (fd == 0)
-		{
-			if (freopen(tmpFile.c_str(), "w", stdout) == NULL)
-				throw std::ios_base::failure("Failed to open File");
-			execve(argv[0], argv, env);
-			perror("execve:");
-			exit(0);
-		}
-		else
-		{
-			int state;
-			while (waitpid(fd, &state, WNOHANG) == 0)
+			if (fd == 0)
 			{
-				clock_t end = clock();
-				double elapsed_secs = static_cast<double>(end - start_c) / CLOCKS_PER_SEC;
-				if (elapsed_secs > (location.proxy_read_time_out) / 1000.0)
-				{
-					kill(fd, SIGKILL);
-					std::remove(tmpFile.c_str());
-					return true;
-				}
-				usleep(100000); 
+				if (freopen(tmpFile.c_str(), "w", stdout) == NULL)
+					throw std::ios_base::failure("Failed to open File");
+				execve(argv[0], argv, env);
+				perror("execve:");
+				exit(0);
 			}
-			readFromCgi();
-			ltrim(content, "\r\n");
-			size_t pos = content.find("\r\n\r\n");
-			std::string bodyCgi;
-			if (pos == std::string::npos)
-			{
-				pos = content.find("\n\n");
-				if (pos != std::string::npos)
-					bodyCgi = content.substr(pos + 2);
-			}
-			else
-				bodyCgi = content.substr(pos + 4);
-			std::string headers = content.substr(0, pos);
-			std::stringstream result;
-			std::vector<std::string> splitedHeaders = ft_split(headers, "\r\n");
-			if (state == 0 && headers.find("Location: ") != std::string::npos)
-			{
-				parseHeaderLocation(splitedHeaders);
-				fsync(_fd);
-				std::remove(tmpFile.c_str());
-				return true;
-			}
-			else if (state == 0)
-			{
-				result << "HTTP/1.1 200 OK\r\n";
-				for (int i = 0; i < (int)splitedHeaders.size(); i++)
-				{
-					if (splitedHeaders.at(i) != "\n")
-					{
-						result << splitedHeaders.at(i);
-					}
-					result << "\r\n";
-				}
-				result << "\r\n";
-				result << bodyCgi;
-			}
-			else
-			{
-				result << "HTTP/1.1 500 Internal Server Error\r\n";
-				for (int i = 0; i < (int)splitedHeaders.size(); i++)
-				{
-					if (splitedHeaders.at(i) != "\n")
-					{
-						result << splitedHeaders.at(i);
-					}
-					result << "\r\n";
-				}
-				result << "\r\n";
-				result << bodyCgi;
-			}
-			write(_fd, result.str().c_str(), result.str().length());
-			std::remove(tmpFile.c_str());
-			fsync(_fd);
 			for (size_t i = 0; env[i]; i++)
 			{
 				free(env[i]);
@@ -412,8 +358,82 @@ bool Client::handleFiles(std::string path)
 			{
 				free(argv[i]);
 			}
-			
-			return true;
+		}
+		if (forked == true)
+		{
+			int state;
+			ss1 = waitpid(fd, &state, WNOHANG);
+			if (ss1 == fd)
+			{
+				readFromCgi();
+				ltrim(content, "\r\n");
+				size_t pos = content.find("\r\n\r\n");
+				std::string bodyCgi;
+				if (pos == std::string::npos)
+				{
+					pos = content.find("\n\n");
+					if (pos != std::string::npos)
+						bodyCgi = content.substr(pos + 2);
+				}
+				else
+					bodyCgi = content.substr(pos + 4);
+				std::string headers = content.substr(0, pos);
+				std::stringstream result;
+				std::vector<std::string> splitedHeaders = ft_split(headers, "\r\n");
+				if (state == 0 && headers.find("Location: ") != std::string::npos)
+				{
+					parseHeaderLocation(splitedHeaders);
+					fsync(_fd);
+					std::remove(tmpFile.c_str());
+					return true;
+				}
+				else if (state == 0)
+				{
+					result << "HTTP/1.1 200 OK\r\n";
+					for (int i = 0; i < (int)splitedHeaders.size(); i++)
+					{
+						if (splitedHeaders.at(i) != "\n")
+						{
+							result << splitedHeaders.at(i);
+						}
+						result << "\r\n";
+					}
+					result << "\r\n";
+					result << bodyCgi;
+				}
+				else
+				{
+					result << "HTTP/1.1 500 Internal Server Error\r\n";
+					for (int i = 0; i < (int)splitedHeaders.size(); i++)
+					{
+						if (splitedHeaders.at(i) != "\n")
+						{
+							result << splitedHeaders.at(i);
+						}
+						result << "\r\n";
+					}
+					result << "\r\n";
+					result << bodyCgi;
+				}
+				write(_fd, result.str().c_str(), result.str().length());
+				std::remove(tmpFile.c_str());
+				fsync(_fd);
+				return true;
+			}else{
+				end = clock();
+				double elapsed_secs = static_cast<double>(end - start_c) / CLOCKS_PER_SEC;
+				if (elapsed_secs > (location.proxy_read_time_out))
+				{
+					std::cout<< "elapsed_secs: " << elapsed_secs << "\n";
+					std::cout<< "location.proxy_read_time_out: " << location.proxy_read_time_out<< "\n";
+					kill(fd, SIGKILL);
+					std::remove(tmpFile.c_str());
+					sendErrorResponse(408, "Request Timeout", getErrorPage(408), _fd);
+					return true;
+				}
+				return false;
+				// usleep(100000);
+			}
 		}
 		return true;
 	}
@@ -470,7 +490,7 @@ void Client::readFromCgi()
 	std::fstream cgi_output_content;
 	cgi_output_content.open(tmpFile.c_str(), std::ios::in);
 	if (!cgi_output_content.is_open())
-		throw std::ios_base::failure("Failed to open file");
+		throw std::ios_base::failure("Failed to open file cgi");
 	char buffer[1024];
 	size_t found = 0;
 	while (1)
@@ -481,13 +501,13 @@ void Client::readFromCgi()
 		content.append(buffer, cgi_output_content.gcount());
 		if (cgi_output_content.eof())
 			break;
-		found = content.find("\r\n\r\n");
-		if (found != std::string::npos)
-		{
-			found += 4;
-			content.substr(0, found);
-			break;
-		}
+		// found = content.find("\r\n\r\n");
+		// if (found != std::string::npos)
+		// {
+		// 	found += 4;
+		// 	content.substr(0, found);
+		// 	break;
+		// }
 	}
 	file_ouptut.close();
 	file_ouptut.open(tmpFile.c_str());
