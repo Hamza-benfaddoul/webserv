@@ -66,7 +66,7 @@ bool Client::receiveResponse(void)
 	{
 		if (this->request->getMethod().compare("GET") == 0)
 		{
-			if (this->body.length() > 0)
+			if (this->body != "0\r\n\r\n" && this->body.length() > 0)
 			{
 				sendErrorResponse(400, "Bad Request", getErrorPage(400), _fd);
 				return true;
@@ -79,7 +79,7 @@ bool Client::receiveResponse(void)
 		}
 		else if (this->request->getMethod().compare("DELETE") == 0)
 		{
-			if (this->body.length() > 0)
+			if (this->body != "0\r\n\r\n" && this->body.length() > 0)
 			{
 				sendErrorResponse(400, "Bad Request", getErrorPage(400), _fd);
 				return true;
@@ -146,9 +146,11 @@ bool Client::deleteMethodHandler(void)
 		del((location.getRoot() + requestedPath).c_str(), isDeleted);
 	}
 	if (isDeleted)
-		write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nResource deleted successfully", 74);
+		sendErrorResponse(204, "No Content", getErrorPage(204), _fd);
+		// write(_fd, "HTTP/1.1 204 No Content\r\nContent-Type: text/plain\r\n\r\nResource deleted successfully", 74);
 	else
-		write(_fd, "HTTP/1.1 207 OK\r\nContent-Type: text/plain\r\n\r\nFailed to delete resource", 70);
+		sendErrorResponse(403, "Forbidden", getErrorPage(403), _fd);
+		// write(_fd, "HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nFailed to delete resource", 70);
 	return true;
 }
 
@@ -434,9 +436,11 @@ bool Client::handleFiles(std::string path)
 				fsync(_fd);
 				return true;
 			}else{
+				
 				end = clock();
-				double elapsed_secs = static_cast<double>(end - start_c) / CLOCKS_PER_SEC;
-				if (elapsed_secs >= (location.proxy_read_time_out))
+				// std::cout << "end: " << end << " " << start_c << std::endl;
+				std::cout << "==> " << (double)(end - start_c) / CLOCKS_PER_SEC << " " << (double)location.proxy_read_time_out << std::endl;
+				if ((((double)(end - start_c)) / CLOCKS_PER_SEC) > (double)location.proxy_read_time_out)
 				{
 					kill(fd, SIGKILL);
 					std::remove(tmpFile.c_str());
@@ -731,7 +735,10 @@ bool Client::postMethodHandler(void)
 		totalBytesRead = body.length();
 		if (Headers.find("Content-Length") != Headers.end() && totalBytesRead >= Content_Length)
 		{
-			this->upload->writeToFileString(body.data(), body.length());
+			if (this->upload->writeToFileString(body.data(), body.length()) == false)
+			{
+				sendErrorResponse(500, "Internal Server Error", getErrorPage(500), _fd);
+			}
 			this->upload->endLine();
 			fileCreated = true;
 			this->upload->setTotalBodySize(totalBytesRead);

@@ -1,5 +1,5 @@
 server:
-  listen: 5002
+  listen: 5003
   host: 0.0.0.0
   root: www/
   client_max_body_size: 2g
@@ -34,4 +34,4 @@ server:
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.sh, /usr/bin/bash]
     - cgi_path: [.php, /usr/bin/php-cgi]
-    - proxy_read_time_out: 2m
+    - proxy_read_time_out: 5s
