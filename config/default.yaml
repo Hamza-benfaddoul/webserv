@@ -11,7 +11,7 @@ server:
     - upload: on
     - autoindex: on
     - methods: [DELETE, POST, GET]
-    - index:  [test.php, index.html]
+    - index:  [index.html, test.php]
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.php, /usr/bin/php-cgi]
     - cgi_path: [.sh, /usr/bin/bash]
@@ -22,6 +22,8 @@ server:
     - root:   www
     - autoindex: on
     - methods: [DELETE, POST, GET]
+    - cgi_path: [.php, /usr/bin/php-cgi]
+    - proxy_read_time_out: 5s
 
   location:
     - path: "/cgi-bin"
@@ -32,4 +34,4 @@ server:
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.sh, /usr/bin/bash]
     - cgi_path: [.php, /usr/bin/php-cgi]
-    - proxy_read_time_out: 60s
+    - proxy_read_time_out: 2m
