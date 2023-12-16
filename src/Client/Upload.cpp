@@ -242,7 +242,6 @@ bool Upload::start()
 			else
 			{
 				end = clock();
-				std::cout << "---> " << ((double)(end - start_c)) / CLOCKS_PER_SEC << " " << location.proxy_read_time_out << std::endl;
 				if (((double)(end - start_c)) / CLOCKS_PER_SEC > (double)location.proxy_read_time_out)
 				{
 					kill(pid, SIGKILL);
@@ -290,25 +289,37 @@ void Upload::setTotalBodySize(long in_total)
 	this->totalBodySize = in_total;
 }
 
-void    Upload::writeToFileString(const std::string &source, size_t size)
+bool    Upload::writeToFileString(const std::string &source, size_t size)
 {
 	bodyContent.write(source.data(), size);
-
+	this->bodyContent << source;
+	if (bodyContent.fail())
+		return false;
+	return true;
 }
 
-void    Upload::writeToFileString(const std::string &source)
+bool    Upload::writeToFileString(const std::string &source)
 {
 	this->bodyContent << source;
+	if (bodyContent.fail())
+		return false;
+	return true;
 }
 
-void Upload::writeToFile(const std::vector<char> &source, size_t end)
+bool Upload::writeToFile(const std::vector<char> &source, size_t end)
 {
 	bodyContent.write(source.data(), end);
+	if (bodyContent.fail())
+		return false;
+	return true;
 }
 
-void	Upload::writeToFile(const std::vector<char> & source)
+bool	Upload::writeToFile(const std::vector<char> & source)
 {
 	bodyContent.write(source.data(), source.size());
+	if (bodyContent.fail())
+		return false;
+	return true;
 }
 
 void Upload::endLine()
