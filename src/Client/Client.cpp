@@ -233,11 +233,12 @@ bool Client::handleDirs()
 				{
 					if (strcmp(iter.c_str(), pDirent->d_name) == 0)
 					{
-						return handleFiles(location.getRoot() + location.directory + "/" + iter);
+						closedir(pDir);
+						std::cout << location.getRoot() + location.directory + iter << std::endl;
+						return handleFiles(location.getRoot() + location.directory + iter);
 					}
 				}
 				closedir(pDir);
-	
 			}
 			sendErrorResponse(403, "Forbidden", getErrorPage(403), _fd);
 			return true;
