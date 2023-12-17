@@ -66,6 +66,11 @@ bool Client::receiveResponse(void)
 	{
 		if (this->request->getMethod().compare("GET") == 0)
 		{
+			if (this->body != "0\r\n\r\n" && this->body.length() > 0)
+			{
+				sendErrorResponse(400, "Bad Request", getErrorPage(400), _fd);
+				return true;
+			}
 			return getMethodHandler();
 		}
 		else if (this->request->getMethod().compare("POST") == 0)
@@ -73,7 +78,14 @@ bool Client::receiveResponse(void)
 			return postMethodHandler();
 		}
 		else if (this->request->getMethod().compare("DELETE") == 0)
+		{
+			if (this->body != "0\r\n\r\n" && this->body.length() > 0)
+			{
+				sendErrorResponse(400, "Bad Request", getErrorPage(400), _fd);
+				return true;
+			}
 			return deleteMethodHandler();
+		}
 		else if (this->request->getMethod().compare("HEAD") == 0)
 		{
 			sendHeadErrorResponse(501, "Not Implemented", _fd);
@@ -111,7 +123,10 @@ void Client::del(const char *path, bool &isDeleted)
 		if (access(path, W_OK) == 0)
 		{
 			if (std::remove(path) != 0)
-				throw std::runtime_error("cant remove file");
+			{
+				isDeleted = false;
+				// throw std::runtime_error("cant remove file");
+			}
 		}
 		else
 			isDeleted = false;
@@ -127,11 +142,15 @@ bool Client::deleteMethodHandler(void)
 		return (true);
 	}
 	else
+	{
 		del((location.getRoot() + requestedPath).c_str(), isDeleted);
+	}
 	if (isDeleted)
-		write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nResource deleted successfully", 74);
+		sendErrorResponse(204, "No Content", getErrorPage(204), _fd);
+		// write(_fd, "HTTP/1.1 204 No Content\r\nContent-Type: text/plain\r\n\r\nResource deleted successfully", 74);
 	else
-		write(_fd, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nFailed to delete resource", 70);
+		sendErrorResponse(403, "Forbidden", getErrorPage(403), _fd);
+		// write(_fd, "HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nFailed to delete resource", 70);
 	return true;
 }
 
@@ -233,11 +252,12 @@ bool Client::handleDirs()
 				{
 					if (strcmp(iter.c_str(), pDirent->d_name) == 0)
 					{
-						return handleFiles(location.getRoot() + location.directory + "/" + iter);
+						closedir(pDir);
+						std::cout << location.getRoot() + location.directory + iter << std::endl;
+						return handleFiles(location.getRoot() + location.directory + iter);
 					}
 				}
 				closedir(pDir);
-	
 			}
 			sendErrorResponse(403, "Forbidden", getErrorPage(403), _fd);
 			return true;
@@ -416,9 +436,11 @@ bool Client::handleFiles(std::string path)
 				fsync(_fd);
 				return true;
 			}else{
+				
 				end = clock();
-				double elapsed_secs = static_cast<double>(end - start_c) / CLOCKS_PER_SEC;
-				if (elapsed_secs >= (location.proxy_read_time_out))
+				// std::cout << "end: " << end << " " << start_c << std::endl;
+				std::cout << "==> " << (double)(end - start_c) / CLOCKS_PER_SEC << " " << (double)location.proxy_read_time_out << std::endl;
+				if ((((double)(end - start_c)) / CLOCKS_PER_SEC) > (double)location.proxy_read_time_out)
 				{
 					kill(fd, SIGKILL);
 					std::remove(tmpFile.c_str());
@@ -713,7 +735,10 @@ bool Client::postMethodHandler(void)
 		totalBytesRead = body.length();
 		if (Headers.find("Content-Length") != Headers.end() && totalBytesRead >= Content_Length)
 		{
-			this->upload->writeToFileString(body.data(), body.length());
+			if (this->upload->writeToFileString(body.data(), body.length()) == false)
+			{
+				sendErrorResponse(500, "Internal Server Error", getErrorPage(500), _fd);
+			}
 			this->upload->endLine();
 			fileCreated = true;
 			this->upload->setTotalBodySize(totalBytesRead);
