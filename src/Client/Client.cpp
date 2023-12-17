@@ -119,7 +119,6 @@ void Client::del(const char *path, bool &isDeleted)
 	}
 	else
 	{
-		std::cout << path << std::endl;
 		if (access(path, W_OK) == 0)
 		{
 			if (std::remove(path) != 0)
@@ -253,7 +252,6 @@ bool Client::handleDirs()
 					if (strcmp(iter.c_str(), pDirent->d_name) == 0)
 					{
 						closedir(pDir);
-						std::cout << location.getRoot() + location.directory + iter << std::endl;
 						return handleFiles(location.getRoot() + location.directory + iter);
 					}
 				}
@@ -294,7 +292,6 @@ std::string extractBodyFromContent(const std::string &content, std::string &head
 	if (found != std::string::npos)
 	{
 		header = content.substr(0, found + 4);
-		// std::cout  << header ;
 		return content.substr(found + 4);
 	}
 	// Headers not found, return an empty string or handle accordingly
@@ -351,7 +348,8 @@ bool Client::handleFiles(std::string path)
 					strdup(std::string("HTTP_COOKIE=" + request->getCookie()).c_str()),
 					NULL};
 			tmpFile = createNewFile("www/TempFiles/", clock() / CLOCKS_PER_SEC, "_cgi");
-			start_c = clock();
+			// start_c = clock();
+			start_clock = get_time('s');
 			fd = fork();
 			char *argv[] = {
 				strdup(cgi_path.c_str()),
@@ -436,17 +434,26 @@ bool Client::handleFiles(std::string path)
 				fsync(_fd);
 				return true;
 			}else{
-				
-				end = clock();
-				// std::cout << "end: " << end << " " << start_c << std::endl;
-				std::cout << "==> " << (double)(end - start_c) / CLOCKS_PER_SEC << " " << (double)location.proxy_read_time_out << std::endl;
-				if ((((double)(end - start_c)) / CLOCKS_PER_SEC) > (double)location.proxy_read_time_out)
+				// end = clock();
+				end_clock = get_time('s');
+				long elapsed_secs = (end_clock - start_clock);
+				if (elapsed_secs > (location.proxy_read_time_out))
+
 				{
 					kill(fd, SIGKILL);
 					std::remove(tmpFile.c_str());
 					sendErrorResponse(408, "Request Timeout", getErrorPage(408), _fd);
 					return true;
 				}
+				// end = clock();
+				// double elapsed_secs = (end - start_c) / CLOCKS_PER_SEC;
+				// if (elapsed_secs >= (location.proxy_read_time_out))
+				// {
+				// 	kill(fd, SIGKILL);
+				// 	std::remove(tmpFile.c_str());
+				// 	sendErrorResponse(408, "Request Timeout", getErrorPage(408), _fd);
+				// 	return true;
+				// }
 				return false;
 				// usleep(100000);
 			}

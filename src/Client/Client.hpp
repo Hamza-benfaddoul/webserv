@@ -56,6 +56,8 @@ class Client {
 		long fileSize;
 		clock_t end;
 		clock_t start_c;
+		long start_clock;
+		long end_clock;
 		// -----------------------------
 		pid_t				ss1;
 		bool				forked;
