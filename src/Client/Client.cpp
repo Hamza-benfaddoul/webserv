@@ -417,24 +417,15 @@ bool Client::handleFiles(std::string path)
 				}
 				else
 				{
-					result << "HTTP/1.1 500 Internal Server Error\r\n";
-					for (int i = 0; i < (int)splitedHeaders.size(); i++)
-					{
-						if (splitedHeaders.at(i) != "\n")
-						{
-							result << splitedHeaders.at(i);
-						}
-						result << "\r\n";
-					}
-					result << "\r\n";
-					result << bodyCgi;
+					sendErrorResponse(500, "Internal Server Error", getErrorPage(500), _fd);
+					std::remove(tmpFile.c_str());
+					return true;
 				}
 				write(_fd, result.str().c_str(), result.str().length());
 				std::remove(tmpFile.c_str());
 				fsync(_fd);
 				return true;
 			}else{
-				// end = clock();
 				end_clock = get_time('s');
 				long elapsed_secs = (end_clock - start_clock);
 				if (elapsed_secs > (location.proxy_read_time_out))
@@ -445,17 +436,7 @@ bool Client::handleFiles(std::string path)
 					sendErrorResponse(408, "Request Timeout", getErrorPage(408), _fd);
 					return true;
 				}
-				// end = clock();
-				// double elapsed_secs = (end - start_c) / CLOCKS_PER_SEC;
-				// if (elapsed_secs >= (location.proxy_read_time_out))
-				// {
-				// 	kill(fd, SIGKILL);
-				// 	std::remove(tmpFile.c_str());
-				// 	sendErrorResponse(408, "Request Timeout", getErrorPage(408), _fd);
-				// 	return true;
-				// }
 				return false;
-				// usleep(100000);
 			}
 		}
 		return true;
