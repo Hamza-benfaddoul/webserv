@@ -14,8 +14,8 @@
 #include <vector>
 
 
-Server::Server(uint32_t ip, unsigned short port, serverBlock *serverBlock) :
-    _ip(ip), _port(port) {
+Server::Server(uint32_t ip, unsigned short port,std::string serverName, serverBlock *serverBlock) :
+    _ip(ip), _port(port), _serverName(serverName) {
 		_serverBlock = serverBlock;
 	};
 
@@ -24,38 +24,54 @@ Server::~Server() {
 };
 
 
-void    Server::run(void)
+int    Server::run(void)
 {
-	initServerSocket();
-	listenToClient();
+	try
+	{
+		initServerSocket();
+		listenToClient();
+	}
+	catch (const std::exception &e)
+	{
+		std::cerr << e.what() << std::endl;
+		return (0);
+	}
+	return (1);
 }
 
 void    Server::initServerSocket()
 {
-	_socketfd = socket( AF_INET, SOCK_STREAM, 0);
+	_socketfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (_socketfd < 0)
 		throw std::runtime_error("could not create socket");
 	this->setupIp();
 	int opt = 1;
-    if (setsockopt(_socketfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1) {
-        perror("setsockopt failed");
-        close(_socketfd);
-        exit(EXIT_FAILURE);
-    }
-
+	if (setsockopt(_socketfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1)
+	{
+		perror("setsockopt failed");
+		close(_socketfd);
+		exit(EXIT_FAILURE);
+	}
 	// bind the IP and port to the server
-	std::stringstream ss;
-	ss <<  (getIp()>> 24) << "."  << ((getIp()>> 16)& 255) << "." << ((getIp()>> 8)&255) << "." << (getIp()&255) << ":" << getPort();
 	if (bind(_socketfd, (const struct sockaddr *)&_server_address, (socklen_t)sizeof(_server_address)) < 0)
-		throw std::runtime_error("Could not bind the address " + ss.str());
+	{
+		close(_socketfd);
+		std::stringstream ss;
+		ss << (getIp() >> 24) << "." << ((getIp() >> 16) & 255) << "." << ((getIp() >> 8) & 255) << "." << (getIp() & 255) << ":" << getPort();
+		throw std::runtime_error("\033[1;31mhis ip:port is already in use: " + ss.str() + "\033[0m");
+	}
 }
 
 void    Server::listenToClient()
 {
 	// listen at the port
+	
 	if (listen(_socketfd, MAX_CONNECTIONS) < 0)
-		throw std::runtime_error("Could not listen at the port");
-	// print message on the console 'server listening on ip:port'
+	{
+		std::stringstream ss;
+		ss << _socketfd << " on port " << getPort() << "";
+		throw std::runtime_error("Could not listen at socket " + ss.str());
+	}
 	std::cout << "server listening on ";
 	std::cout << (getIp()	>> 24)			<< ".";
 	std::cout << ((getIp()	>> 16)	& 255)	<< ".";

@@ -19,7 +19,8 @@ Cluster::Cluster( std::vector<serverBlock> serverBlocks)
 	// create a _servers
 	for (std::vector<serverBlock>::iterator it = serverBlocks.begin(); it != serverBlocks.end(); ++it)
 	{
-		_servers.push_back(new Server(it->getHost(), it->getPort(), &(*it)));
+		std::cout << "server name: " << it->getServerName() << std::endl;
+		_servers.push_back(new Server(it->getHost(), it->getPort(),it->getServerName(), &(*it)));
 	}
 	// run all _servers
 	this->run();
@@ -52,11 +53,14 @@ void Cluster::run(void)
 	}
 
 	for (size_t i = 0; i < _servers.size(); i++) {
-		_servers[i]->run();
-		ev.events = EPOLLIN | EPOLLOUT;
-		ev.data.fd = _servers[i]->getFd();
-		if (epoll_ctl(epollfd, EPOLL_CTL_ADD, _servers[i]->getFd(), &ev) == -1) {
-			throw std::runtime_error("epoll_ctl");
+		if (_servers[i]->run())
+		{
+			ev.events = EPOLLIN | EPOLLOUT;
+			ev.data.fd = _servers[i]->getFd();
+			if (epoll_ctl(epollfd, EPOLL_CTL_ADD, _servers[i]->getFd(), &ev) == -1)
+			{
+				throw std::runtime_error("epoll_ctl");
+			}
 		}
 	}
 
@@ -76,7 +80,8 @@ void Cluster::run(void)
 				if (client_fd >= (int)_clients.size()) {
 					_clients.resize(client_fd + 1);
 				}
-				_clients.at(client_fd) = new Client(client_fd,_servers[events[n].data.fd - _servers[0]->getFd()]->_serverBlock);
+				_clients.at(client_fd) = new Client(client_fd,_servers, events[n].data.fd); 
+				/* [events[n].data.fd - _servers[0]->getFd()]->_serverBlock */
 				ev.events = EPOLLIN | EPOLLOUT;
 				ev.data.fd = client_fd;
 				if (epoll_ctl(epollfd, EPOLL_CTL_ADD, client_fd, &ev) == -1) {

@@ -21,6 +21,7 @@ class serverBlock
 		std::string root;
 		int         port;
 		bool        autoIndex;
+		std::string	serverName;
 		std::map<std::string, std::string> attributes;
 	public:
 		std::string host;
@@ -39,12 +40,15 @@ class serverBlock
 		void    parsePortNumber( std::string value );
 		void    parseRoot( std::string value );
 		void    parseHost( std::string value );
+		void    parseServerName( std::string value );
+		
 		void    parseAutoIndex( std::string value );
 		void	parseClientMaxBodySize( std::string value );
 
 		int     getPort(void) const;
 		bool    getAutoIndex(void) const;
 		std::string getRoot(void) const;
+		std::string getServerName(void) const;
 		uint32_t getHost(void) const;
 
 		std::map<std::string, std::string> getAttributes() const {

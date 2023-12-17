@@ -6,7 +6,7 @@
 /*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 11:35:06 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/12/05 15:32:13 by hbenfadd         ###   ########.fr       */
+/*   Updated: 2023/12/17 14:27:53by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,8 +15,10 @@
 #include "dirent.h"
 
 int Client::cpt = 0;
-Client::Client(size_t fd, serverBlock *serverBlock) : _fd(fd), location(), _serverBlock(serverBlock)
+Client::Client(size_t fd, std::vector<Server*> const & servers, int server_fd)
+	: _fd(fd), location(), _servers(servers)
 {
+	_server_fd = server_fd;
 	_fdFile = -1;
 	this->_readHeader = true;
 	this->request = NULL;
@@ -30,6 +32,12 @@ Client::Client(size_t fd, serverBlock *serverBlock) : _fd(fd), location(), _serv
 	hasCgi = false;
 	isChunkComplete = true;
 	forked = false;
+	_serverBlock = NULL;
+}
+
+void	Client::setServerBlock(serverBlock *serverBlock)
+{
+	this->_serverBlock = serverBlock;
 }
 
 bool Client::receiveResponse(void)
@@ -42,8 +50,9 @@ bool Client::receiveResponse(void)
 		if (bytesRead < 0)
 			throw std::runtime_error("Could not read from socket");
 		_responseBuffer.append(buffer, bytesRead);
-		if (_responseBuffer.find("\r\n\r\n") != std::string::npos)
+		if (_responseBuffer.find("\r\n\r\n") != std::string::npos || bytesRead < 1024)
 		{
+			std::cout << _responseBuffer << std::endl;
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
 			this->request->printRequest();
@@ -54,6 +63,25 @@ bool Client::receiveResponse(void)
 				std::string C_Length = Oheaders["Content-Length"];
 				Content_Length = strtod(C_Length.c_str(), NULL);
 			}
+			if (Oheaders.find("Host") != Oheaders.end() && Oheaders["Host"].find(":") == std::string::npos)
+			{
+				if (Oheaders["Host"] == _servers.at(_server_fd - _servers.at(0)->getFd())->_serverBlock->getServerName())
+					_serverBlock = _servers.at(_server_fd - _servers.at(0)->getFd())->_serverBlock;
+				else{
+					for(std::vector<Server*>::iterator it = _servers.begin(); it != _servers.end(); ++it)
+					{
+						if((*it)->_serverBlock->getServerName() == Oheaders["Host"])
+						{
+							_serverBlock = (*it)->_serverBlock;
+							break;
+						}
+					}
+				}
+				if (!_serverBlock)
+					_serverBlock = _servers.at(0)->_serverBlock;
+			}
+			else
+				_serverBlock = _servers.at(_server_fd - _servers.at(0)->getFd())->_serverBlock;
 			location = getCurrentLocation();
 			_readHeader = false;
 			if (is_request_well_formed() == -1)

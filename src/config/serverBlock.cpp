@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   serverBlock.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:15:12 by rakhsas           #+#    #+#             */
-/*   Updated: 2023/11/19 12:30:14 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/12/17 13:42:05 by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,9 @@ uint32_t serverBlock::getHost(void) const {
 	// std::cout << res << std::endl;
 	return res;
 }
+
+std::string serverBlock::getServerName(void) const { return this->serverName; }
+
 int     serverBlock::getPort(void) const { return port; }
 bool	serverBlock::getAutoIndex( void ) const { return autoIndex; }
 void    serverBlock::parseBlock(  )
@@ -46,9 +49,9 @@ void    serverBlock::parseBlock(  )
 	// std::cout << "Server Block Attributes:" << std::endl;
 	std::map<std::string, std::string> attributes = getAttributes();
 	for (std::map<std::string, std::string>::iterator attr_it = attributes.begin(); attr_it != attributes.end(); ++attr_it) {
-		// if (attr_it->first.compare("server_name") == 0)
-		// 	parseServerName(attr_it->second);
-		if (attr_it->first.compare("listen") == 0)
+		if (attr_it->first.compare("server_name") == 0)
+		 	parseServerName(attr_it->second);
+		else if (attr_it->first.compare("listen") == 0)
 			parsePortNumber(attr_it->second);
 		else if (attr_it->first.compare("root") == 0)
 			parseRoot(attr_it->second);
@@ -66,6 +69,24 @@ void    serverBlock::parseBlock(  )
 	// Location
 	// std::cout << "END OF SERVER INFOS\n\n\n";
 
+}
+
+
+void    serverBlock::parseServerName(std::string value) {
+	if (value.find("[[") != std::string::npos || value.find("]]") != std::string::npos
+		|| value.find("][") != std::string::npos || value.find("[]") != std::string::npos
+			|| value.find("]") != std::string::npos || value.find("[") != std::string::npos)
+		throw std::runtime_error("ERROR: Found an invalid pattern related to []!!!.");
+	std::stringstream ss1(value);
+	std::string word;
+	int words = 0;
+	while (ss1 >> word)
+	{
+		words++;
+	}
+	if (words > 1)
+		throw std::runtime_error("ERROR: Found multiple server names !!!.");
+	this->serverName = value;
 }
 
 void	serverBlock::parseClientMaxBodySize( std::string value )

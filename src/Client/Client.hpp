@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rakhsas <rakhsas@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: hbenfadd <hbenfadd@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/28 10:59:30 by hbenfadd          #+#    #+#             */
-/*   Updated: 2023/11/19 17:38:38 by rakhsas          ###   ########.fr       */
+/*   Updated: 2023/12/17 13:12:16 by hbenfadd         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,7 @@
 #define ERROR200 "www/error/200.html"
 
 class serverBlock;
+class Server;
 
 class Client {
 	private:
@@ -75,6 +76,7 @@ class Client {
 		int				Content_Length;
 		bool			_readHeader;
 		serverBlock		*_serverBlock;
+		std::vector<Server*> _servers;
 		bool 			isLocationExist;
 		std::string 	body;
 		std::map<std::string, std::string>	ourLocations;
@@ -123,11 +125,13 @@ class Client {
 		Location	getCurrentLocation();
 		std::string	generateDirectoryListing(const std::string& directoryPath);
 		void	del(const char *path, bool &isDeleted);
+		int _server_fd;
 
 	public:
-		Client(size_t fd, serverBlock *serverBlock);
+		Client(size_t fd, std::vector<Server*> const &servers, int server_fd);
 		std::map<std::string, std::string> getOurLocations() const;
 		~Client();
 
 		bool	run(void);
+		void	setServerBlock(serverBlock *serverBlock);
 };
