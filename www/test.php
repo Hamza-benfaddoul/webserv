@@ -1,4 +1,4 @@
 <?php
-    while(1)
-        ;
+    header('Location: http://www.google.com/');
+    exit;
 ?>
