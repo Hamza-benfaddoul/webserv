@@ -438,6 +438,7 @@ bool Client::handleFiles(std::string path)
 				end_clock = get_time('s');
 				long elapsed_secs = (end_clock - start_clock);
 				if (elapsed_secs > (location.proxy_read_time_out))
+
 				{
 					kill(fd, SIGKILL);
 					std::remove(tmpFile.c_str());
