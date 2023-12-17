@@ -52,10 +52,9 @@ bool Client::receiveResponse(void)
 		_responseBuffer.append(buffer, bytesRead);
 		if (_responseBuffer.find("\r\n\r\n") != std::string::npos || bytesRead < 1024)
 		{
-			std::cout << _responseBuffer << std::endl;
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
-			this->request->printRequest();
+			//this->request->printRequest();
 			this->body = this->request->getBodyString();
 			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
 			if (Oheaders.find("Content-Length") != Oheaders.end())

@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "../../includes/main.hpp"
+#include <vector>
 
 Cluster::Cluster() {}
 
@@ -19,7 +20,6 @@ Cluster::Cluster( std::vector<serverBlock> serverBlocks)
 	// create a _servers
 	for (std::vector<serverBlock>::iterator it = serverBlocks.begin(); it != serverBlocks.end(); ++it)
 	{
-		std::cout << "server name: " << it->getServerName() << std::endl;
 		_servers.push_back(new Server(it->getHost(), it->getPort(),it->getServerName(), &(*it)));
 	}
 	// run all _servers
@@ -40,9 +40,10 @@ Cluster::~Cluster()
 }
 
 #define MAX_EVENTS  1024
-
+#include <set>
 void Cluster::run(void)
 {
+	std::set<int> server_fds;
 	_clients.resize(MAX_EVENTS);
 	struct epoll_event	ev, events[MAX_EVENTS];
 	int					client_fd, nfds, epollfd, n;
@@ -55,6 +56,7 @@ void Cluster::run(void)
 	for (size_t i = 0; i < _servers.size(); i++) {
 		if (_servers[i]->run())
 		{
+			server_fds.insert(_servers[i]->getFd());
 			ev.events = EPOLLIN | EPOLLOUT;
 			ev.data.fd = _servers[i]->getFd();
 			if (epoll_ctl(epollfd, EPOLL_CTL_ADD, _servers[i]->getFd(), &ev) == -1)
@@ -71,7 +73,7 @@ void Cluster::run(void)
 		}
 
 		for (n = 0; n < nfds; ++n) {
-			if (events[n].data.fd >= 4 && events[n].data.fd <= _servers.at(_servers.size()- 1)->getFd() ) {
+			if (server_fds.find(events[n].data.fd) != server_fds.end()){
 				client_fd = accept(events[n].data.fd,NULL, NULL);
 				if (client_fd == -1) {
 					throw std::runtime_error("could not accept client");
