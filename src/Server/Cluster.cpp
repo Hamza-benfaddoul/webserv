@@ -63,7 +63,6 @@ void Cluster::run(void)
 			}
 		}
 	}
-
 	for (;;) {
 		nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
 		if (nfds == -1) {
@@ -72,7 +71,7 @@ void Cluster::run(void)
 		}
 
 		for (n = 0; n < nfds; ++n) {
-			if (events[n].data.fd >= 3 && events[n].data.fd <= _servers.at(_servers.size()- 1)->getFd() ) {
+			if (events[n].data.fd >= 4 && events[n].data.fd <= _servers.at(_servers.size()- 1)->getFd() ) {
 				client_fd = accept(events[n].data.fd,NULL, NULL);
 				if (client_fd == -1) {
 					throw std::runtime_error("could not accept client");
@@ -81,14 +80,13 @@ void Cluster::run(void)
 					_clients.resize(client_fd + 1);
 				}
 				_clients.at(client_fd) = new Client(client_fd,_servers, events[n].data.fd); 
-				/* [events[n].data.fd - _servers[0]->getFd()]->_serverBlock */
 				ev.events = EPOLLIN | EPOLLOUT;
 				ev.data.fd = client_fd;
 				if (epoll_ctl(epollfd, EPOLL_CTL_ADD, client_fd, &ev) == -1) {
 					throw std::runtime_error("epoll_ctl");
 				}
 			}
-			else if (events[n].data.fd >= 3){
+			else if (events[n].data.fd >= 4){
 				if (_clients.at(events[n].data.fd)->run()) // return true when client close the connection
 				{
 					// std::cout << "client allh irahmo\n";
