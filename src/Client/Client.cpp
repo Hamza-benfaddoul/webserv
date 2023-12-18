@@ -42,60 +42,62 @@ void	Client::setServerBlock(serverBlock *serverBlock)
 
 bool Client::receiveResponse(void)
 {
-	if (_readHeader)
-	{
-		char buffer[1024] = {0};
-		int bytesRead;
-		bytesRead = read(_fd, buffer, 1024);
-		if (bytesRead < 0)
-			throw std::runtime_error("Could not read from socket");
-		_responseBuffer.append(buffer, bytesRead);
-		if (_responseBuffer.find("\r\n\r\n") != std::string::npos || bytesRead < 1024)
+		if (_readHeader)
 		{
-			//std::cout << _responseBuffer << std::endl;
-			this->request = new Request(_responseBuffer);
-			this->request->parseRequest();
-			//this->request->printRequest();
-			this->body = this->request->getBodyString();
-			std::map<std::string, std::string> Oheaders = this->request->getHeaders();
-			if (Oheaders.find("Content-Length") != Oheaders.end())
+			char buffer[1024] = {0};
+			int bytesRead;
+			bytesRead = read(_fd, buffer, 1024);
+			if (bytesRead < 0)
+				throw std::runtime_error("Could not read from socket");
+			if (bytesRead == 0)
+				return true;
+			_responseBuffer.append(buffer, bytesRead);
+			if (_responseBuffer.find("\r\n\r\n") != std::string::npos)
 			{
-				std::string C_Length = Oheaders["Content-Length"];
-				Content_Length = strtod(C_Length.c_str(), NULL);
-			}
-
-			if (Oheaders.find("Host") != Oheaders.end())
-			{
-				for(std::vector<Server*>::iterator it = _servers.begin(); it != _servers.end(); ++it)
+				//std::cout << _responseBuffer << std::endl;
+				this->request = new Request(_responseBuffer);
+				this->request->parseRequest();
+				//this->request->printRequest();
+				this->body = this->request->getBodyString();
+				std::map<std::string, std::string> Oheaders = this->request->getHeaders();
+				if (Oheaders.find("Content-Length") != Oheaders.end())
 				{
-					std::stringstream ip;
-					ip <<((*it)->_serverBlock->getHost() >> 24) << "." << ((*it)->_serverBlock->getHost() >> 16 & 255) << "." << (((*it)->_serverBlock->getHost() >> 8) & 255) << "." <<((*it)->_serverBlock->getHost() & 255);
-
-					std::stringstream ss;
-					if ((*it)->_serverBlock->getServerName().empty())
-						ss << ip.str() << ":" << (*it)->_serverBlock->getPort();
-					else
-						ss << (*it)->_serverBlock->getServerName() <<  ":"<< (*it)->_serverBlock->getPort();
-					if(ss.str() == Oheaders["Host"]) 
-					{
-						_serverBlock = (*it)->_serverBlock;
-						break;
-					}
+					std::string C_Length = Oheaders["Content-Length"];
+					Content_Length = strtod(C_Length.c_str(), NULL);
 				}
-				if (!_serverBlock)
-					_serverBlock = _servers.at(0)->_serverBlock;
+
+				if (Oheaders.find("Host") != Oheaders.end())
+				{
+					for(std::vector<Server*>::iterator it = _servers.begin(); it != _servers.end(); ++it)
+					{
+						std::stringstream ip;
+						ip <<((*it)->_serverBlock->getHost() >> 24) << "." << ((*it)->_serverBlock->getHost() >> 16 & 255) << "." << (((*it)->_serverBlock->getHost() >> 8) & 255) << "." <<((*it)->_serverBlock->getHost() & 255);
+
+						std::stringstream ss;
+						if ((*it)->_serverBlock->getServerName().empty())
+							ss << ip.str() << ":" << (*it)->_serverBlock->getPort();
+						else
+							ss << (*it)->_serverBlock->getServerName() <<  ":"<< (*it)->_serverBlock->getPort();
+						if(ss.str() == Oheaders["Host"]) 
+						{
+							_serverBlock = (*it)->_serverBlock;
+							break;
+						}
+					}
+					if (!_serverBlock)
+						_serverBlock = _servers.at(0)->_serverBlock;
+				}
+				else
+					_serverBlock = _servers.at(_server_fd)->_serverBlock;
+
+				location = getCurrentLocation();
+				_readHeader = false;
+				if (is_request_well_formed() == -1)
+					return true;
 			}
 			else
-				_serverBlock = _servers.at(_server_fd)->_serverBlock;
-
-			location = getCurrentLocation();
-			_readHeader = false;
-			if (is_request_well_formed() == -1)
-				return true;
+				return false;
 		}
-		else
-			return false;
-	}
 	if (!_readHeader)
 	{
 		if (this->request->getMethod().compare("GET") == 0)
@@ -386,7 +388,7 @@ bool Client::handleFiles(std::string path)
 					strdup(std::string("REDIRECT_STATUS=200").c_str()),
 					strdup(std::string("HTTP_COOKIE=" + request->getCookie()).c_str()),
 					NULL};
-			tmpFile = createNewFile("www/TempFiles/", clock() / CLOCKS_PER_SEC, "_cgi");
+			tmpFile = createNewFile("www/TempFiles/", this->cpt, "_cgi");
 			// start_c = clock();
 			start_clock = get_time('s');
 			fd = fork();
@@ -418,7 +420,12 @@ bool Client::handleFiles(std::string path)
 			ss1 = waitpid(fd, &state, WNOHANG);
 			if (ss1 == fd)
 			{
-				readFromCgi();
+				try {
+					readFromCgi();
+				} catch (const std::exception &e) {
+					sendErrorResponse(500, "Internal Server Error", getErrorPage(500), _fd);
+					return true;
+				}
 				ltrim(content, "\r\n");
 				size_t pos = content.find("\r\n\r\n");
 				std::string bodyCgi;
