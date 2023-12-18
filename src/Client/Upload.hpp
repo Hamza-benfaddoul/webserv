@@ -35,6 +35,8 @@ private:
     std::string cgi_path;
     long max_body_size;
     long    totalBodySize;
+    long start_clock;
+    long end_clock;
     // Client client;
 
 public:
