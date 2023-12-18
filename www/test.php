@@ -1,4 +1,4 @@
 <?php
-    header('Location: http://www.google.com/');
-    exit;
+    echo "welcome php";
+    exit();
 ?>

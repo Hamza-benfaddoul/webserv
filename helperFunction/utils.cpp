@@ -103,10 +103,18 @@ void	sendErrorResponse( int CODE, std::string ERRORTYPE, std::string errorTypeFi
 	std::stringstream response;
 	response << "HTTP/1.1 " << CODE << " " << ERRORTYPE << "\r\n";
 	response << "Content-Type: text/html; charset=UTF-8\r\n";
-	response << "Content-Length: " << content.length() << "\r\n";
-	response << "\r\n";
-    response << content;
-
+	// response << "Content-Length: " << content.length() << "\r\n";
+	// response << "\r\n";
+	if (!content.empty()) {
+		response << "Content-Length: " << content.length() << "\r\n";
+		response << "\r\n";
+		response << content;
+	} else {
+		std::string errorContent = "<h1> " + ERRORTYPE + "</h1>";
+		response << "Content-Length: " << errorContent.length() << "\r\n";
+		response << "\r\n";
+		response << errorContent;
+}
 	write(_fd, response.str().c_str(), response.str().length());
 }
 void	sendHeadErrorResponse( int CODE, std::string ERRORTYPE, int _fd) {

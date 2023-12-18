@@ -265,9 +265,11 @@ bool Upload::start()
 	// the case where the cgi is of but the upload is on.
 	else if (ourLocations.find("upload") != ourLocations.end() && ourLocations["upload"] == "on")
 	{
+		std::cout << "uplod on " << std::endl;
 		std::vector<std::string> splitedContentType = ft_split(content_type, "/");
 		std::string extension = splitedContentType.at(1);
 		std::string newFileName = this->filename + "." + extension;
+		std::cout << "new file name: " << newFileName << std::endl;
 		int	resRename = std::rename(this->filename.c_str(), newFileName.c_str());
 		if (resRename != 0)
 			throw std::runtime_error("Failed to upload file");
