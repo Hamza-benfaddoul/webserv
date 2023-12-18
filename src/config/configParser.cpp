@@ -117,7 +117,7 @@ bool configParser::loadFile()
 			for (std::vector<serverBlock>::iterator it = serverBlocks.begin(); it != serverBlocks.end(); ++it) {
 				for(std::vector<serverBlock>::iterator it2 = it + 1; it2 != serverBlocks.end(); ++it2) {
 					if (it->getHost() == it2->getHost() && it->getPort() == it2->getPort() && it->getServerName() == it2->getServerName())
-						throw std::runtime_error("ERROR: Found multiple servers with the same host and port !!!.");
+						throw std::runtime_error("Error: Found multiple servers with the host and port and server name.");
 				}
 			}
 		}

@@ -58,7 +58,7 @@ void    Server::initServerSocket()
 		close(_socketfd);
 		std::stringstream ss;
 		ss << (getIp() >> 24) << "." << ((getIp() >> 16) & 255) << "." << ((getIp() >> 8) & 255) << "." << (getIp() & 255) << ":" << getPort();
-		throw std::runtime_error("\033[1;31mhis ip:port is already in use: " + ss.str() + "\033[0m");
+		throw std::runtime_error("ip:port is already in use: " + ss.str() );
 	}
 }
 
