@@ -52,7 +52,6 @@ bool Client::receiveResponse(void)
 		_responseBuffer.append(buffer, bytesRead);
 		if (_responseBuffer.find("\r\n\r\n") != std::string::npos || bytesRead < 1024)
 		{
-			std::cout << _responseBuffer << std::endl;
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
 			this->request->printRequest();
@@ -346,6 +345,11 @@ bool Client::handleFiles(std::string path)
 {
 	size_t dotPos = path.find_last_of('.');
 	size_t markPos = path.find_last_of('?');
+	if (request->getPath().find("/?") != std::string::npos)
+	{
+		sendErrorResponse(404, "Not Found", getErrorPage(404), _fd);
+		return true;
+	}
 	std::string extension;
 	if (dotPos != std::string::npos && (markPos == std::string::npos || dotPos > markPos))
 	{
@@ -606,6 +610,7 @@ bool Client::getMethodHandler(void)
 	if (access((location.getRoot() + filePath).c_str(), R_OK) == -1)
 	{
 		sendErrorResponse(404, "Not Found", getErrorPage(404), _fd);
+		return true;
 	}
 	else if (checkType() == true)
 	{
