@@ -65,6 +65,8 @@ void Cluster::run(void)
 			}
 		}
 	}
+	if(server_fds.empty())
+		exit(1);
 	for (;;) {
 		nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
 		if (nfds == -1) {
@@ -81,6 +83,7 @@ void Cluster::run(void)
 				if (client_fd >= (int)_clients.size()) {
 					_clients.resize(client_fd + 1);
 				}
+				std::cout << events[n].data.fd - *server_fds.begin() << std::endl;
 				_clients.at(client_fd) = new Client(client_fd,_servers, events[n].data.fd - *server_fds.begin()); 
 				ev.events = EPOLLIN | EPOLLOUT;
 				ev.data.fd = client_fd;

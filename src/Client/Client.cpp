@@ -52,6 +52,7 @@ bool Client::receiveResponse(void)
 		_responseBuffer.append(buffer, bytesRead);
 		if (_responseBuffer.find("\r\n\r\n") != std::string::npos || bytesRead < 1024)
 		{
+			//std::cout << _responseBuffer << std::endl;
 			this->request = new Request(_responseBuffer);
 			this->request->parseRequest();
 			//this->request->printRequest();
@@ -62,18 +63,23 @@ bool Client::receiveResponse(void)
 				std::string C_Length = Oheaders["Content-Length"];
 				Content_Length = strtod(C_Length.c_str(), NULL);
 			}
-			if (Oheaders.find("Host") != Oheaders.end() && Oheaders["Host"].find(":") == std::string::npos)
+
+			if (Oheaders.find("Host") != Oheaders.end())
 			{
-				if (Oheaders["Host"] == _servers.at(_server_fd)->_serverBlock->getServerName())
-					_serverBlock = _servers.at(_server_fd)->_serverBlock;
-				else{
-					for(std::vector<Server*>::iterator it = _servers.begin(); it != _servers.end(); ++it)
+				for(std::vector<Server*>::iterator it = _servers.begin(); it != _servers.end(); ++it)
+				{
+					std::stringstream ip;
+					ip <<((*it)->_serverBlock->getHost() >> 24) << "." << ((*it)->_serverBlock->getHost() >> 16 & 255) << "." << (((*it)->_serverBlock->getHost() >> 8) & 255) << "." <<((*it)->_serverBlock->getHost() & 255);
+
+					std::stringstream ss;
+					if ((*it)->_serverBlock->getServerName().empty())
+						ss << ip.str() << ":" << (*it)->_serverBlock->getPort();
+					else
+						ss << (*it)->_serverBlock->getServerName() <<  ":"<< (*it)->_serverBlock->getPort();
+					if(ss.str() == Oheaders["Host"]) 
 					{
-						if((*it)->_serverBlock->getServerName() == Oheaders["Host"])
-						{
-							_serverBlock = (*it)->_serverBlock;
-							break;
-						}
+						_serverBlock = (*it)->_serverBlock;
+						break;
 					}
 				}
 				if (!_serverBlock)
@@ -81,6 +87,7 @@ bool Client::receiveResponse(void)
 			}
 			else
 				_serverBlock = _servers.at(_server_fd)->_serverBlock;
+
 			location = getCurrentLocation();
 			_readHeader = false;
 			if (is_request_well_formed() == -1)
