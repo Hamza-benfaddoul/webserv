@@ -64,8 +64,8 @@ bool Client::receiveResponse(void)
 			}
 			if (Oheaders.find("Host") != Oheaders.end() && Oheaders["Host"].find(":") == std::string::npos)
 			{
-				if (Oheaders["Host"] == _servers.at(_server_fd - _servers.at(0)->getFd())->_serverBlock->getServerName())
-					_serverBlock = _servers.at(_server_fd - _servers.at(0)->getFd())->_serverBlock;
+				if (Oheaders["Host"] == _servers.at(_server_fd)->_serverBlock->getServerName())
+					_serverBlock = _servers.at(_server_fd)->_serverBlock;
 				else{
 					for(std::vector<Server*>::iterator it = _servers.begin(); it != _servers.end(); ++it)
 					{
@@ -80,7 +80,7 @@ bool Client::receiveResponse(void)
 					_serverBlock = _servers.at(0)->_serverBlock;
 			}
 			else
-				_serverBlock = _servers.at(_server_fd - _servers.at(0)->getFd())->_serverBlock;
+				_serverBlock = _servers.at(_server_fd)->_serverBlock;
 			location = getCurrentLocation();
 			_readHeader = false;
 			if (is_request_well_formed() == -1)

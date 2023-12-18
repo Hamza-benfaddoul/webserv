@@ -81,7 +81,7 @@ void Cluster::run(void)
 				if (client_fd >= (int)_clients.size()) {
 					_clients.resize(client_fd + 1);
 				}
-				_clients.at(client_fd) = new Client(client_fd,_servers, events[n].data.fd); 
+				_clients.at(client_fd) = new Client(client_fd,_servers, events[n].data.fd - *server_fds.begin()); 
 				ev.events = EPOLLIN | EPOLLOUT;
 				ev.data.fd = client_fd;
 				if (epoll_ctl(epollfd, EPOLL_CTL_ADD, client_fd, &ev) == -1) {
