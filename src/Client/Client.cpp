@@ -741,7 +741,7 @@ int Client::is_request_well_formed()
 		(request->getMethod() == "POST" && location.POST == false) ||
 		(request->getMethod() == "DELETE" && location.DELETE == false))
 	{
-		sendErrorResponse(405, "405 Method Not Allowed", getErrorPage(405), _fd);
+		sendErrorResponse(405, "Method Not Allowed", getErrorPage(405), _fd);
 		return -1;
 	}
 	return (true);

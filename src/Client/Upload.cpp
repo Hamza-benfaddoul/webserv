@@ -137,6 +137,7 @@ bool Upload::start()
 			ss << cpt;
 			cgi_output_filename = "www/TempFiles/cgi_output" + ss.str();
 			start_c = clock();
+			start_clock = get_time('s');
 			pid = fork();
 			if (pid == 0) // the child proccess
 			{
@@ -242,7 +243,9 @@ bool Upload::start()
 			else
 			{
 				end = clock();
-				if (((double)(end - start_c)) / CLOCKS_PER_SEC > (double)location.proxy_read_time_out)
+				end_clock = get_time('s');
+				// if (((double)(end - start_c)) / CLOCKS_PER_SEC > (double)location.proxy_read_time_out)
+				if (end_clock - start_clock > location.proxy_read_time_out)
 				{
 					kill(pid, SIGKILL);
 					close(cgi_output_fd);

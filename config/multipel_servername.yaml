@@ -1,0 +1,50 @@
+server:
+  listen: 5002
+  host: 127.0.0.3
+  root: www/
+  
+  location:
+    - path: "/uploads"
+    - root: www
+    - methods: [DELETE]
+    - upload: on
+    - autoindex: on
+
+  location:
+    - path: "/"
+    - root:   www
+    - upload: on  
+    - autoindex: on
+    - methods: [GET]
+    - index:  [index.html]
+    - proxy_read_time_out: 5s
+
+server:
+  listen: 5000
+  host: 127.0.0.1
+  server_name: one.com
+  root: www/
+
+  location:
+    - path: "/"
+    - root:   www
+    - upload: on  
+    - autoindex: on
+    - methods: [GET]
+    - index:  [one.html]
+    - proxy_read_time_out: 5s
+
+server:
+  listen: 5000
+  host: 127.0.0.1
+  server_name: two.com
+  root: www/
+
+  location:
+    - path: "/"
+    - root:   www
+    - upload: on  
+    - autoindex: on
+    - methods: [GET]
+    - index:  [two.html]
+    - proxy_read_time_out: 5s

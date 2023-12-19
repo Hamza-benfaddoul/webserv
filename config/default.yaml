@@ -1,15 +1,14 @@
 server:
-  listen: 5001
+  listen: 5000
   host: 127.0.0.1
   root: www/
-  client_max_body_size: 2g
 
   location:
     - path: "/"
     - root:   www
     - upload: on  
     - autoindex: on
-    - methods: [DELETE, POST, GET]
+    - methods: [GET]
     - index:  [index.html]
     - cgi_path: [.py, /usr/bin/python3]
     - cgi_path: [.php, /usr/bin/php-cgi]
@@ -17,32 +16,27 @@ server:
     - proxy_read_time_out: 5s
 
 server:
-  listen: 5002
-  host: 127.0.0.1
-  root: www/
-  client_max_body_size: 2g
-
-  location:
-    - path: "/uploads"
-    - root:   www 
-    - autoindex: on
-    - methods: [DELETE, POST, GET]
-    - cgi_path: [.php, /usr/bin/php-cgi]
-    - proxy_read_time_out: 5s
-
-server:
-  listen: 5003
+  listen: 5001
   host: 127.0.0.1
   root: www/
   client_max_body_size: 2g
 
   location:
     - path: "/cgi-bin"
-    - root: www
-    - methods: [GET, POST]
-    - upload: on
+    - root:   www 
     - autoindex: on
-    - cgi_path: [.py, /usr/bin/python3]
-    - cgi_path: [.sh, /usr/bin/bash]
+    - methods: [POST]
     - cgi_path: [.php, /usr/bin/php-cgi]
     - proxy_read_time_out: 5s
+
+server:
+  listen: 5002
+  host: 127.0.0.1
+  root: www/
+
+  location:
+    - path: "/uploads"
+    - root: www
+    - methods: [DELETE]
+    - upload: on
+    - autoindex: on

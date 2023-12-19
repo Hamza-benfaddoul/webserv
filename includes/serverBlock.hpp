@@ -25,7 +25,7 @@ class serverBlock
 		std::map<std::string, std::string> attributes;
 	public:
 		std::string host;
-		long	client_max_body_size;
+		unsigned long	client_max_body_size;
 		std::vector<Location> locations;
 		std::vector<std::pair<int, std::string> > errorPages;
 		serverBlock();
